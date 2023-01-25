@@ -315,7 +315,7 @@ export default class Settings extends Component {
               marginBottom: 20,
             }}
             onPress={() =>
-              Linking.openURL('https://github.com/Ara-Bog?tab=repositories')
+              Linking.openURL('https://www.tinkoff.ru/cf/1uakjigjJrq')
             }>
             <Image source={require('../assets/baner.png')} />
           </TouchableOpacity>
