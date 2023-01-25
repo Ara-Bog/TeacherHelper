@@ -21,6 +21,12 @@ export async function importFromJson(uriMasterBase, saveData) {
     .then(res => (newData = JSON.parse(res)))
     .catch(err => console.log('importFromJson readfile - ', err));
 
+  if (newData.typeSchedule != userSettings.typeSchedule) {
+    userSettings.typeSchedule = newData.typeSchedule;
+  }
+
+  delete newData.typeSchedule;
+
   // блок с очисткой текущих данных
   if (!saveData) {
     await clearData();

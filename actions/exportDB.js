@@ -13,9 +13,9 @@ export async function exportToJson() {
   let fileName = 'TH' + currentTime + '.json';
   let pathDownload = RNFS.DownloadDirectoryPath + '/' + fileName;
   let sqlRequest;
-  let contentDb = {};
+  let contentDb = {typeSchedule: userSettings.typeSchedule};
 
-  confirmCheck = db.transaction(tx => {
+  await db.transaction(tx => {
     requiredColumns.forEach(item => {
       sqlRequest = 'SELECT * FROM ' + item;
       tx.executeSql(
@@ -26,8 +26,5 @@ export async function exportToJson() {
       );
     });
   });
-
-  confirmCheck.then(() =>
-    RNFS.writeFile(pathDownload, JSON.stringify(contentDb)),
-  );
+  return [RNFS.writeFile(pathDownload, JSON.stringify(contentDb)), fileName];
 }

@@ -1,5 +1,11 @@
 import {StyleSheet} from 'react-native';
-import {COLORS} from './colors.js';
+
+const COLORS = {
+  gray: '#EBEBEB',
+  darkBlue: '#04021D',
+  blue: '#554AF0',
+  whiteGray: '#F2F1F1',
+};
 
 export default StyleSheet.create({
   tabBar: {
@@ -319,11 +325,11 @@ export default StyleSheet.create({
 
   cardDefaultRow_edit: {
     flexDirection: 'column',
-    marginBottom: 15,
+    marginBottom: 25,
   },
 
   cardDefaultLabel: {
-    width: '48%',
+    width: '100%',
     marginRight: '2%',
     fontFamily: 'sf_regular',
     fontWeight: '400',

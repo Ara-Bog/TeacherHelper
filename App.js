@@ -21,10 +21,8 @@ import SettingsPage from './pages/settings';
 
 // глобальные ссылки
 import './global.js';
-
 // база
 // db
-
 // стили
 // Styles.*nameStyle*
 // иконки

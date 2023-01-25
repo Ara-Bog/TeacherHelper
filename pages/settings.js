@@ -23,7 +23,7 @@ import RowSwitcher from '../components/elements/switcherInLine';
 import LoadModal from '../components/loadingModal';
 
 // внешние действия
-import {importFromJson} from '../actions/importDB';
+import {importFromJson, clearData} from '../actions/importDB';
 import {exportToJson} from '../actions/exportDB';
 import {setUserSetting} from '../actions/userSettings';
 
@@ -52,7 +52,6 @@ export default class Settings extends Component {
     };
   }
 
-  // проверить работает ли задержка permisson
   // экран загрузки для экспорта
   // стили для кнопок импорт/экспорт
   // кнопка очистка данных
@@ -72,15 +71,11 @@ export default class Settings extends Component {
     this.setState({dropDownsOpen: newOpen});
   }
 
-  exportDataBase() {
-    exportToJson();
-  }
-
   // поведение при загрузке другой базы
   async importDataBase() {
     // пикаем файл
     let pickerResult;
-    // try чтобы не писать .then().catch(), т.к. при закрытии пикера - он бросает исключение
+    // try  т.к. при закрытии пикера - он бросает исключение
     try {
       pickerResult = await DocumentPicker.pickSingle({
         presentationStyle: 'fullScreen',
@@ -93,27 +88,34 @@ export default class Settings extends Component {
 
     // проверка на то, что это json
     if (pickerResult.name.split('.')[1] != 'json') {
-      Alert.alert('Файл должен иметь расширение .json!');
+      Alert.alert('Ошибка загрузки', 'Файл должен иметь расширение .json!');
       return;
     }
 
     // запрос пользователю на необходимость удалить текущие данные
     saveCurrentData = new Promise((resolve, reject) => {
-      Alert.alert('Выберите действие', 'Что делать с текущими данными?', [
-        {
-          text: 'Оставить',
-          onPress: () => resolve(true),
-        },
-        {
-          text: 'Удалить',
-          onPress: () => resolve(false),
-        },
-        {
-          text: 'Отмена',
-          onPress: () => reject(),
-          style: 'cancel',
-        },
-      ]);
+      Alert.alert(
+        'Подтвердите действие',
+        'При загрузке новых данных - старые будут удалены. Вы действительно хотите загрузить ?',
+        [
+          {
+            text: 'Да',
+            onPress: () => resolve(false),
+          },
+          // Отключена возможность оставить текущие данные
+          // Не получится объеденить данные в расписании, т.к. записи могут падать на одно время
+          // + разные виды расписания
+          // {
+          //   text: 'Нет',
+          //   onPress: () => resolve(true),
+          // },
+          {
+            text: 'Отмена',
+            onPress: () => reject(),
+            style: 'cancel',
+          },
+        ],
+      );
     });
 
     // при выборе не cancel
@@ -129,13 +131,75 @@ export default class Settings extends Component {
             this.setState({loading: false});
             Alert.alert('Данные успешно загружены!');
           })
-          .catch(() => {
+          .catch(err => {
             this.setState({loading: false});
             Alert.alert('Произошла непредвиденная ошибка :(');
+            console.log('test err', err);
           });
       },
       () => {},
     );
+  }
+
+  // поведение при выгрузке базы
+  async exportDataBase() {
+    // загрузка...
+    this.setState({loading: true});
+
+    // выполняем экспорт, на выходе получаем промис и имя файла
+    let [exportBase, fileName] = await exportToJson();
+    exportBase
+      .then(res => {
+        // сброс загрузки
+        this.setState({loading: false});
+        Alert.alert(
+          'Данные успешно выгруженны!',
+          'Данные сохраненны в файл ' + fileName,
+        );
+      })
+      .catch(() => {
+        this.setState({loading: false});
+        Alert.alert('Произошла непредвиденная ошибки.');
+      });
+  }
+
+  // поведение при очистке базы
+  async clearDataBase() {
+    let confirmAction = new Promise((resolve, reject) => {
+      Alert.alert(
+        'Подтвердите действие',
+        'Вы действительно хотите очистить ваши данные?',
+        [
+          {
+            text: 'Да',
+            onPress: () => resolve(),
+          },
+          {
+            text: 'Нет',
+            onPress: () => reject(),
+            style: 'cancel',
+          },
+        ],
+      );
+    });
+
+    confirmAction.then(() => {
+      // Загрузка...
+      this.setState({loading: true});
+
+      // Получаем промис с очистки
+      let actionCleaning = clearData();
+      actionCleaning
+        .then(() => {
+          // сброс загрузки
+          this.setState({loading: false});
+          Alert.alert('Данные успешно очищены!');
+        })
+        .catch(() => {
+          this.setState({loading: false});
+          Alert.alert('Произошла непредвиденная ошибки.');
+        });
+    });
   }
 
   // закрытие модалки шаблонов и сброс параметров
@@ -178,6 +242,67 @@ export default class Settings extends Component {
     }
   }
 
+  // изменение вида расписание
+  async changeTypeSchedule(val) {
+    // много кода потому, что имеется визуальный баг
+    // значение скидывается на нулевое во время Alert
+
+    // Сохраняем первонаальное значение настроек
+    let oldVal = userSettings['typeSchedule'];
+
+    // если значение не поменялось, то и действий никаких не надо
+    if (val == oldVal) {
+      return;
+    }
+
+    // меняем значение сразу (чтобы визуально отображалось новое)
+    this.saveSettings('typeSchedule', val);
+
+    // получаем промис от пользователя, что он согласен, что расписание зачистится
+    let confirmAction = new Promise((resolve, reject) => {
+      Alert.alert(
+        'Подтвердите действие',
+        'Изменение вида приведет к очистке расписания!',
+        [
+          {
+            text: 'Продолжить',
+            onPress: () => resolve(),
+          },
+          {
+            text: 'Отмена',
+            onPress: () => reject(),
+            style: 'cancel',
+          },
+        ],
+      );
+    });
+
+    await confirmAction
+      .then(() => {
+        // Загрузка...
+        this.setState({loading: true});
+
+        // Получаем промис с очистки
+        let actionCleaning = clearData();
+        actionCleaning
+          .then(() => {
+            // сброс загрузки
+            this.setState({loading: false});
+            Alert.alert('Данные успешно очищены!');
+          })
+          .catch(() => {
+            this.setState({loading: false});
+            Alert.alert('Произошла непредвиденная ошибки.');
+            this.saveSettings('typeSchedule', oldVal);
+          });
+      })
+      .catch(() => {
+        // пользователь не согласился - возвращаем значение
+        this.saveSettings('typeSchedule', oldVal);
+        return;
+      });
+  }
+
   render() {
     return (
       <View style={Styles.container}>
@@ -203,7 +328,9 @@ export default class Settings extends Component {
               value={userSettings.firstScreen}
               items={this.state.screens}
               setOpen={val => this.closeOtherDropDown('firstScreen', val)}
-              setValue={callback => saveSettings('firstScreen', callback())}
+              setValue={callback =>
+                this.saveSettings('firstScreen', callback())
+              }
               listMode="SCROLLVIEW"
               style={Styles.dropDown}
               dropDownContainerStyle={Styles.dropDownBox}
@@ -235,7 +362,7 @@ export default class Settings extends Component {
               value={userSettings.typeSchedule}
               items={this.state.typesSchedule}
               setOpen={val => this.closeOtherDropDown('typeSchedule', val)}
-              setValue={callback => saveSettings('typeSchedule', callback())}
+              setValue={callback => this.changeTypeSchedule(callback())}
               listMode="SCROLLVIEW"
               style={Styles.dropDown}
               dropDownContainerStyle={Styles.dropDownBox}
@@ -307,16 +434,48 @@ export default class Settings extends Component {
               onCallBack={val => this.saveSettings('showSubCategories', val)}
             />
           </View>
-          {/* импорт/экспорт базы */}
+          {/* импорт/экспорт/очистка базы */}
           <View style={Styles.cardDefaultRow_edit}>
             <Text style={Styles.cardDefaultLabel}>
               Действия с данными приложения
             </Text>
-            <TouchableOpacity onPress={() => this.exportDataBase()}>
-              <Text>ЭКСПОРТ</Text>
+            {/* экспорт */}
+            <TouchableOpacity
+              style={Styles.buttonDefault}
+              onPress={() => this.exportDataBase()}>
+              <Icons.AntDesign
+                name="upload"
+                size={20}
+                color="#554AF0"
+                style={{marginRight: 15}}
+              />
+              <Text style={Styles.buttonDefaultText}>Выгрузить данные</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => this.importDataBase()}>
-              <Text>ИМПОРТ</Text>
+            {/* импорт */}
+            <TouchableOpacity
+              style={Styles.buttonDefault}
+              onPress={() => this.importDataBase()}>
+              <Icons.AntDesign
+                name="download"
+                size={20}
+                color="#554AF0"
+                style={{marginRight: 15}}
+              />
+              <Text style={Styles.buttonDefaultText}>Загрузить данные</Text>
+            </TouchableOpacity>
+            {/* очистка */}
+            <TouchableOpacity
+              style={Styles.buttonDefault}
+              onPress={() => this.clearDataBase()}>
+              <Icons.AntDesign
+                name="delete"
+                size={20}
+                color="#DC5F5A"
+                style={{marginRight: 15}}
+              />
+              <Text style={{...Styles.buttonDefaultText, color: '#DC5F5A'}}>
+                Очистить данные
+              </Text>
             </TouchableOpacity>
           </View>
           {/* пустое пространство */}

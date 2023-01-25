@@ -1,6 +1,5 @@
 import React from 'react';
 import {Text, View, Switch} from 'react-native';
-import {COLORS} from '../../colors.js';
 
 export default function rowSwitcher({label, currentValue, onCallBack}) {
   // получает:
@@ -14,7 +13,7 @@ export default function rowSwitcher({label, currentValue, onCallBack}) {
       <Text style={Styles.rowSwitchText}>{label}</Text>
       <Switch
         value={currentValue}
-        trackColor={{true: COLORS.blue, false: COLORS.gray}}
+        trackColor={{true: '#554AF0', false: '#EBEBEB'}}
         thumbColor={'#FFFFFF'}
         onValueChange={check => onCallBack(check)}
       />
