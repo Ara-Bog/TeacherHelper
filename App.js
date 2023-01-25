@@ -141,7 +141,7 @@ export default function App() {
   if (loading) {
     SplashScreen.hide();
     //
-    // ДОБАВИТЬ ВЫВОД ОБУЧАЮЩЕГО БЛОКА, ЕСЛИ OPENED == FALSE
+    // ДОБАВИТЬ ВЫВОД ОБУЧАЮЩЕГО БЛОКА, ЕСЛИ userSettings.opened == false
     Promise.all([db, userSettings]).then(
       values => {
         db = values[0];

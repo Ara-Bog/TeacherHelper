@@ -15,15 +15,17 @@ import DocumentPicker, {
   isInProgress,
   types,
 } from 'react-native-document-picker';
-// настройки пользователя
-import {setUserSetting} from '../actions/userSettings';
-import SelectedList from '../components/elements/modalSelectedInList';
 import Modal from 'react-native-modal';
-import RowSwitcher from '../components/elements/switcherInLine';
 
-//
+// компоненты
+import SelectedList from '../components/elements/modalSelectedInList';
+import RowSwitcher from '../components/elements/switcherInLine';
+import LoadModal from '../components/loadingModal';
+
+// внешние действия
 import {importFromJson} from '../actions/importDB';
 import {exportToJson} from '../actions/exportDB';
+import {setUserSetting} from '../actions/userSettings';
 
 export default class Settings extends Component {
   constructor(props) {
@@ -46,8 +48,15 @@ export default class Settings extends Component {
         {label: 'Еженедельное', value: 'week'},
       ],
       modalTemplates: false,
+      loading: false,
     };
   }
+
+  // проверить работает ли задержка permisson
+  // экран загрузки для экспорта
+  // стили для кнопок импорт/экспорт
+  // кнопка очистка данных
+  // перейти на новую базу
 
   // закрытие остальных выпадающих списков
   // - выбранный список -- selectDD:String
@@ -67,12 +76,28 @@ export default class Settings extends Component {
     exportToJson();
   }
 
+  // поведение при загрузке другой базы
   async importDataBase() {
-    const pickerResult = await DocumentPicker.pickSingle({
-      presentationStyle: 'fullScreen',
-      copyTo: 'cachesDirectory',
-    });
+    // пикаем файл
+    let pickerResult;
+    // try чтобы не писать .then().catch(), т.к. при закрытии пикера - он бросает исключение
+    try {
+      pickerResult = await DocumentPicker.pickSingle({
+        presentationStyle: 'fullScreen',
+        copyTo: 'cachesDirectory',
+      });
+    } catch {
+      // пикер был закрыт, прерываем функцию
+      return;
+    }
 
+    // проверка на то, что это json
+    if (pickerResult.name.split('.')[1] != 'json') {
+      Alert.alert('Файл должен иметь расширение .json!');
+      return;
+    }
+
+    // запрос пользователю на необходимость удалить текущие данные
     saveCurrentData = new Promise((resolve, reject) => {
       Alert.alert('Выберите действие', 'Что делать с текущими данными?', [
         {
@@ -90,9 +115,26 @@ export default class Settings extends Component {
         },
       ]);
     });
+
+    // при выборе не cancel
     saveCurrentData.then(
-      res => importFromJson(pickerResult.fileCopyUri, res),
-      () => console.log('Canceled'),
+      res => {
+        // запуск окна загрузки
+        this.setState({loading: true});
+        // импорт через внешний файл
+        let loadingData = importFromJson(pickerResult.fileCopyUri, res);
+        // окончание завершения импорта смена статуса загрузки и увемодление
+        loadingData
+          .then(() => {
+            this.setState({loading: false});
+            Alert.alert('Данные успешно загружены!');
+          })
+          .catch(() => {
+            this.setState({loading: false});
+            Alert.alert('Произошла непредвиденная ошибка :(');
+          });
+      },
+      () => {},
     );
   }
 
@@ -307,6 +349,7 @@ export default class Settings extends Component {
             </TouchableOpacity>
           </View>
         </Modal>
+        <LoadModal status={this.state.loading} />
       </View>
     );
   }

@@ -710,4 +710,21 @@ export default StyleSheet.create({
     borderRadius: 36,
     height: 11,
   },
+
+  modalLoad: {
+    width: 294,
+    height: 194,
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 15,
+  },
+
+  modalLoad_text: {
+    fontSize: 18,
+    fontWeight: '400',
+    lineHeight: 24,
+    color: COLORS.darkBlue,
+    marginTop: 25,
+  },
 });

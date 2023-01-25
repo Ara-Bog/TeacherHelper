@@ -7,11 +7,12 @@ SQLite.enablePromise(true);
 
 // список таблиц для редактирования (переделать на общий модуль)
 const requiredColumns = ['Students', 'Timetable', 'Groups', 'CurrentSymptoms'];
-console.log('test');
 
 export async function importFromJson(uriMasterBase, saveData) {
-  let newData;
-  let currentIds = {};
+  let newData; // хранилище данных
+  let currentIds = {}; // последние id-шники каждой таблицы
+  let tablesOnLoad = []; // хранилище промисов с загрузкой данных в базу
+
   // считываем файл с временного хранилища
   readingFile = RNFS.readFile(uriMasterBase);
 
@@ -20,6 +21,7 @@ export async function importFromJson(uriMasterBase, saveData) {
     .then(res => (newData = JSON.parse(res)))
     .catch(err => console.log('importFromJson readfile - ', err));
 
+  // блок с очисткой текущих данных
   if (!saveData) {
     await clearData();
     // нулевые seq, т.к. выше очистили sqlite_sequence
@@ -30,7 +32,8 @@ export async function importFromJson(uriMasterBase, saveData) {
     // текущие seq
     currentIds = await getIds();
   }
-  console.log('test ids - ', currentIds);
+
+  // обход всех таблиц с новых данных
   Object.keys(newData).forEach(tableName => {
     let tempKeys = '(' + Object.keys(newData[tableName][0]).join(', ') + ')'; // шаблон порядка столбцов
     let massValues = []; // массив всех заполняемых значений
@@ -40,11 +43,8 @@ export async function importFromJson(uriMasterBase, saveData) {
     let tempVal =
       '(' +
       '?,'.repeat(Object.keys(newData[tableName][0]).length).slice(0, -1) +
-      ')'; // шаблон 1 строки VALUES (?,?,?,?)
-    tempVals = tempVal
-      .repeat(newData[tableName].length)
-      .replaceAll(')', '),')
-      .slice(0, -1); // (?,?,?,?),(?,?,?,?)
+      '),'; // шаблон 1 строки (?,?,?,?)
+    tempVals = tempVal.repeat(newData[tableName].length).slice(0, -1); // многострочный шаблон (?,?,?,?),(?,?,?,?)
     // получение общего списка значений для запроса
     newData[tableName].forEach(row => {
       // увеличиваем id до последнего в базе
@@ -69,15 +69,20 @@ export async function importFromJson(uriMasterBase, saveData) {
     });
     // формируем sql запрос без значений
     let sqlReq = `INSERT INTO "${tableName}" ${tempKeys} VALUES ${tempVals}`;
-    db.transaction(tx => {
-      tx.executeSql(
-        sqlReq,
-        massValues,
-        () => console.log('load suc'),
-        () => console.log('load fail - '),
-      );
-    });
+    tablesOnLoad.push(
+      db.transaction(tx => {
+        tx.executeSql(sqlReq, massValues);
+      }),
+    ); // добавляем промис загрузки в бд, чтобы дождаться, пока все не загрузятся
   });
+
+  Promise.all(tablesOnLoad)
+    .then(() => {
+      return true;
+    })
+    .catch(() => {
+      return false;
+    });
 }
 
 // получение последних id по всем таблицам в виде объекта
