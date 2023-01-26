@@ -32,6 +32,7 @@ export default StyleSheet.create({
       color: '#000',
       fontFamily: 'sf_semibold',
       fontSize: 18,
+      fontWeight: '600',
     },
     headerShadowVisible: false,
   },
@@ -50,7 +51,7 @@ export default StyleSheet.create({
     flexDirection: 'column',
   },
 
-  cardDays: {
+  cardDelault: {
     display: 'flex',
     flexWrap: 'wrap',
     padding: 25,
@@ -61,34 +62,45 @@ export default StyleSheet.create({
     backgroundColor: '#fff',
   },
 
-  cardDaysRow: {
+  cardDelault__active: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    padding: 25,
+    borderRadius: 15,
+    backgroundColor: 'rgba(85, 74, 240, 0.1)',
+    borderColor: '#554AF0',
+    borderWidth: 1,
+    marginBottom: 15,
+  },
+
+  cardDelaultRow: {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
   },
 
-  cardDaysRowTime: {
+  cardDelaultRowTime: {
     marginBottom: 15,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
   },
 
-  cardDaysRowTimeText: {
+  cardDelaultRowTimeText: {
     fontSize: 16,
     fontFamily: 'sf_medium',
     color: COLORS.darkBlue,
   },
 
-  cardDaysRowTitle: {
+  cardDelaultRowTitle: {
     fontSize: 14,
     fontFamily: 'sf_medium',
     color: COLORS.darkBlue,
     marginBottom: 15,
   },
 
-  cardDaysRowText: {
+  cardDelaultRowText: {
     fontSize: 14,
     fontFamily: 'sf_regular',
     fontWeight: '400',
@@ -96,7 +108,7 @@ export default StyleSheet.create({
     fontStyle: 'normal',
   },
 
-  cardDaysRowLine: {
+  cardDelaultRowLine: {
     height: 1,
     backgroundColor: COLORS.gray,
     borderRadius: 42,
@@ -214,7 +226,7 @@ export default StyleSheet.create({
     marginTop: 10,
   },
 
-  cardDaysGoTo: {
+  cardDelaultGoTo: {
     backgroundColor: '#554AF01A',
     borderRadius: 10,
     paddingVertical: 12,
@@ -225,7 +237,7 @@ export default StyleSheet.create({
     width: '100%',
   },
 
-  cardDaysGoToText: {
+  cardDelaultGoToText: {
     fontSize: 13,
     fontFamily: 'sf_semibold',
     fontWeight: '600',
@@ -242,7 +254,7 @@ export default StyleSheet.create({
     marginBottom: 15,
   },
 
-  cardDaysRemove: {
+  cardDelaultRemove: {
     backgroundColor: '#fcefef',
     borderRadius: 10,
     paddingVertical: 12,
@@ -253,20 +265,20 @@ export default StyleSheet.create({
     justifyContent: 'center',
   },
 
-  cardDaysRemoveText: {
+  cardDelaultRemoveText: {
     fontSize: 13,
     fontFamily: 'sf_semibold',
     fontWeight: '600',
     color: '#DC5F5A',
   },
 
-  cardDaysBtns: {
+  cardDelaultBtns: {
     marginTop: 20,
     flexDirection: 'row',
     width: '100%',
   },
 
-  cardDaysEdit: {
+  cardDelaultEdit: {
     backgroundColor: '#554AF01A',
     borderRadius: 10,
     paddingVertical: 11,
@@ -277,7 +289,7 @@ export default StyleSheet.create({
     justifyContent: 'center',
   },
 
-  cardDaysEditText: {
+  cardDelaultEditText: {
     fontSize: 13,
     fontFamily: 'sf_semibold',
     fontWeight: '600',
@@ -288,6 +300,22 @@ export default StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     width: '100%',
+  },
+
+  emptyContainer_mainText: {
+    fontSize: 18,
+    fontWeight: '500',
+    fontFamily: 'sf_medium',
+    marginBottom: 15,
+    color: '#04021D',
+  },
+
+  emptyContainer_addedText: {
+    fontSize: 14,
+    fontWeight: '400',
+    fontFamily: 'sf_regular',
+    color: '#B1B1B1',
+    textAlign: 'center',
   },
 
   pickerDefault: {
@@ -732,5 +760,30 @@ export default StyleSheet.create({
     lineHeight: 24,
     color: COLORS.darkBlue,
     marginTop: 25,
+  },
+
+  holdMenu: {
+    flexDirection: 'column',
+    paddingTop: 19,
+    paddingBottom: 4,
+    paddingHorizontal: 20,
+    backgroundColor: '#fff',
+    marginTop: 'auto',
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+  },
+
+  holdMenuButton: {
+    flexDirection: 'row',
+    paddingVertical: 15,
+    marginBottom: 15,
+    alignItems: 'center',
+  },
+
+  holdMenuButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 17,
+    marginLeft: 15,
   },
 });

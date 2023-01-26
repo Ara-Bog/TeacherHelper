@@ -1,8 +1,9 @@
 import React, {Component} from 'react';
-import {View, TouchableOpacity, Text} from 'react-native';
-import Styles from '../styleGlobal.js';
+import {View, TouchableOpacity} from 'react-native';
 
 export default class AddingButton extends Component {
+  // Элемент, плавающая кнопка в нижней части экрана для добавления новых объектов
+
   constructor(props) {
     super(props);
   }

@@ -9,12 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import DocumentPicker, {
-  DirectoryPickerResponse,
-  DocumentPickerResponse,
-  isInProgress,
-  types,
-} from 'react-native-document-picker';
+import DocumentPicker from 'react-native-document-picker';
 import Modal from 'react-native-modal';
 
 // компоненты
@@ -51,11 +46,6 @@ export default class Settings extends Component {
       loading: false,
     };
   }
-
-  // экран загрузки для экспорта
-  // стили для кнопок импорт/экспорт
-  // кнопка очистка данных
-  // перейти на новую базу
 
   // закрытие остальных выпадающих списков
   // - выбранный список -- selectDD:String
@@ -215,28 +205,34 @@ export default class Settings extends Component {
     this.forceUpdate();
   }
 
-  // генерация добавочного sql
+  // генерация добавочного sql (для формирвания списков шаблонов)
   getAddedSql() {
-    let val = '(';
+    let val = '';
     if (this.state.temporaryTemplates.length === 0) {
       return '';
     }
-    this.state.temporaryTemplates.forEach((item, index) => {
+    this.state.temporaryTemplates.forEach(item => {
       val += item.id + ',';
     });
 
-    return 'WHERE id NOT IN' + val.slice(0, -1) + ')';
+    return 'WHERE id NOT IN (' + val.slice(0, -1) + ')';
   }
 
   // изменение вида карточек
   changeSizeCards(val) {
+    // текущий список размеров
     let currentVals = [...userSettings.sizeCardAll];
+    // поиск выбранного шаблона в списке
     findVal = currentVals.indexOf(val);
     if (findVal >= 0) {
+      // убераем элемент из списка
       currentVals.splice(findVal, 1);
     } else {
+      // добавляем элемент в список
       currentVals.push(val);
     }
+    // если список не будет пуст, то данные сохранятся
+    // один шаблон должен быть всегда активен
     if (currentVals.length != 0) {
       this.saveSettings('sizeCardAll', currentVals);
     }
@@ -508,6 +504,7 @@ export default class Settings extends Component {
             </TouchableOpacity>
           </View>
         </Modal>
+        {/* заглушка фоновой загрузки */}
         <LoadModal status={this.state.loading} />
       </View>
     );

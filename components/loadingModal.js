@@ -3,6 +3,11 @@ import {Text, View, ActivityIndicator} from 'react-native';
 import Modal from 'react-native-modal';
 
 export default function LoadModal({status}) {
+  // Компонент заглушка во время загрузки данных
+
+  // получает:
+  // текущий статус отображения -- status: bool
+
   return (
     <Modal
       style={{alignItems: 'center'}}

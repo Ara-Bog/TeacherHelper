@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 async function defaultSettingUser() {
   let data = [
     ['opened', 'false'],
-    ['firstScreen', 'settings'],
+    ['firstScreen', 'students'],
     ['templates', '[]'],
     ['typeSchedule', 'week'],
     ['showCategories', 'false'],

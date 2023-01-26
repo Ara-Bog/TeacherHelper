@@ -1,8 +1,12 @@
 import React from 'react';
 import {Text, View} from 'react-native';
-import Styles from '../styleGlobal.js';
 
 export default function emptyField({typeField}) {
+  // Компонент для отображения пустых списков на всех основных страницах
+
+  // получает:
+  // - ключ значения для вставки в текст -- typeField: bool
+
   const fieldValues = {
     s: 'карточку ученика',
     g: 'группу',
@@ -11,24 +15,8 @@ export default function emptyField({typeField}) {
 
   return (
     <View style={Styles.emptyContainer}>
-      <Text
-        style={{
-          fontSize: 18,
-          fontWeight: '500',
-          fontFamily: 'sf_medium',
-          marginBottom: 15,
-          color: '#04021D',
-        }}>
-        Ничего не найдено
-      </Text>
-      <Text
-        style={{
-          fontSize: 14,
-          fontWeight: '400',
-          fontFamily: 'sf_regular',
-          color: '#B1B1B1',
-          textAlign: 'center',
-        }}>
+      <Text style={Styles.emptyContainer_mainText}>Ничего не найдено</Text>
+      <Text style={Styles.emptyContainer_addedText}>
         Нажмите на кнопку “+” в правном нижнем углу экрана, что бы создать новую{' '}
         {fieldValues[typeField]}
       </Text>

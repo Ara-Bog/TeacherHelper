@@ -18,6 +18,7 @@ import GroupPage from './pages/groupPage';
 import ListGroups from './pages/listGroups';
 import LoadingAnimation from './pages/LoadingAnimation';
 import SettingsPage from './pages/settings';
+import {Button} from 'react-native-paper';
 
 // глобальные ссылки
 import './global.js';
@@ -71,7 +72,7 @@ export default function App() {
   };
 
   // на каких страницах скрывать меню
-  const hideTabPage = ['Student', 'TimetableForm', 'Group'];
+  const hideTabPage = ['Student', 'TimetableForm', 'Group', 'Filter'];
 
   // навигации для страницы ученики
   const ListStudentsNav = () => (
@@ -81,7 +82,12 @@ export default function App() {
       <Stack.Screen
         name="ListStudents"
         component={ListStudents}
-        options={{title: 'Список учеников'}}
+        options={{
+          headerRight: () => (
+            <Icons.Ionicons name="filter" color="#554AF0" size={23} />
+          ),
+          title: 'Список учеников',
+        }}
       />
       <Stack.Screen name="Student" component={StudentPage} />
     </Stack.Navigator>
@@ -154,6 +160,7 @@ export default function App() {
     return (
       <NavigationContainer>
         <Tab.Navigator
+          id="mainTab"
           initialRouteName={userSettings.firstScreen}
           screenOptions={({route}) => ({
             tabBarStyle: {
@@ -166,7 +173,7 @@ export default function App() {
             tabBarActiveTintColor: '#554AF0',
             tabBarInactiveTintColor: '#B1B1B1',
           })}>
-          <Tab.Screen
+          {/* <Tab.Screen
             name="timetable"
             component={TimetableNav}
             options={{
@@ -187,7 +194,7 @@ export default function App() {
                 <Icons.Ionicons name="people-outline" size={27} color={color} />
               ),
             }}
-          />
+          /> */}
           <Tab.Screen
             name="students"
             component={ListStudentsNav}
