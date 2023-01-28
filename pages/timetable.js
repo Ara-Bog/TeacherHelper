@@ -34,15 +34,57 @@ export default class TimetableWrap extends Component {
       changedItem: null,
       itemsDays: [
         {label: 'Понедельник', value: 'mon'},
-        {label: 'Вторник', value: 'tues'},
+        {label: 'Вторник', value: 'tue'},
         {label: 'Среда', value: 'wen'},
-        {label: 'Четверг', value: 'thur'},
+        {label: 'Четверг', value: 'thu'},
         {label: 'Пятница', value: 'fri'},
+        {label: 'Четверг', value: 'sat'},
+        {label: 'Пятница', value: 'sun'},
       ],
     };
     this.setValue = this.setValue.bind(this);
     this.setOpen = this.setOpen.bind(this);
     this.setItems = this.setItems.bind(this);
+
+    // добавить куда-нибудь
+    // // тестовая выборка
+    // let asd = [
+    //   {date: '01/23/2023', id: 1},
+    //   {date: '01/24/2023', id: 2},
+    //   {date: '01/25/2023', id: 3},
+    //   {date: '01/26/2023', id: 4},
+    //   {date: '01/27/2023', id: 5},
+    //   {date: '01/28/2023', id: 6},
+    //   {date: '01/29/2023', id: 7},
+    //   {date: '01/23/2023', id: 8},
+    //   {date: '01/24/2023', id: 9},
+    //   {date: '01/25/2023', id: 10},
+    //   {date: '01/26/2023', id: 11},
+    //   {date: '01/27/2023', id: 12},
+    //   {date: '01/28/2023', id: 13},
+    //   {date: '01/29/2023', id: 14},
+    // ];
+    // // новый список
+    // let newList = {};
+    // // форматер даты к виду заголовков
+    // let formater = new Intl.DateTimeFormat('ru-RU', {
+    //   weekday: 'long',
+    //   month: 'long',
+    //   day: 'numeric',
+    // });
+    // // перебор тестовой выборки
+    // asd.forEach(item => {
+    // // создание новой даты по объектам из выборки
+    //   let newDate = new Date(item.date);
+    // // применение форматера
+    //   let formatedDate = formater.format(newDate);
+    // // костыль, чтобы первая буква была в верхнем регистре
+    //   formatedDate = formatedDate[0].toUpperCase() + formatedDate.slice(1);
+    // // если ключ еще не создан = создаст с пустым массивом
+    //   newList[formatedDate] ??= [];
+    // // добавления объекта в соответствующую дату
+    //   newList[formatedDate].push(item);
+    // });
   }
 
   // componentDidMount() {

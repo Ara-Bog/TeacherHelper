@@ -84,7 +84,7 @@ export default function App() {
         component={ListStudents}
         options={{
           headerRight: () => (
-            <Icons.Ionicons name="filter" color="#554AF0" size={23} />
+            <Icons.Ionicons name="filter" color="#554AF0" size={25} />
           ),
           title: 'Список учеников',
         }}

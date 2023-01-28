@@ -8,7 +8,7 @@ async function defaultSettingUser() {
     ['typeSchedule', 'week'],
     ['showCategories', 'false'],
     ['showSubCategories', 'false'],
-    ['bigCardStudents', 'true'],
+    ['bigCardStudent', 'true'],
     ['bigCardGroup', 'true'],
     ['bigCardTimetable', 'true'],
     ['sizeCardAll', '["big"]'],

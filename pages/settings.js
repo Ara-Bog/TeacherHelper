@@ -231,6 +231,7 @@ export default class Settings extends Component {
       // добавляем элемент в список
       currentVals.push(val);
     }
+
     // если список не будет пуст, то данные сохранятся
     // один шаблон должен быть всегда активен
     if (currentVals.length != 0) {

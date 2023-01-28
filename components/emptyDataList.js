@@ -8,9 +8,9 @@ export default function emptyField({typeField}) {
   // - ключ значения для вставки в текст -- typeField: bool
 
   const fieldValues = {
-    s: 'карточку ученика',
-    g: 'группу',
-    t: 'запись в расписании',
+    Student: 'карточку ученика',
+    Group: 'группу',
+    Timetable: 'запись в расписании',
   };
 
   return (

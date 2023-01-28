@@ -95,16 +95,15 @@ export default StyleSheet.create({
 
   cardDelaultRowTitle: {
     fontSize: 14,
-    fontFamily: 'sf_medium',
+    lineHeight: 16,
+    fontFamily: 'sf_regular',
     color: COLORS.darkBlue,
-    marginBottom: 15,
   },
 
   cardDelaultRowText: {
     fontSize: 14,
+    lineHeight: 16,
     fontFamily: 'sf_regular',
-    fontWeight: '400',
-    marginTop: 15,
     fontStyle: 'normal',
   },
 
@@ -112,6 +111,7 @@ export default StyleSheet.create({
     height: 1,
     backgroundColor: COLORS.gray,
     borderRadius: 42,
+    marginVertical: 15,
   },
 
   rowSwitch: {
@@ -785,5 +785,32 @@ export default StyleSheet.create({
     fontWeight: '600',
     lineHeight: 17,
     marginLeft: 15,
+  },
+
+  checkbox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 'auto',
+  },
+
+  checkboxIcon: {
+    display: 'flex',
+    width: 22,
+    height: 22,
+    borderWidth: 1.5,
+    borderColor: '#554AF0',
+    borderRadius: 2,
+    marginRight: 12,
+  },
+
+  checkboxIcon__active: {
+    display: 'flex',
+    width: 22,
+    height: 22,
+    borderRadius: 2,
+    marginRight: 12,
+    backgroundColor: '#554AF0',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
