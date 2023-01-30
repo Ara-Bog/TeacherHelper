@@ -787,10 +787,28 @@ export default StyleSheet.create({
     marginLeft: 15,
   },
 
+  dropdownList: {
+    gap: 15,
+    overflow: 'hidden',
+  },
+
+  dropdownLabel: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+
+  dropdownLabelText: {
+    fontWeight: 500,
+    fontSize: 16,
+    lineHeight: 19,
+    color: COLORS.darkBlue,
+  },
+
   checkbox: {
     flexDirection: 'row',
     alignItems: 'center',
     marginRight: 'auto',
+    gap: 12,
   },
 
   checkboxIcon: {
@@ -800,17 +818,20 @@ export default StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#554AF0',
     borderRadius: 2,
-    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   checkboxIcon__active: {
-    display: 'flex',
-    width: 22,
-    height: 22,
-    borderRadius: 2,
-    marginRight: 12,
+    borderWidth: 0,
     backgroundColor: '#554AF0',
-    alignItems: 'center',
-    justifyContent: 'center',
+  },
+
+  checkboxText: {
+    fontFamily: 'sf_regular',
+    fontSize: 14,
+    fontWeight: 400,
+    lineHeight: 21,
+    color: COLORS.darkBlue,
   },
 });

@@ -18,7 +18,6 @@ import GroupPage from './pages/groupPage';
 import ListGroups from './pages/listGroups';
 import LoadingAnimation from './pages/LoadingAnimation';
 import SettingsPage from './pages/settings';
-import {Button} from 'react-native-paper';
 
 // глобальные ссылки
 import './global.js';

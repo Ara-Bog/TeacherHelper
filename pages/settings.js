@@ -9,7 +9,6 @@ import {
   Alert,
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import DocumentPicker from 'react-native-document-picker';
 import Modal from 'react-native-modal';
 
 // компоненты
@@ -317,10 +316,10 @@ export default class Settings extends Component {
             <Image source={require('../assets/baner.png')} />
           </TouchableOpacity>
           {/* первый экран */}
-          <View style={Styles.cardDefaultRow_edit}>
+          <View style={{...Styles.cardDefaultRow_edit, zIndex: 11}}>
             <Text style={Styles.cardDefaultLabel}>Первый экран</Text>
             <DropDownPicker
-              zIndex={12}
+              zIndex={11}
               open={this.state.dropDownsOpen.firstScreen}
               value={userSettings.firstScreen}
               items={this.state.screens}

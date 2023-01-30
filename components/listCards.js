@@ -122,7 +122,7 @@ export default class ListCards extends Component {
     // когда нет контента - выводим пустоту
     if (this.state.dataList.length != 0) {
       content = (
-        <ScrollView style={Styles.containerCard}>
+        <ScrollView style={{...Styles.containerCard, gap: 150}}>
           {this.state.dataList.map(item => (
             <DefaultCard
               key={item.ID}

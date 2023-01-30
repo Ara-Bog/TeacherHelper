@@ -1,43 +1,7 @@
 import React, {Component} from 'react';
 import {Text, View, TouchableOpacity, ScrollView} from 'react-native';
 import DropList from '../elements/dropdownList';
-
-class Checkbox extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      isSelected: this.props.isSelected(this.props.id),
-      label: this.props.label,
-      id: this.props.id,
-    };
-  }
-
-  render() {
-    return (
-      <TouchableOpacity
-        onPress={() => {
-          this.setState({isSelected: !this.state.isSelected});
-          this.props.callBack(this.state.id);
-        }}
-        style={Styles.checkbox}>
-        <View
-          style={
-            this.state.isSelected
-              ? Styles.checkboxIcon__active
-              : Styles.checkboxIcon
-          }>
-          {this.state.isSelected ? (
-            <Icons.Octicons name="check" size={13} color="#fff" />
-          ) : null}
-        </View>
-        <Text
-          style={this.state.isSelected ? {color: 'red'} : {color: 'orange'}}>
-          {this.state.label}
-        </Text>
-      </TouchableOpacity>
-    );
-  }
-}
+import Checkbox from './checkbox';
 
 export default class CheckboxList extends Component {
   // полученные данные:
@@ -78,7 +42,7 @@ export default class CheckboxList extends Component {
 
   render() {
     return (
-      <>
+      <View style={{gap: 15}}>
         {Object.keys(this.state.data).map((label, index) => (
           <DropList
             key={index}
@@ -93,7 +57,7 @@ export default class CheckboxList extends Component {
             />
           </DropList>
         ))}
-      </>
+      </View>
     );
   }
 }
