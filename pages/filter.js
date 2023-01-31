@@ -8,6 +8,7 @@ export default class FilterPage extends Component {
   // props.route.params:
   // - предыдущие значения фильтра -- currentFilter: object
   // - список id's выпадающих списков, которые остались открытыми -- showLabels: array
+  // - предыдущая страница -- pageBack: string
   // ----------------------------
   // выходные props.route.params:
   // - выбранные значения -- listChecked: object
@@ -21,6 +22,7 @@ export default class FilterPage extends Component {
       listChecked: {...params.currentFilter},
       data: {},
       showLabels: [...params.showLabels],
+      pageBack: params.pageBack,
     };
 
     // запрос данных для фильтрации
@@ -131,7 +133,7 @@ export default class FilterPage extends Component {
           <TouchableOpacity
             style={Styles.submitBtn}
             onPress={() => {
-              this.props.navigation.navigate('ListStudents', {
+              this.props.navigation.navigate(this.state.pageBack, {
                 listChecked: this.state.listChecked,
                 showLabels: this.state.showLabels,
               });

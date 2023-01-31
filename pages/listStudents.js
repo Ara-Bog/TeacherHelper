@@ -40,6 +40,7 @@ export default class ListStudentsWrap extends Component {
             this.props.navigation.navigate('Filter', {
               currentFilter: this.state.currentFilter,
               showLabels: this.state.showLabels,
+              pageBack: 'ListStudents',
             })
           }>
           <Icons.Ionicons name="filter" color="#554AF0" size={25} />
@@ -143,7 +144,7 @@ export default class ListStudentsWrap extends Component {
           });
           // меняем заголовок, добавляем количество записей
           this.props.navigation.setOptions({
-            title: `Ученики (${this.state.dataStudents.length})`,
+            title: `Ученики (${data.length})`,
           });
           // стартуем фильтрацию
           this.setFilters();

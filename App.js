@@ -75,6 +75,22 @@ export default function App() {
   // на каких страницах скрывать меню
   const hideTabPage = ['Student', 'TimetableForm', 'Group', 'Filter'];
 
+  // навигации для страницы расписания
+  const TimetableNav = () => (
+    <Stack.Navigator
+      initialRouteName="Timetable"
+      screenOptions={Styles.screenOptionsNav}>
+      <Stack.Screen
+        name="Timetable"
+        component={Timetable}
+        options={{title: 'Расписание'}}
+      />
+      <Stack.Screen name="TimetableForm" component={TimetableForm} />
+      <Stack.Screen name="Student" component={StudentPage} />
+      <Stack.Screen name="Group" component={GroupPage} />
+    </Stack.Navigator>
+  );
+
   // навигации для страницы ученики
   const ListStudentsNav = () => (
     <Stack.Navigator
@@ -94,22 +110,6 @@ export default function App() {
     </Stack.Navigator>
   );
 
-  // навигации для страницы расписания
-  const TimetableNav = () => (
-    <Stack.Navigator
-      initialRouteName="Timetable"
-      screenOptions={Styles.screenOptionsNav}>
-      <Stack.Screen
-        name="Timetable"
-        component={Timetable}
-        options={{title: 'Расписание'}}
-      />
-      <Stack.Screen name="TimetableForm" component={TimetableForm} />
-      <Stack.Screen name="Student" component={StudentPage} />
-      <Stack.Screen name="Group" component={GroupPage} />
-    </Stack.Navigator>
-  );
-
   // навигации для страницы групп
   const ListGroupNav = () => (
     <Stack.Navigator
@@ -121,6 +121,11 @@ export default function App() {
         options={{title: 'Список групп'}}
       />
       <Stack.Screen name="Group" component={GroupPage} />
+      <Stack.Screen
+        name="Filter"
+        options={{title: 'Фильтр'}}
+        component={FilterPage}
+      />
     </Stack.Navigator>
   );
 
@@ -184,7 +189,7 @@ export default function App() {
                 <Icons.Feather name="calendar" size={24} color={color} />
               ),
             }}
-          />
+          /> */}
           <Tab.Screen
             name="groups"
             component={ListGroupNav}
@@ -195,7 +200,7 @@ export default function App() {
                 <Icons.Ionicons name="people-outline" size={27} color={color} />
               ),
             }}
-          /> */}
+          />
           <Tab.Screen
             name="students"
             component={ListStudentsNav}
