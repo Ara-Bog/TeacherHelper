@@ -9,10 +9,11 @@ import {
   Alert,
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
+import DocumentPicker from 'react-native-document-picker';
 import Modal from 'react-native-modal';
 
 // компоненты
-import SelectedList from '../components/elements/modalSelectedInList';
+import SelectedList from '../components/modalSelectedInList';
 import RowSwitcher from '../components/elements/switcherInLine';
 import LoadModal from '../components/loadingModal';
 
@@ -70,7 +71,8 @@ export default class Settings extends Component {
         presentationStyle: 'fullScreen',
         copyTo: 'cachesDirectory',
       });
-    } catch {
+    } catch (e) {
+      console.log('test - ', e);
       // пикер был закрыт, прерываем функцию
       return;
     }
@@ -199,8 +201,21 @@ export default class Settings extends Component {
 
   // сохранение настроек
   saveSettings(key, val) {
-    userSettings[key] = val;
     setUserSetting(key, val);
+    if (key == 'sizeCardAll') {
+      if (val.length == 1) {
+        if (val[0] == 'big') {
+          setUserSetting('bigCardStudent', true);
+          setUserSetting('bigCardGroup', true);
+          setUserSetting('bigCardTimetable', true);
+        } else {
+          setUserSetting('bigCardStudent', false);
+          setUserSetting('bigCardGroup', false);
+          setUserSetting('bigCardTimetable', false);
+        }
+      }
+    }
+
     this.forceUpdate();
   }
 
@@ -304,22 +319,18 @@ export default class Settings extends Component {
       <View style={Styles.container}>
         <ScrollView
           nestedScrollEnabled={true}
-          contentContainerStyle={{flexGrow: 1}}>
+          contentContainerStyle={{gap: 25}}>
           {/* баннер */}
           <TouchableOpacity
-            style={{
-              marginBottom: 20,
-            }}
             onPress={() =>
               Linking.openURL('https://www.tinkoff.ru/cf/1uakjigjJrq')
             }>
             <Image source={require('../assets/baner.png')} />
           </TouchableOpacity>
           {/* первый экран */}
-          <View style={{...Styles.cardDefaultRow_edit, zIndex: 11}}>
-            <Text style={Styles.cardDefaultLabel}>Первый экран</Text>
+          <View style={{...Styles.divDefault, zIndex: 100}}>
+            <Text style={Styles.divDefaultLabel}>Первый экран</Text>
             <DropDownPicker
-              zIndex={11}
               open={this.state.dropDownsOpen.firstScreen}
               value={userSettings.firstScreen}
               items={this.state.screens}
@@ -333,27 +344,21 @@ export default class Settings extends Component {
             />
           </View>
           {/* шаблоны */}
-          <View style={Styles.cardDefaultRow_edit}>
-            <Text style={Styles.cardDefaultLabel}>Шаблоны</Text>
+          <View style={Styles.divDefault}>
+            <Text style={Styles.divDefaultLabel}>Шаблоны</Text>
             <TouchableOpacity
               style={Styles.buttonDefault}
               onPress={() => this.setState({modalTemplates: true})}>
-              <Icons.Entypo
-                name="documents"
-                size={20}
-                color={'#554AF0'}
-                style={{marginRight: 15}}
-              />
+              <Icons.Entypo name="documents" size={20} color={'#554AF0'} />
               <Text style={Styles.buttonDefaultText}>
                 Изменить список шаблонов
               </Text>
             </TouchableOpacity>
           </View>
           {/* вид расписания */}
-          <View style={Styles.cardDefaultRow_edit}>
-            <Text style={Styles.cardDefaultLabel}>Вид расписания</Text>
+          <View style={{...Styles.divDefault, zIndex: 99}}>
+            <Text style={Styles.divDefaultLabel}>Вид расписания</Text>
             <DropDownPicker
-              zIndex={11}
               open={this.state.dropDownsOpen.typeSchedule}
               value={userSettings.typeSchedule}
               items={this.state.typesSchedule}
@@ -365,26 +370,26 @@ export default class Settings extends Component {
             />
           </View>
           {/* размер карточек */}
-          <View style={Styles.cardDefaultRow_edit}>
-            <Text style={Styles.cardDefaultLabel}>Размер карточек</Text>
+          <View style={Styles.divDefault}>
+            <Text style={Styles.divDefaultLabel}>Размер карточек</Text>
             <TouchableOpacity
               onPress={() => this.changeSizeCards('small')}
               style={
                 userSettings.sizeCardAll.includes('small')
-                  ? Styles.SkeletonCardActive
-                  : Styles.SkeletonCard
+                  ? Styles.skeletonCard__active
+                  : Styles.skeletonCard
               }>
               <View
                 style={
                   userSettings.sizeCardAll.includes('small')
-                    ? Styles.SkeletonCardContentActive
-                    : Styles.SkeletonCardContent
+                    ? Styles.skeletonCardContentActive
+                    : Styles.skeletonCardContent
                 }>
-                <View style={Styles.SkeletonCardRow}>
+                <View style={Styles.skeletonCardRow}>
                   <View
-                    style={{...Styles.SkeletonCardEl, flex: 1, marginRight: 15}}
+                    style={{...Styles.skeletonCardEl, flex: 1, marginRight: 15}}
                   />
-                  <View style={{...Styles.SkeletonCardEl, flex: 3}} />
+                  <View style={{...Styles.skeletonCardEl, flex: 3}} />
                 </View>
               </View>
             </TouchableOpacity>
@@ -392,33 +397,33 @@ export default class Settings extends Component {
               onPress={() => this.changeSizeCards('big')}
               style={
                 userSettings.sizeCardAll.includes('big')
-                  ? Styles.SkeletonCardActive
-                  : Styles.SkeletonCard
+                  ? Styles.skeletonCard__active
+                  : Styles.skeletonCard
               }>
               <View
                 style={
                   userSettings.sizeCardAll.includes('big')
-                    ? Styles.SkeletonCardContentActive
-                    : Styles.SkeletonCardContent
+                    ? Styles.skeletonCardContentActive
+                    : Styles.skeletonCardContent
                 }>
-                <View style={Styles.SkeletonCardRow}>
+                <View style={Styles.skeletonCardRow}>
                   <View
-                    style={{...Styles.SkeletonCardEl, flex: 1, marginRight: 15}}
+                    style={{...Styles.skeletonCardEl, flex: 1, marginRight: 15}}
                   />
-                  <View style={{...Styles.SkeletonCardEl, flex: 3}} />
+                  <View style={{...Styles.skeletonCardEl, flex: 3}} />
                 </View>
-                <View style={{...Styles.SkeletonCardRow, marginTop: 20}}>
+                <View style={{...Styles.skeletonCardRow, marginTop: 20}}>
                   <View
-                    style={{...Styles.SkeletonCardEl, flex: 1, marginRight: 15}}
+                    style={{...Styles.skeletonCardEl, flex: 1, marginRight: 15}}
                   />
-                  <View style={{...Styles.SkeletonCardEl, flex: 1}} />
+                  <View style={{...Styles.skeletonCardEl, flex: 1}} />
                 </View>
               </View>
             </TouchableOpacity>
           </View>
           {/* Расскрытие категорий и подкатегорий */}
-          <View style={Styles.cardDefaultRow_edit}>
-            <Text style={Styles.cardDefaultLabel}>Карточка ученика</Text>
+          <View style={Styles.divDefault}>
+            <Text style={Styles.divDefaultLabel}>Карточка ученика</Text>
             <RowSwitcher
               label="Раскрывать категории"
               currentValue={userSettings.showCategories}
@@ -431,8 +436,8 @@ export default class Settings extends Component {
             />
           </View>
           {/* импорт/экспорт/очистка базы */}
-          <View style={Styles.cardDefaultRow_edit}>
-            <Text style={Styles.cardDefaultLabel}>
+          <View style={Styles.divDefault}>
+            <Text style={Styles.divDefaultLabel}>
               Действия с данными приложения
             </Text>
             {/* экспорт */}
@@ -483,7 +488,7 @@ export default class Settings extends Component {
           isVisible={this.state.modalTemplates}
           onBackButtonPress={() => this.templatesModalExit()}
           onBackdropPress={() => this.templatesModalExit()}>
-          <View style={Styles.ModalDownWrap}>
+          <View style={Styles.modalDownWrap}>
             <SelectedList
               currentValues={userSettings.templates}
               sqlText={'SELECT id, name FROM Templates ' + this.getAddedSql()}

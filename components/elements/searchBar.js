@@ -1,7 +1,7 @@
 import React from 'react';
-import {Text, View, TouchableOpacity} from 'react-native';
+import {Text, View, TouchableOpacity, TextInput} from 'react-native';
 
-export default function LargeCard({data}) {
+export default function LargeCard({value, onChange}) {
   // получает:
   // - текущее значение свича -- currentValue: Bool
   // - заголовок -- label: String
@@ -9,17 +9,22 @@ export default function LargeCard({data}) {
   // возврат:
   // - массив выбранных значений -- onCallBack(val: bool)
   return (
-    <TouchableOpacity style={Styles.cardDelault}>
-      <View style={Styles.cardDelaultRow}>
-        <Text style={Styles.cardDelaultRowTitle}>{data.LeftTop}</Text>
-      </View>
-      <View style={Styles.cardDelaultRowLine}></View>
-      <View style={Styles.cardDelaultRow}>
-        <Text style={Styles.cardDelaultRowText}>
-          {data.LeftBot == null ? '*не заполненно*' : data.LeftBot}
-        </Text>
-        <Text style={Styles.cardDelaultRowText}>{data.RightBot}</Text>
-      </View>
-    </TouchableOpacity>
+    <View style={{...Styles.inputDefaultWrap, paddingHorizontal: 15}}>
+      <Icons.Octicons
+        name="search"
+        color="#B1B1B1"
+        size={15}
+        style={{paddingVertical: 3.5, transform: [{scaleX: -1}]}}
+      />
+      <TextInput
+        style={Styles.inputDefault}
+        value={value}
+        placeholder="Найти ученика..."
+        placeholderTextColor="#B1B1B1"
+        onChangeText={val => {
+          onChange(val);
+        }}
+      />
+    </View>
   );
 }

@@ -45,24 +45,32 @@ export async function getUserSetting() {
   let keys = [];
   let values;
   try {
+    // получаем ключи хранилища
     keys = await AsyncStorage.getAllKeys();
+    // хранилище не было иницилизированно
     if (keys.length == 0) {
+      // создаем новое
       values = await defaultSettingUser();
       return values;
     } else {
+      // получаем данные с хранилища
       values = await AsyncStorage.multiGet(keys);
+      // конвертируем данные
       return convertArrayToObj(values);
     }
   } catch (e) {
-    console.warn('error async\n', e);
+    console.warn('error async getUserSetting\n', e);
   }
 }
 
 // изменение значений ключа
 export async function setUserSetting(key, val) {
   try {
+    // обновляем глобалку
+    userSettings[key] = val;
+    // загружаем в хранилище
     await AsyncStorage.setItem(key, JSON.stringify(val));
   } catch (e) {
-    console.warn('error async\n', e);
+    console.warn('error async setUserSetting\n', e);
   }
 }

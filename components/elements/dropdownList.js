@@ -8,9 +8,13 @@ export default function defaultCard(props) {
   // - данные для заполнения дочернего элемент -- data: array
   // - дочерний элемент -- children: Component || func
   // - заголовок выпадающего списка -- label: string
+  // - текущее состояния открытия списка -- show: bool
+  // ---------------
+  // обратная связь (props):
+  // - значение сменилось setCheck
 
   // отслеживания открытия/закрытия списка
-  const [show, changeShow] = useState(false);
+  const [show, setShow] = useState(props.show);
 
   // обход переданных данных, для создания детей с передачей им необходимых props
   const ChildrenElements = props.data.map((item, index) => {
@@ -22,6 +26,12 @@ export default function defaultCard(props) {
       label: item.name,
     });
   });
+
+  // меняем текущее значение и отправляем колбэк, что состояние сменилось
+  const changeShow = state => {
+    props.setCheck();
+    setShow(state);
+  };
 
   return (
     <>

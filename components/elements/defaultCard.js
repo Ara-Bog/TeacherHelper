@@ -4,15 +4,15 @@ import {Text, View, TouchableOpacity} from 'react-native';
 export default function defaultCard({
   data,
   select,
-  typeData,
+  bigSize,
   onCallPress,
   onCallLong,
 }) {
   // полученные данные:
   // - текущие значения свича -- data: object
   // - статус выделения блока -- select: bool
-  // - тип данных (ученики, группы или расписание) -- typeData: string
-  // --
+  // - большой размер карточек -- bigSize: bool
+  // ---------------
   // обратная связь:
   // - событие на зажатие -- onCallLong
   // - событие на нажатие -- onCallPress
@@ -26,12 +26,6 @@ export default function defaultCard({
     </>
   );
 
-  let showAdded;
-  if (userSettings.sizeCardAll.length != 1) {
-    showAdded = userSettings['bigCard' + typeData];
-  } else {
-    showAdded = userSettings.sizeCardAll[0] == 'big';
-  }
   return (
     <TouchableOpacity
       style={select ? Styles.cardDelault__active : Styles.cardDelault}
@@ -40,7 +34,7 @@ export default function defaultCard({
       <View style={Styles.cardDelaultRow}>
         <Text style={Styles.cardDelaultRowTitle}>{data.LeftTop}</Text>
       </View>
-      {showAdded ? addedContent : null}
+      {bigSize ? addedContent : null}
     </TouchableOpacity>
   );
 }

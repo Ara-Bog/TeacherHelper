@@ -14,7 +14,7 @@ export default class Checkbox extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      isSelected: this.props.isSelected(this.props.id),
+      isSelected: () => this.props.isSelected(this.props.label),
       label: this.props.label,
       id: this.props.id,
     };
@@ -24,16 +24,16 @@ export default class Checkbox extends Component {
     return (
       <TouchableOpacity
         onPress={() => {
-          this.setState({isSelected: !this.state.isSelected});
-          this.props.callBack(this.state.id);
+          this.props.callBack(this.state.label);
+          this.forceUpdate();
         }}
         style={Styles.checkbox}>
         <View
           style={[
             Styles.checkboxIcon,
-            this.state.isSelected ? Styles.checkboxIcon__active : null,
+            this.state.isSelected() ? Styles.checkboxIcon__active : null,
           ]}>
-          {this.state.isSelected ? (
+          {this.state.isSelected() ? (
             <Icons.Octicons name="check" size={13} color="#fff" />
           ) : null}
         </View>

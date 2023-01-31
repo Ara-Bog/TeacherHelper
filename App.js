@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {PermissionsAndroid} from 'react-native';
+import {PermissionsAndroid, TouchableOpacity} from 'react-native';
 import {
   NavigationContainer,
   getFocusedRouteNameFromRoute,
@@ -18,6 +18,7 @@ import GroupPage from './pages/groupPage';
 import ListGroups from './pages/listGroups';
 import LoadingAnimation from './pages/LoadingAnimation';
 import SettingsPage from './pages/settings';
+import FilterPage from './pages/filter';
 
 // глобальные ссылки
 import './global.js';
@@ -44,6 +45,7 @@ import './global.js';
 
 // нижние вкладки
 const Tab = createBottomTabNavigator();
+// навигация
 const Stack = createNativeStackNavigator();
 
 // для тестирования
@@ -81,14 +83,14 @@ export default function App() {
       <Stack.Screen
         name="ListStudents"
         component={ListStudents}
-        options={{
-          headerRight: () => (
-            <Icons.Ionicons name="filter" color="#554AF0" size={25} />
-          ),
-          title: 'Список учеников',
-        }}
+        options={{title: 'Список учеников'}}
       />
       <Stack.Screen name="Student" component={StudentPage} />
+      <Stack.Screen
+        name="Filter"
+        options={{title: 'Фильтр'}}
+        component={FilterPage}
+      />
     </Stack.Navigator>
   );
 

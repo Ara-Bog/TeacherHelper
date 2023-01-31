@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import {View, ScrollView, Alert} from 'react-native';
 import ButtonAdd from './elements/buttonAdd';
 import EmptyData from './emptyDataList';
-import DefaultCard from './elements/defaultCardList';
+import DefaultCard from './elements/defaultCard';
 import MenuActions from './elements/menuActions';
 
 export default class ListCards extends Component {
@@ -12,6 +12,7 @@ export default class ListCards extends Component {
   // - текущие данные для списка -- data: array(object)
   // - активная страница -- typeData: String (Student, Group)
   // - props.navigation для навигации на страницы карточек -- navigation: object
+  // - большой размер карточек -- bigSizeCards: bool
   // --
   // обратная связь:
   // - событие при удалении списка -- onCallDeleteData
@@ -28,11 +29,14 @@ export default class ListCards extends Component {
   }
 
   componentDidMount() {
+    // при смене экрана - сбрасываем все выделения
     this.props.navigation.addListener('blur', () => {
       this.setState({selected: [], onHold: false, holdIdCard: 0});
     });
   }
 
+  // костыль. данные с базы приходят после рендера элемента
+  // нужно обновить state на новые props
   shouldComponentUpdate(nextProps, nextState) {
     let curPropsData = this.props.data;
     if (curPropsData != nextProps.data) {
@@ -122,13 +126,13 @@ export default class ListCards extends Component {
     // когда нет контента - выводим пустоту
     if (this.state.dataList.length != 0) {
       content = (
-        <ScrollView style={{...Styles.containerCard, gap: 150}}>
+        <ScrollView contentContainerStyle={{gap: 15}}>
           {this.state.dataList.map(item => (
             <DefaultCard
               key={item.ID}
               data={item}
+              bigSize={this.props.bigSizeCards}
               select={this.state.selected.includes(item.ID)}
-              typeData={this.state.typeData}
               onCallPress={() => {
                 this.state.selected.length != 0
                   ? this.selectCard(item.ID)

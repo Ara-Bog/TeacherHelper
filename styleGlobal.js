@@ -13,7 +13,7 @@ export default StyleSheet.create({
     borderTopRightRadius: 30,
     position: 'absolute',
     borderTopWidth: 0,
-    shadowColor: 'red',
+    shadowColor: 'rgba(4, 2, 29, 0.1)',
     elevation: 10,
     height: 78,
     paddingBottom: 22,
@@ -58,8 +58,8 @@ export default StyleSheet.create({
     borderRadius: 15,
     borderColor: COLORS.gray,
     borderWidth: 1,
-    marginBottom: 15,
     backgroundColor: '#fff',
+    gap: 15,
   },
 
   cardDelault__active: {
@@ -70,7 +70,7 @@ export default StyleSheet.create({
     backgroundColor: 'rgba(85, 74, 240, 0.1)',
     borderColor: '#554AF0',
     borderWidth: 1,
-    marginBottom: 15,
+    gap: 15,
   },
 
   cardDelaultRow: {
@@ -111,7 +111,6 @@ export default StyleSheet.create({
     height: 1,
     backgroundColor: COLORS.gray,
     borderRadius: 42,
-    marginVertical: 15,
   },
 
   rowSwitch: {
@@ -125,13 +124,13 @@ export default StyleSheet.create({
     borderColor: COLORS.gray,
     borderWidth: 1,
     borderRadius: 10,
-    marginTop: 10,
   },
 
   rowSwitchText: {
     fontSize: 14,
     fontFamily: 'sf_medium',
     color: '#04021D',
+    fontWeight: 400,
   },
 
   float_btAdd_wrap: {
@@ -213,7 +212,6 @@ export default StyleSheet.create({
   },
 
   dropDown: {
-    marginTop: 10,
     paddingHorizontal: 25,
     height: 50,
     borderColor: COLORS.gray,
@@ -223,7 +221,6 @@ export default StyleSheet.create({
     borderColor: COLORS.gray,
     paddingHorizontal: 15,
     paddingVertical: 0,
-    marginTop: 10,
   },
 
   cardDelaultGoTo: {
@@ -351,35 +348,47 @@ export default StyleSheet.create({
     width: '100%',
   },
 
-  cardDefaultRow_edit: {
+  // cardDefaultRow_edit
+  divDefault: {
     flexDirection: 'column',
-    marginBottom: 25,
+    gap: 10,
   },
 
-  cardDefaultLabel: {
+  // cardDefaultLabel
+  divDefaultLabel: {
     width: '100%',
-    marginRight: '2%',
     fontFamily: 'sf_regular',
-    fontWeight: '400',
+    fontWeight: 400,
     fontSize: 14,
     lineHeight: 17,
     color: '#848484',
   },
 
-  inputDefault: {
+  inputDefaultWrap: {
+    flexDirection: 'row',
+    paddingVertical: 13,
     paddingHorizontal: 25,
     borderColor: COLORS.gray,
-    borderWidth: 1,
     backgroundColor: '#fff',
+    borderWidth: 1,
     borderRadius: 10,
-    flex: 1,
     width: '100%',
-    marginTop: 6,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: 5,
+    height: 50,
+  },
+
+  // fontWeight: 400, - не поддерживается
+  inputDefault: {
     color: COLORS.darkBlue,
     fontFamily: 'sf_regular',
-    fontWeight: '400',
     fontSize: 14,
-    height: 50,
+    lineHeight: 24,
+    height: '100%',
+    padding: 0,
+    margin: 0,
+    width: '100%',
   },
 
   inputDefault_disabled: {
@@ -489,13 +498,16 @@ export default StyleSheet.create({
   //   marginBottom: 15,
   // },
 
+  cardBlock: {
+    gap: 15,
+  },
+
   cardBlockTitle: {
     fontFamily: 'sf_medium',
     fontWeight: '500',
     fontSize: 16,
     lineHeight: 19,
     color: COLORS.darkBlue,
-    marginBottom: 15,
   },
 
   emptyValue: {
@@ -503,8 +515,7 @@ export default StyleSheet.create({
     fontFamily: 'sf_regular',
     fontWeight: '400',
     color: '#848484',
-    width: '48%',
-    marginLeft: '2%',
+    width: '100%',
   },
 
   cardStudentSubTitle: {
@@ -601,21 +612,18 @@ export default StyleSheet.create({
   },
 
   selectedList: {
-    marginBottom: 15,
     flexGrow: 1,
-    height: 140,
+    height: 100,
   },
 
   selectedListRow: {
     flexDirection: 'row',
-    marginBottom: 15,
     alignItems: 'center',
     justifyContent: 'space-between',
   },
 
   selectedListRowText: {
     fontFamily: 'sf_light',
-    fontStyle: 'normal',
     fontWeight: '300',
     fontSize: 14,
     lineHeight: 17,
@@ -665,7 +673,7 @@ export default StyleSheet.create({
     borderColor: COLORS.gray,
     borderWidth: 1,
     alignItems: 'center',
-    marginTop: 10,
+    gap: 15,
   },
 
   buttonDefaultText: {
@@ -684,20 +692,20 @@ export default StyleSheet.create({
     justifyContent: 'flex-end',
   },
 
-  ModalDownWrap: {
+  modalDownWrap: {
     marginTop: 'auto',
     paddingHorizontal: 20,
     paddingTop: 30,
     paddingBottom: 20,
     backgroundColor: '#fff',
     justifyContent: 'space-between',
-    height: 526,
+    height: 426,
     width: '100%',
     borderTopLeftRadius: 15,
     borderTopRightRadius: 15,
   },
 
-  SkeletonCard: {
+  skeletonCard: {
     backgroundColor: '#FFF',
     borderColor: COLORS.gray,
     borderWidth: 1,
@@ -705,10 +713,9 @@ export default StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 25,
     shadowColor: 'transparent',
-    marginTop: 10,
   },
 
-  SkeletonCardActive: {
+  skeletonCard__active: {
     backgroundColor: '#EEEDFE',
     borderColor: COLORS.blue,
     borderWidth: 1,
@@ -716,30 +723,29 @@ export default StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 25,
     shadowColor: 'transparent',
-    marginTop: 10,
   },
 
-  SkeletonCardContent: {
+  skeletonCardContent: {
     backgroundColor: COLORS.gray,
     borderRadius: 15,
     paddingHorizontal: 15,
     paddingVertical: 19,
   },
 
-  SkeletonCardContentActive: {
+  skeletonCardContentActive: {
     backgroundColor: '#fff',
     borderRadius: 15,
     paddingHorizontal: 15,
     paddingVertical: 19,
   },
 
-  SkeletonCardRow: {
+  skeletonCardRow: {
     gap: 15,
     flexDirection: 'row',
     flex: 1,
   },
 
-  SkeletonCardEl: {
+  skeletonCardEl: {
     backgroundColor: '#C6C6C6',
     borderRadius: 36,
     height: 11,
@@ -795,6 +801,7 @@ export default StyleSheet.create({
   dropdownLabel: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingVertical: 15,
   },
 
   dropdownLabelText: {
@@ -833,5 +840,27 @@ export default StyleSheet.create({
     fontWeight: 400,
     lineHeight: 21,
     color: COLORS.darkBlue,
+  },
+
+  filterCancel: {
+    backgroundColor: '#FBEFEF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+    paddingVertical: 16,
+    width: '100%',
+  },
+
+  filterCancelText: {
+    color: '#DC5F5A',
+    fontWeight: 600,
+    fontFamily: 'sf_regular',
+    fontSize: 15,
+    lineHeight: 18,
+  },
+
+  filterButtons: {
+    marginBottom: 21,
+    gap: 15,
   },
 });

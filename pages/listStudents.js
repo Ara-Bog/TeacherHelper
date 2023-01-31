@@ -1,62 +1,91 @@
 import React, {Component} from 'react';
-import {Text, View, ScrollView, TouchableOpacity, Alert} from 'react-native';
+import {View, TouchableOpacity, Alert} from 'react-native';
 import ListCards from '../components/listCards';
-import CheckBoxList from '../components/form/checkBoxList';
 import SQLite from 'react-native-sqlite-storage';
+import SearchBar from '../components/elements/searchBar';
+import {setUserSetting} from '../actions/userSettings';
+import RowSwitcher from '../components/elements/switcherInLine';
 
 SQLite.enablePromise(true);
 
 export default class ListStudentsWrap extends Component {
+  // главная страница блока "ученики"
   constructor(props) {
     super(props);
+    // копирование 3 раза данных
+    // dataStudents - изменяемый массив данных
+    // defaultData - данные полученные при запросе
+    // filterData - данные полученные после фильтрации (необходима для корректного поиска)
     this.state = {
       dataStudents: [],
+      defaultData: [],
+      filterData: [],
+      filterUsed: false,
       dataType: 'Student',
-      saveData: [],
-      testData: {},
-      testCurentValues: {},
+      currentSearch: '',
+      showLabels: [],
+      currentFilter: {
+        'Возрастная группа': [],
+        Шаблон: [],
+        'Заключение ЦПМПК': [],
+      },
+      bigSizeCards: userSettings.bigCardStudent,
     };
 
-    // ПЕРЕНЕСТИ В ФИЛЬТРЫ
-    db.transaction(tx => {
-      tx.executeSql(
-        `SELECT * FROM Categories`,
-        [],
-        (_, {rows}) => {
-          this.state.testData['Возрастная группа'] = rows.raw();
-        },
-        (_, err) =>
-          console.log('error testGetFiltersField (Categories) - ', err),
-      );
-      tx.executeSql(
-        `SELECT * FROM Templates`,
-        [],
-        (_, {rows}) => {
-          this.state.testData['Шаблон'] = rows.raw();
-        },
-        (_, err) =>
-          console.log('error testGetFiltersField (Templates) - ', err),
-      );
-      tx.executeSql(
-        `SELECT * FROM Diagnosis`,
-        [],
-        (_, {rows}) => {
-          this.state.testData['Заключение ЦПМПК'] = rows.raw();
-        },
-        (_, err) =>
-          console.log('error testGetFiltersField (Diagnosis) - ', err),
-      );
+    // добавление кнопки фильтра (фильтр идет страницей в стаке в App)
+    this.props.navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() =>
+            this.props.navigation.navigate('Filter', {
+              currentFilter: this.state.currentFilter,
+              showLabels: this.state.showLabels,
+            })
+          }>
+          <Icons.Ionicons name="filter" color="#554AF0" size={25} />
+        </TouchableOpacity>
+      ),
     });
   }
 
   componentDidMount() {
-    this.props.navigation.addListener('focus', () => this.getData());
+    // сброс фильтра
+    let resetFilters = false;
+    // когда было нажатие на кнопку в меню - флаг сброса фильтра активируется
+    this.props.navigation.getParent('mainTab').addListener('tabPress', () => {
+      resetFilters = true;
+    });
+    // событие при фокусировке на экране
+    this.props.navigation.addListener('focus', () => {
+      this.setState({bigSizeCards: userSettings.bigCardStudent});
+      if (resetFilters) {
+        // сбрасываем фараметры, чтобы setFilters не запускался
+        this.props.route.params = undefined;
+        // сбрасываем фильтры и открытые вкладки
+        this.setState({
+          filterData: [...this.state.dataStudents],
+          showLabels: [],
+          filterUsed: false,
+          currentSearch: '',
+          currentFilter: {
+            'Возрастная группа': [],
+            Шаблон: [],
+            'Заключение ЦПМПК': [],
+          },
+        });
+        // возвращаем флаг в исходное положение
+        resetFilters = false;
+      }
+      // делаем запрос в базу, для полученяи списка учеников
+      this.getData();
+    });
   }
 
   // удаление пользователя с подтверждением
   deleteUser(currentList) {
     db.transaction(tx => {
       currentList.map(id => {
+        // удаление из расписания
         tx.executeSql(
           "DELETE FROM Timetable WHERE id_client = ? AND type_client = 's'",
           [id],
@@ -66,6 +95,7 @@ export default class ListStudentsWrap extends Component {
             console.log('error removeStudent (timetable) - ', err)
           ),
         );
+        // удаление текущих симптомов
         tx.executeSql(
           'DELETE FROM CurrentSymptoms WHERE id_student = ?',
           [id],
@@ -75,6 +105,7 @@ export default class ListStudentsWrap extends Component {
             console.log('error removeStudent (CurrentSymptoms) - ', err)
           ),
         );
+        // удаление ученика
         tx.executeSql(
           'DELETE FROM students WHERE id = ?',
           [id],
@@ -86,6 +117,7 @@ export default class ListStudentsWrap extends Component {
         );
       });
     });
+    // запрос новых данных
     this.getData();
   }
 
@@ -94,35 +126,140 @@ export default class ListStudentsWrap extends Component {
     db.transaction(tx => {
       tx.executeSql(
         `SELECT st.id as ID, ct.name as LeftBot, dg.name as RightBot, 
-                st.surname || ' ' || st.name || ' ' || COALESCE(st.midname, '') as LeftTop 
+                st.surname || ' ' || st.name || ' ' || COALESCE(st.midname, '') as LeftTop,
+                tp.name as template 
         FROM Students as st 
+        INNER JOIN Templates as tp ON st.id_template = tp.id
         INNER JOIN Diagnosis as dg ON st.id_diagnos = dg.id
         INNER JOIN Categories as ct ON st.id_category = ct.id`,
         [],
         (_, {rows}) => {
-          let qwe = rows.raw();
-          this.setState({dataStudents: qwe, saveData: qwe});
+          let data = rows.raw();
+          // сохраняем данные в 2 переменны, чтобы для фильтрации брать один и сохранять в другой
+          this.setState({
+            dataStudents: data,
+            defaultData: data,
+            filterData: data,
+          });
+          // меняем заголовок, добавляем количество записей
           this.props.navigation.setOptions({
             title: `Ученики (${this.state.dataStudents.length})`,
           });
+          // стартуем фильтрацию
+          this.setFilters();
         },
         (_, err) => console.log('error getData - ', err),
       );
     });
   }
 
+  // фильтрация карточек
+  setFilters() {
+    // фильтры не были переданы
+    if (this.props.route.params === undefined) {
+      return;
+    }
+
+    // ссылка на текущие значения с фильтра
+    let currentValues = this.props.route.params.listChecked;
+    // для хранения новых данных по ученикам
+    let newData;
+    // текст для шапки
+    let tempTitle = '';
+    // распаковываем подмасивы и смотрим количество значений
+    // когда 0 - фильтр сбрасывается
+    if (Object.values(currentValues).flat().length > 0) {
+      // фильтруем учеников на соответсвие выходных данных фильтра
+      newData = this.state.defaultData.filter(
+        item =>
+          currentValues['Возрастная группа'].includes(item.LeftBot) ||
+          currentValues['Шаблон'].includes(item.template) ||
+          currentValues['Заключение ЦПМПК'].includes(item.RightBot),
+      );
+      // фильтр используется
+      this.setState({filterUsed: true});
+    } else {
+      // возвращаем данные из второго хранилища
+      newData = [...this.state.defaultData];
+      // фильтр больше не используется
+      this.setState({filterUsed: false});
+    }
+
+    // устанавливаем все новые значения
+    this.setState({
+      filterData: newData,
+      showLabels: [...this.props.route.params.showLabels],
+      currentFilter: currentValues,
+      dataStudents: newData,
+    });
+
+    // вызываем поиск (т.к. фильтр мог установится после ввода)
+    this.search(this.state.currentSearch);
+  }
+
+  // поиск учеников
+  search(val) {
+    // для хранения новых данных по ученикам
+    let newData;
+
+    if (val.length > 0) {
+      // ищем по отфильтрованным данным учеников
+      newData = this.state.filterData.filter(
+        item => item.LeftTop.toLowerCase().indexOf(val.toLowerCase()) != -1,
+      );
+
+      // сколько из скольки выведено
+      tempTitle = `Ученики (${newData.length}/${this.state.defaultData.length})`;
+    } else {
+      // возвращаем данные из хранилища фильтра
+      newData = [...this.state.filterData];
+
+      // когда фильтр активны - оставляем "сколько из скольки"
+      if (this.state.filterUsed) {
+        tempTitle = `Ученики (${newData.length}/${this.state.defaultData.length})`;
+      } else {
+        // сбрасываем на "сколько всего"
+        tempTitle = `Ученики (${this.state.defaultData.length})`;
+      }
+    }
+
+    // обновляем текущие данные
+    this.setState({dataStudents: newData});
+
+    // установка титульника
+    this.props.navigation.setOptions({
+      title: tempTitle,
+    });
+  }
+
   render() {
     return (
       <View style={Styles.container}>
-        {/* <ListCards
+        <View style={{gap: 10, marginBottom: 30}}>
+          <SearchBar
+            value={this.state.currentSearch}
+            onChange={val => {
+              this.setState({currentSearch: val});
+              this.search(val);
+            }}
+          />
+          {userSettings.sizeCardAll.length == 2 ? (
+            <RowSwitcher
+              label="Расширенные карточки"
+              currentValue={this.state.bigSizeCards}
+              onCallBack={val => {
+                setUserSetting('bigCardStudent', val);
+                this.setState({bigSizeCards: val});
+              }}
+            />
+          ) : null}
+        </View>
+        <ListCards
           onCallDeleteData={currentList => this.deleteUser(currentList)}
           data={this.state.dataStudents}
+          bigSizeCards={this.state.bigSizeCards}
           typeData={'Student'}
           navigation={this.props.navigation}
-        /> */}
-        <CheckBoxList
-          data={this.state.testData}
-          currentValues={this.state.testCurentValues}
         />
       </View>
     );
