@@ -885,6 +885,7 @@ export default StyleSheet.create({
   },
 
   navPageTab: {
+    flex: 1,
     padding: 16,
     backgroundColor: 'transparent',
     height: 'auto',

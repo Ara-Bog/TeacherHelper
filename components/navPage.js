@@ -22,7 +22,6 @@ export default function NavPage({values, onSelect, selected}) {
       onPress={() => onSelect(index)}
       style={[
         Styles.navPageTab,
-        {flex: 1, ju},
         selected == index ? {backgroundColor: '#554AF0'} : null,
       ]}>
       <Text
