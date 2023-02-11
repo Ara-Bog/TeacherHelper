@@ -1,5 +1,5 @@
 import React from 'react';
-import {Text, View, TouchableOpacity, TextInput} from 'react-native';
+import {View, TextInput} from 'react-native';
 
 export default function LargeCard({value, onChange}) {
   // получает:
@@ -9,7 +9,7 @@ export default function LargeCard({value, onChange}) {
   // возврат:
   // - массив выбранных значений -- onCallBack(val: bool)
   return (
-    <View style={{...Styles.inputDefaultWrap, paddingHorizontal: 15}}>
+    <View style={Styles.inputDefaultWrap}>
       <Icons.Octicons
         name="search"
         color="#B1B1B1"

@@ -341,27 +341,41 @@ export default StyleSheet.create({
     color: '#fff',
   },
 
-  cardDefaultRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-    width: '100%',
-  },
-
   // cardDefaultRow_edit
-  divDefault: {
-    flexDirection: 'column',
+  divDefault__edit: {
     gap: 10,
   },
 
-  // cardDefaultLabel
-  divDefaultLabel: {
+  divDefault: {
+    flexDirection: 'row',
+    gap: 34,
     width: '100%',
+  },
+
+  divDefaultLabel: {
+    width: '50%',
     fontFamily: 'sf_regular',
     fontWeight: 400,
     fontSize: 14,
     lineHeight: 17,
     color: '#848484',
+  },
+
+  // cardDefaultLabel
+  divDefaultLabel__edit: {
+    fontFamily: 'sf_regular',
+    fontWeight: 400,
+    fontSize: 14,
+    lineHeight: 17,
+    color: '#848484',
+  },
+
+  divDefaultValue: {
+    width: '50%',
+    fontSize: 14,
+    fontFamily: 'sf_regular',
+    fontWeight: 400,
+    color: COLORS.darkBlue,
   },
 
   inputDefaultWrap: {
@@ -377,6 +391,7 @@ export default StyleSheet.create({
     justifyContent: 'flex-start',
     gap: 5,
     height: 50,
+    paddingHorizontal: 15,
   },
 
   // fontWeight: 400, - не поддерживается
@@ -862,5 +877,26 @@ export default StyleSheet.create({
   filterButtons: {
     marginBottom: 21,
     gap: 15,
+  },
+
+  navPageWrap: {
+    height: 'auto',
+    width: '100%',
+  },
+
+  navPageTab: {
+    padding: 16,
+    backgroundColor: 'transparent',
+    height: 'auto',
+    borderBottomLeftRadius: 15,
+    borderBottomRightRadius: 15,
+  },
+
+  navPageTabText: {
+    color: '#B1B1B1',
+    fontSize: 14,
+    lineHeight: 17,
+    fontWeight: 500,
+    fontFamily: 'sf_regular',
   },
 });

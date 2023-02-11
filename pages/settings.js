@@ -328,8 +328,8 @@ export default class Settings extends Component {
             <Image source={require('../assets/baner.png')} />
           </TouchableOpacity>
           {/* первый экран */}
-          <View style={{...Styles.divDefault, zIndex: 100}}>
-            <Text style={Styles.divDefaultLabel}>Первый экран</Text>
+          <View style={{...Styles.divDefault__edit, zIndex: 100}}>
+            <Text style={Styles.divDefaultLabel__edit}>Первый экран</Text>
             <DropDownPicker
               open={this.state.dropDownsOpen.firstScreen}
               value={userSettings.firstScreen}
@@ -344,8 +344,8 @@ export default class Settings extends Component {
             />
           </View>
           {/* шаблоны */}
-          <View style={Styles.divDefault}>
-            <Text style={Styles.divDefaultLabel}>Шаблоны</Text>
+          <View style={Styles.divDefault__edit}>
+            <Text style={Styles.divDefaultLabel__edit}>Шаблоны</Text>
             <TouchableOpacity
               style={Styles.buttonDefault}
               onPress={() => this.setState({modalTemplates: true})}>
@@ -356,8 +356,8 @@ export default class Settings extends Component {
             </TouchableOpacity>
           </View>
           {/* вид расписания */}
-          <View style={{...Styles.divDefault, zIndex: 99}}>
-            <Text style={Styles.divDefaultLabel}>Вид расписания</Text>
+          <View style={{...Styles.divDefault__edit, zIndex: 99}}>
+            <Text style={Styles.divDefaultLabel__edit}>Вид расписания</Text>
             <DropDownPicker
               open={this.state.dropDownsOpen.typeSchedule}
               value={userSettings.typeSchedule}
@@ -370,8 +370,8 @@ export default class Settings extends Component {
             />
           </View>
           {/* размер карточек */}
-          <View style={Styles.divDefault}>
-            <Text style={Styles.divDefaultLabel}>Размер карточек</Text>
+          <View style={Styles.divDefault__edit}>
+            <Text style={Styles.divDefaultLabel__edit}>Размер карточек</Text>
             <TouchableOpacity
               onPress={() => this.changeSizeCards('small')}
               style={
@@ -422,8 +422,8 @@ export default class Settings extends Component {
             </TouchableOpacity>
           </View>
           {/* Расскрытие категорий и подкатегорий */}
-          <View style={Styles.divDefault}>
-            <Text style={Styles.divDefaultLabel}>Карточка ученика</Text>
+          <View style={Styles.divDefault__edit}>
+            <Text style={Styles.divDefaultLabel__edit}>Карточка ученика</Text>
             <RowSwitcher
               label="Раскрывать категории"
               currentValue={userSettings.showCategories}
@@ -436,8 +436,8 @@ export default class Settings extends Component {
             />
           </View>
           {/* импорт/экспорт/очистка базы */}
-          <View style={Styles.divDefault}>
-            <Text style={Styles.divDefaultLabel}>
+          <View style={Styles.divDefault__edit}>
+            <Text style={Styles.divDefaultLabel__edit}>
               Действия с данными приложения
             </Text>
             {/* экспорт */}
