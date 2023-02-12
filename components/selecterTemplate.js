@@ -1,7 +1,7 @@
 import {Component, useState} from 'react';
 import {TouchableOpacity} from 'react-native';
 import {Text, View} from 'react-native';
-import {RadioButton} from 'react-native-paper';
+import RadioBlock from './form/radioBlock';
 
 export default class SelectorTemplates extends Component {
   // selectTemp, goSettings
@@ -11,7 +11,8 @@ export default class SelectorTemplates extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      currentValue: null,
+      selectValue: null,
+      selectId: null,
       dataset: [],
     };
 
@@ -19,8 +20,10 @@ export default class SelectorTemplates extends Component {
       this.state.dataset = userSettings.templates;
     } else {
       db.transaction(tx => {
-        tx.executeSql(`SELECT * FROM Templates`, [], (_, {rows}) =>
-          this.setState({dataset: rows.raw()}),
+        tx.executeSql(
+          `SELECT id, name as label FROM Templates`,
+          [],
+          (_, {rows}) => this.setState({dataset: rows.raw()}),
         );
       });
     }
@@ -32,36 +35,27 @@ export default class SelectorTemplates extends Component {
         <View style={{gap: 20}}>
           <Text style={Styles.cardBlockTitle}>Выберите шаблон</Text>
           <View style={Styles.cardBlock}>
-            <RadioButton.Group
-              onValueChange={value => this.setState({currentValue: value})}
-              value={this.state.currentValue}>
-              {this.state.dataset.map(item => (
-                <RadioButton.Item
-                  key={item.id}
-                  label={item.name}
-                  value={item.id}
-                  style={{padding: 0}}
-                  labelStyle={{}}
-                  color={'#554AF0'}
-                />
-              ))}
-            </RadioButton.Group>
+            <RadioBlock
+              currentValue={[null]}
+              data={this.state.dataset}
+              onCallBack={(key, val) =>
+                this.setState({selectId: key, selectValue: val})
+              }
+            />
           </View>
         </View>
-        <View>
-          <TouchableOpacity onPress={() => this.props.goSettings()}>
-            <Text>Настройки</Text>
+        <View style={{gap: 15}}>
+          <TouchableOpacity
+            style={Styles.opacityButton}
+            onPress={() => this.props.goSettings()}>
+            <Text style={Styles.opacityButtonText}>Настройки</Text>
           </TouchableOpacity>
           <TouchableOpacity
+            style={Styles.submitBtn}
             onPress={() =>
-              this.props.selectTemp(
-                this.state.currentValue,
-                this.state.dataset.find(
-                  item => item.id === this.state.currentValue,
-                ).name,
-              )
+              this.props.selectTemp(this.state.selectId, this.state.selectValue)
             }>
-            <Text>Подтвердить</Text>
+            <Text style={Styles.submitBtnText}>Подтвердить</Text>
           </TouchableOpacity>
         </View>
       </View>

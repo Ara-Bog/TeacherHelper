@@ -544,49 +544,6 @@ export default StyleSheet.create({
     marginRight: '2%',
   },
 
-  cardDefaultRowRadio: {
-    marginBottom: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  RadioView: {
-    marginBottom: 25,
-  },
-
-  RadioView_label: {
-    fontSize: 14,
-    fontWeight: '300',
-    fontFamily: 'sf_regular',
-    margin: 0,
-    padding: 0,
-    alignContent: 'center',
-  },
-
-  RadioView_wrap: {
-    flexDirection: 'row-reverse',
-    left: -24,
-    height: 22,
-  },
-
-  RadioViewTitle: {
-    fontSize: 14,
-    lineHeight: 17,
-    fontFamily: 'sf_semibold',
-    fontWeight: '600',
-    margin: 0,
-    color: COLORS.darkBlue,
-  },
-
-  RadioViewTitleSub: {
-    fontSize: 14,
-    lineHeight: 17,
-    fontFamily: 'sf_light',
-    fontWeight: '300',
-    marginBottom: 12,
-    color: COLORS.darkBlue,
-  },
-
   TableRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -912,5 +869,41 @@ export default StyleSheet.create({
     width: '100%',
     height: 1,
     backgroundColor: '#EBEBEB',
+  },
+
+  radioCircle: {
+    borderWidth: 1.5,
+    borderColor: '#B1B1B1',
+    borderRadius: 22,
+    width: 22,
+    height: 22,
+    backgroundColor: 'transparent',
+  },
+
+  radioCircle__active: {
+    borderWidth: 6,
+    borderColor: '#554AF0',
+  },
+
+  radioText: {
+    fontSize: 14,
+    lineHeight: 21,
+    fontWeight: 400,
+    color: '#04021D',
+  },
+
+  opacityButton: {
+    backgroundColor: 'rgba(85, 74, 240, 0.1);',
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+
+  opacityButtonText: {
+    color: '#554AF0',
+    fontSize: 15,
+    lineHeight: 18,
+    fontWeight: 600,
   },
 });

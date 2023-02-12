@@ -38,7 +38,7 @@ function destructStudentCardData(data) {
       // заголовок симптоматики
       label: '',
       // значения текущей симптоматики
-      values: {},
+      values: [],
       // тип поля
       type: '',
     };
@@ -50,25 +50,28 @@ function destructStudentCardData(data) {
       currentObject.childrens[item.id_symptom] ??= {
         label: item.symptom,
         type: item.typeSym,
-        values: {},
+        values: [],
       };
       // вносим новое значение для дочернего
-      currentObject.childrens[item.id_symptom].values[item.id_symptomsValue] = {
+      currentObject.childrens[item.id_symptom].values.push({
+        id: item.id_symptomsValue,
         label: item.value,
         type: item.typeVal,
-      };
+      });
     } else {
       // данные для симптоматики
       currentObject.label = item.symptom;
       currentObject.type = item.typeSym;
       // чтобы не создавать null индекс значения для заголовка
       if (item.typeSym != 'label') {
-        currentObject.values[item.id_symptomsValue] = {
+        currentObject.values.push({
+          id: item.id_symptomsValue,
           label: item.value,
           type: item.typeVal,
-        };
+        });
       }
     }
+    newData[item.id_section][selectIndex] = currentObject;
   });
   return newData;
 }

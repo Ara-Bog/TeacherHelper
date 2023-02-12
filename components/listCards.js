@@ -144,13 +144,6 @@ export default class ListCards extends Component {
     }
   }
 
-  selectTemplateExit(settings) {
-    this.setState({selectTemplateShow: false});
-
-    if (settings) {
-      this.props.navigation.navigate('settings');
-    }
-  }
   render() {
     let content;
     // когда нет контента - выводим пустоту
@@ -218,13 +211,16 @@ export default class ListCards extends Component {
         <Modal
           style={{marginBottom: 0, marginLeft: 0, marginRight: 0}}
           isVisible={this.state.selectTemplateShow}
-          onBackButtonPress={() => this.selectTemplateExit()}
-          onBackdropPress={() => this.selectTemplateExit()}>
+          onBackButtonPress={() => this.setState({selectTemplateShow: false})}
+          onBackdropPress={() => this.setState({selectTemplateShow: false})}>
           <View style={Styles.modalDownWrap}>
             <SelectorTemplates
-              goSettings={() => this.selectTemplateExit(true)}
+              goSettings={() => {
+                this.setState({selectTemplateShow: false});
+                this.props.navigation.navigate('settings');
+              }}
               selectTemp={(id, name) => {
-                this.selectTemplateExit();
+                this.setState({selectTemplateShow: false});
                 this.props.navigation.navigate(this.state.typeData, {
                   type: 'add',
                   id: undefined,
