@@ -1,6 +1,6 @@
 import {Component, useState} from 'react';
 import {TouchableOpacity} from 'react-native';
-import {Text, View} from 'react-native';
+import {Text, View, ScrollView} from 'react-native';
 import RadioBlock from './form/radioBlock';
 
 export default class SelectorTemplates extends Component {
@@ -34,15 +34,17 @@ export default class SelectorTemplates extends Component {
       <View style={{justifyContent: 'space-between', flex: 1}}>
         <View style={{gap: 20}}>
           <Text style={Styles.cardBlockTitle}>Выберите шаблон</Text>
-          <View style={Styles.cardBlock}>
+          <ScrollView
+            style={{...Styles.cardBlock, height: 200}}
+            contentContainerStyle={{gap: 15}}>
             <RadioBlock
-              currentValue={[null]}
+              currentVall={[null]}
               data={this.state.dataset}
               onCallBack={(key, val) =>
                 this.setState({selectId: key, selectValue: val})
               }
             />
-          </View>
+          </ScrollView>
         </View>
         <View style={{gap: 15}}>
           <TouchableOpacity
