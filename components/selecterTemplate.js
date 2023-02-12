@@ -4,7 +4,6 @@ import {Text, View, ScrollView} from 'react-native';
 import RadioBlock from './form/radioBlock';
 
 export default class SelectorTemplates extends Component {
-  // selectTemp, goSettings
   // обратная связь:
   // - передача данных выбронного шаблона-- selectTemp(id: int, name: string)
   // - закрытие модалки и переход в настройки -- goSettings
@@ -16,9 +15,12 @@ export default class SelectorTemplates extends Component {
       dataset: [],
     };
 
+    // определяем датасет
     if (userSettings.templates.length > 1) {
+      // берем данные с сохраненных пользователем шаблонов
       this.state.dataset = userSettings.templates;
     } else {
+      // берем все шаблоны
       db.transaction(tx => {
         tx.executeSql(
           `SELECT id, name as label FROM Templates`,

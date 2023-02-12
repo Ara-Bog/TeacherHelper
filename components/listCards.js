@@ -33,7 +33,7 @@ export default class ListCards extends Component {
       // id_template карточки которую зажали
       holdCardTemplate: [],
       // открытие модалки выбора шаблона
-      selectTemplateShow: true,
+      selectTemplateShow: false,
     };
   }
 
