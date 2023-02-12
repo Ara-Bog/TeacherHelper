@@ -14,6 +14,7 @@ import SubTab from '../components/generatorPages';
 import EmptyData from '../components/emptyDataList';
 import PagerView from 'react-native-pager-view';
 import NavPage from '../components/navPage';
+import HeaderTitle from '../components/elements/headerTitle';
 
 // import {TabView, SceneMap} from 'react-native-tab-view';
 
@@ -114,25 +115,15 @@ export default class StudentPage extends Component {
         // },
       },
       // секции страницы
-      addedData: [],
+      sections: [],
       // текущий индекс страницы
       selectedPageIndex: 0,
       // данные для секций по id
       sectionsData: {},
-      // dataClient: {},
-      // subGroups: [],
-      // categories: [],
-      // diagnosis: [],
-      // violations: [],
-      // currentDataClient: {},
-      // timePickerDate: new Date(),
-      // timePickerOpen: false,
-      // clientAge: 0,
-      // dropDownsOpen: {subgroup: false, categori: false, diagnos: false},
-      // checkedViolations: [],
-      // currentSymptoms: false,
-      // currentSounds: false,
-      // closePage: false,
+      // список групп
+      listGroups: [],
+      // текущие данные ученика
+      dataClient: {},
     };
     // способ открытия страницы
     currentType = this.state.options.type;
@@ -140,8 +131,8 @@ export default class StudentPage extends Component {
       // получение сортированных секций
       tx.executeSql(
         `SELECT id, name, show_label FROM Sections WHERE id_template = ? ORDER BY "orderBy"`,
-        [1],
-        (_, {rows}) => this.setState({addedData: rows.raw()}),
+        [this.state.options.template[0]],
+        (_, {rows}) => this.setState({sections: rows.raw()}),
       );
       // запрос получения всех значений по каждой симптоматике с указанием
       // типа поля (как имя) и соответствующей секции
@@ -179,13 +170,59 @@ export default class StudentPage extends Component {
               SymptomsValues as symVal ON sym.id = symVal.id_symptom) AS data
         LEFT JOIN 
             TypesField as type ON data.typeVal = type.id`,
-        [1],
+        [this.state.options.template[0]],
         (_, {rows}) =>
           this.setState({sectionsData: destructStudentCardData(rows.raw())}),
       );
     });
 
-    db.transaction(tx => {});
+    switch (currentType) {
+      case 'view':
+        this.props.navigation.setOptions({
+          headerTitle: props => (
+            <HeaderTitle
+              mainTitle="Карточка ученика"
+              addedTitle={this.state.options.template[1]}
+            />
+          ),
+          headerRight: () => (
+            <TouchableOpacity>
+              <Icons.Feather name="edit" size={24} color="#554AF0" />
+            </TouchableOpacity>
+          ),
+        });
+        break;
+      case 'add':
+        this.props.navigation.setOptions({
+          headerTitle: props => (
+            <HeaderTitle
+              mainTitle="Новая ученика"
+              addedTitle={this.state.options.template[1]}
+            />
+          ),
+          headerRight: () => (
+            <TouchableOpacity>
+              <Icons.Feather name="trash" size={24} color="#DC5F5A" />
+            </TouchableOpacity>
+          ),
+        });
+        break;
+      case 'copy':
+        this.props.navigation.setOptions({
+          headerTitle: props => (
+            <HeaderTitle
+              mainTitle="Копия карточки"
+              addedTitle={this.state.options.template[1]}
+            />
+          ),
+          headerRight: () => (
+            <TouchableOpacity>
+              <Icons.Feather name="trash" size={24} color="#DC5F5A" />
+            </TouchableOpacity>
+          ),
+        });
+        break;
+    }
 
     // if (currentType == 'view') {
     //   db.transaction(tx => {
@@ -221,32 +258,6 @@ export default class StudentPage extends Component {
     // } else if (currentType == 'copy') {
     //   console.log('test copy')
     // }
-    // db.transaction(tx => {
-    //   tx.executeSql(
-    //     'SELECT name as label, id as value FROM Groups',
-    //     [],
-    //     (_, {rows: {_array}}) => this.setState({subGroups: _array}),
-    //     (_, err) => console.log('error - ', err),
-    //   );
-    //   tx.executeSql(
-    //     'SELECT name as label, id as value FROM Categories',
-    //     [],
-    //     (_, {rows: {_array}}) => this.setState({categories: _array}),
-    //     (_, err) => console.log('error - ', err),
-    //   );
-    //   tx.executeSql(
-    //     'SELECT name as label, id as value FROM Diagnosis',
-    //     [],
-    //     (_, {rows: {_array}}) => this.setState({diagnosis: _array}),
-    //     (_, err) => console.log('error - ', err),
-    //   );
-    //   tx.executeSql(
-    //     'SELECT name as label, id as value FROM Violations',
-    //     [],
-    //     (_, {rows: {_array}}) => this.setState({violations: _array}),
-    //     (_, err) => console.log('error - ', err),
-    //   );
-    // });
   }
 
   // checkData() {
@@ -514,8 +525,9 @@ export default class StudentPage extends Component {
   render() {
     return (
       <>
+        <View style={Styles.seqLineHeader}></View>
         <NavPage
-          values={this.state.addedData}
+          values={this.state.sections}
           selected={this.state.selectedPageIndex}
           onSelect={index => this.state.pageViewer.setPage(index)}
         />
@@ -526,7 +538,7 @@ export default class StudentPage extends Component {
           onPageSelected={e =>
             this.setState({selectedPageIndex: e.nativeEvent.position})
           }>
-          {this.state.addedData.map(item => {
+          {this.state.sections.map(item => {
             return (
               <SubTab
                 key={item.id}

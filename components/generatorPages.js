@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import DropDownPicker from 'react-native-dropdown-picker';
-import SymptomsForm from '../components/elements/symptomsForm';
+import SymptomsForm from './form/radioBlock';
 import TableSounds from '../components/elements/tableSounds';
 import InputView from '../components/form/inputView';
 

@@ -13,7 +13,7 @@ import DocumentPicker from 'react-native-document-picker';
 import Modal from 'react-native-modal';
 
 // компоненты
-import SelectedList from '../components/modalSelectedInList';
+import SelectedList from '../components/selectedInList';
 import RowSwitcher from '../components/elements/switcherInLine';
 import LoadModal from '../components/loadingModal';
 
@@ -72,7 +72,6 @@ export default class Settings extends Component {
         copyTo: 'cachesDirectory',
       });
     } catch (e) {
-      console.log('test - ', e);
       // пикер был закрыт, прерываем функцию
       return;
     }
@@ -124,8 +123,7 @@ export default class Settings extends Component {
           })
           .catch(err => {
             this.setState({loading: false});
-            Alert.alert('Произошла непредвиденная ошибка :(');
-            console.log('test err', err);
+            Alert.alert('Произошла непредвиденная ошибка :(', err);
           });
       },
       () => {},

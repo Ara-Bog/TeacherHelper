@@ -1,21 +1,12 @@
-import React from 'react';
-import {
-  Text,
-  View,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
+import {Text, View, TouchableOpacity, ScrollView} from 'react-native';
 
 export default function NavPage({values, onSelect, selected}) {
   // получает:
-  // - режим редактирования или просмотра -- editing: Bool
-  // - значение поля ввода -- value: String
-  // - звездочка в поле -- requared: Bool
-  // - заголовок -- label: String
+  // - значение поля ввода -- values: Array [Object]
+  // - выбранный индекс страницы -- selected: Int
   // --
   // обратный вызов:
-  // - изменение значения поля -- onChange(val: string)
+  // - выбор страницы -- onSelect
   const Tab = (val, key, index) => (
     <TouchableOpacity
       key={key}

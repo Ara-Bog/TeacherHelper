@@ -12,23 +12,28 @@ export default class ListStudentsWrap extends Component {
   // главная страница блока "ученики"
   constructor(props) {
     super(props);
-    // копирование 3 раза данных
-    // dataStudents - изменяемый массив данных
-    // defaultData - данные полученные при запросе
-    // filterData - данные полученные после фильтрации (необходима для корректного поиска)
     this.state = {
+      // текущие данные учеников
       dataStudents: [],
+      // все данные учеников
       defaultData: [],
+      // отфильтрованные данные учеников
       filterData: [],
+      // флаг использования фильтра
       filterUsed: false,
+      // тип данных (страница)
       dataType: 'Student',
+      // текст поиска
       currentSearch: '',
+      // последние сохраненные состояния раскрывающихся списков фильтра
       showLabels: [],
+      // текущие параметры отбора
       currentFilter: {
         'Возрастная группа': [],
         Шаблон: [],
         'Заключение ЦПМПК': [],
       },
+      // флаг больших карточек
       bigSizeCards: userSettings.bigCardStudent,
     };
 
@@ -128,7 +133,7 @@ export default class ListStudentsWrap extends Component {
       tx.executeSql(
         `SELECT st.id as ID, ct.name as LeftBot, dg.name as RightBot, 
                 st.surname || ' ' || st.name || ' ' || COALESCE(st.midname, '') as LeftTop,
-                tp.name as template 
+                tp.name as RightTop, tp.id as id_template 
         FROM Students as st 
         INNER JOIN Templates as tp ON st.id_template = tp.id
         INNER JOIN Diagnosis as dg ON st.id_diagnos = dg.id
@@ -174,7 +179,7 @@ export default class ListStudentsWrap extends Component {
       newData = this.state.defaultData.filter(
         item =>
           currentValues['Возрастная группа'].includes(item.LeftBot) ||
-          currentValues['Шаблон'].includes(item.template) ||
+          currentValues['Шаблон'].includes(item.RightTop) ||
           currentValues['Заключение ЦПМПК'].includes(item.RightBot),
       );
       // фильтр используется

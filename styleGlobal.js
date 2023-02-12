@@ -566,8 +566,7 @@ export default StyleSheet.create({
   RadioView_wrap: {
     flexDirection: 'row-reverse',
     left: -24,
-    height: 36,
-    alignItems: 'center',
+    height: 22,
   },
 
   RadioViewTitle: {
@@ -575,7 +574,7 @@ export default StyleSheet.create({
     lineHeight: 17,
     fontFamily: 'sf_semibold',
     fontWeight: '600',
-    marginBottom: 12,
+    margin: 0,
     color: COLORS.darkBlue,
   },
 
@@ -899,5 +898,19 @@ export default StyleSheet.create({
     lineHeight: 17,
     fontWeight: 500,
     fontFamily: 'sf_regular',
+  },
+
+  headerAddedTitleStyle: {
+    color: '#B1B1B1',
+    fontSize: 12,
+    lineHeight: 14,
+    fontWeight: 400,
+    fontFamily: 'sf_regular',
+  },
+
+  seqLineHeader: {
+    width: '100%',
+    height: 1,
+    backgroundColor: '#EBEBEB',
   },
 });

@@ -4,6 +4,8 @@ import ButtonAdd from './elements/buttonAdd';
 import EmptyData from './emptyDataList';
 import DefaultCard from './elements/defaultCard';
 import MenuActions from './elements/menuActions';
+import SelectorTemplates from './selecterTemplate';
+import Modal from 'react-native-modal';
 
 export default class ListCards extends Component {
   // общий модуль списка для списка групп и учеников
@@ -14,17 +16,24 @@ export default class ListCards extends Component {
   // - props.navigation для навигации на страницы карточек -- navigation: object
   // - большой размер карточек -- bigSizeCards: bool
   // --
-  // обратная связь:
-  // - событие при удалении списка -- onCallDeleteData
 
   constructor(props) {
     super(props);
     this.state = {
+      // датасет
       dataList: [...this.props.data],
+      // список выбранных карточек
       selected: [],
+      // тип страницы
       typeData: this.props.typeData,
+      // состояние выбора карточек
       onHold: false,
+      // id карточки, которую зажали
       holdIdCard: 0,
+      // id_template карточки которую зажали
+      holdCardTemplate: [],
+      // открытие модалки выбора шаблона
+      selectTemplateShow: true,
     };
   }
 
@@ -120,9 +129,30 @@ export default class ListCards extends Component {
       });
   }
 
+  createNew() {
+    if (userSettings.templates.length == 1) {
+      this.props.navigation.navigate(this.state.typeData, {
+        type: 'add',
+        id: undefined,
+        template: [
+          userSettings.templates[0].id,
+          userSettings.templates[0].name,
+        ],
+      });
+    } else {
+      this.setState({selectTemplateShow: true});
+    }
+  }
+
+  selectTemplateExit(settings) {
+    this.setState({selectTemplateShow: false});
+
+    if (settings) {
+      this.props.navigation.navigate('settings');
+    }
+  }
   render() {
     let content;
-
     // когда нет контента - выводим пустоту
     if (this.state.dataList.length != 0) {
       content = (
@@ -139,6 +169,7 @@ export default class ListCards extends Component {
                   : this.props.navigation.navigate(this.state.typeData, {
                       type: 'view',
                       id: item.ID,
+                      template: [item.id_template, item.RightTop],
                     });
               }}
               onCallLong={() => {
@@ -146,7 +177,11 @@ export default class ListCards extends Component {
                   ? this.state.selected.includes(item.ID)
                     ? this.setState({onHold: true})
                     : this.selectCard(item.ID)
-                  : this.setState({onHold: true, holdIdCard: item.ID});
+                  : this.setState({
+                      onHold: true,
+                      holdIdCard: item.ID,
+                      holdCardTemplate: [item.id_template, item.RightTop],
+                    });
               }}
             />
           ))}
@@ -165,9 +200,10 @@ export default class ListCards extends Component {
           callClose={() => this.setState({onHold: false})}
           callSelect={() => this.selectCard()}
           callCopy={() =>
-            this.props.navigation.navigate(this.state.typeList, {
+            this.props.navigation.navigate(this.state.typeData, {
               type: 'copy',
               id: this.state.holdIdCard,
+              template: this.state.holdCardTemplate,
             })
           }
           callDelete={() => this.deleteCard()}
@@ -175,13 +211,29 @@ export default class ListCards extends Component {
           isSelected={this.state.selected.length != 0}
         />
         <ButtonAdd
-          execute={() =>
-            this.props.navigation.navigate(this.state.typeData, {
-              type: 'add',
-              id: undefined,
-            })
-          }
+          onPress={() => this.createNew()}
+          navigation={this.props.navigation}
+          type={this.state.typeData}
         />
+        <Modal
+          style={{marginBottom: 0, marginLeft: 0, marginRight: 0}}
+          isVisible={this.state.selectTemplateShow}
+          onBackButtonPress={() => this.selectTemplateExit()}
+          onBackdropPress={() => this.selectTemplateExit()}>
+          <View style={Styles.modalDownWrap}>
+            <SelectorTemplates
+              goSettings={() => this.selectTemplateExit(true)}
+              selectTemp={(id, name) => {
+                this.selectTemplateExit();
+                this.props.navigation.navigate(this.state.typeData, {
+                  type: 'add',
+                  id: undefined,
+                  template: [id, name],
+                });
+              }}
+            />
+          </View>
+        </Modal>
       </>
     );
   }

@@ -25,7 +25,6 @@ export default function defaultCard({
       </View>
     </>
   );
-
   return (
     <TouchableOpacity
       style={select ? Styles.cardDelault__active : Styles.cardDelault}
@@ -33,6 +32,9 @@ export default function defaultCard({
       onLongPress={() => onCallLong()}>
       <View style={Styles.cardDelaultRow}>
         <Text style={Styles.cardDelaultRowTitle}>{data.LeftTop}</Text>
+        {bigSize ? (
+          <Text style={Styles.cardDelaultRowTitle}>{data.RightTop}</Text>
+        ) : null}
       </View>
       {bigSize ? addedContent : null}
     </TouchableOpacity>
