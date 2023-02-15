@@ -20,6 +20,7 @@ import HeaderTitle from '../components/elements/headerTitle';
 
 // форматирование данных симптоматики и знеачений с базы
 function destructStudentCardData(data) {
+  // data - массив объектов
   // новый стэш данных
   let newData = {};
   // обходим строки данных
@@ -84,101 +85,224 @@ export default class StudentPage extends Component {
       options: this.props.route.params,
       // состояние редактирования
       editing: false,
+
       // хранение экземпляра страниц
       pageViewer: undefined,
-      // поля по умолчанию для основной страницы
-      default_main: {
-        surname: {
-          value: '',
-          label: 'Фамилия',
-          requared: true,
-          type: 'inputView',
-        },
-        mame: {value: '', label: 'Имя', requared: true, type: 'inputView'},
-        midname: {value: '', label: 'Отчество', type: 'inputView'},
-        // date_bd: {
-        //   value: '',
-        //   label: 'Возраст',
-        //   labelEdit: 'Дата рождения',
-        //   type: 'dateTime',
-        // },
-        // group_org: {value: '', label: 'Группа в организации', type: 'inputView'},
-        // category: {
-        //   value: '',
-        //   label: 'Возрастная группа',
-        //   requared: true,
-        //   type: 'droplist',
-        // },
-        // group: {value: '', label: 'Группа', type: 'droplist'},
-        // diagnos: {
-        //   value: '',
-        //   label: 'Заключение ЦПМПК',
-        //   requared: true,
-        //   type: 'droplist',
-        // },
-      },
-      // секции страницы
-      sections: [],
       // текущий индекс страницы
       selectedPageIndex: 0,
+
+      // секции страницы
+      sections: [],
+
+      // поля по умолчанию для основной страницы с данными выбора (если есть)
+      defaultData: {
+        default_main: {
+          surname: {
+            label: 'Фамилия',
+            requared: true,
+            type: 'inputView',
+          },
+          mame: {label: 'Имя', requared: true, type: 'inputView'},
+          midname: {label: 'Отчество', type: 'inputView'},
+          date_bd: {
+            label: 'Возраст',
+            labelEdit: 'Дата рождения',
+            type: 'dateTime',
+          },
+          group_org: {
+            label: 'Группа в организации',
+            type: 'inputView',
+          },
+          group: {label: 'Группы', type: 'view'},
+          note: {label: 'Заметки', type: 'text'},
+        },
+
+        default_contacts: {
+          label: '',
+          type: 'dynamicBlock',
+          key: 'contacts',
+          values: [
+            {label: 'ФИО', type: 'inputView', requared: true},
+            {label: 'Телефон', type: 'phone', requared: true},
+            {label: 'Кем приходится', type: 'inputView'},
+          ],
+        },
+      },
       // данные для секций по id
       sectionsData: {},
-      // список групп
-      listGroups: [],
+
       // текущие данные ученика
-      dataClient: {},
+      currentData: {},
+
+      loading: true,
     };
     // способ открытия страницы
     currentType = this.state.options.type;
+    // флаг, для запроса данных ученика
+    getStudent = currentType == 'add' ? false : true;
+    // для уменьшения количества рендеров
+    // данные обновляются без setState
+    // в последней транзакции 2-х блоков меняется флаг загрузки
     db.transaction(tx => {
       // получение сортированных секций
       tx.executeSql(
         `SELECT id, name, show_label FROM Sections WHERE id_template = ? ORDER BY "orderBy"`,
         [this.state.options.template[0]],
-        (_, {rows}) => this.setState({sections: rows.raw()}),
+        (_, {rows}) => {
+          this.state.sections = rows.raw();
+        },
       );
       // запрос получения всех значений по каждой симптоматике с указанием
       // типа поля (как имя) и соответствующей секции
       // по конкретному шаблону
       tx.executeSql(
-        `SELECT 
-          data.id_section, data.id_symptom, 
-          data.id_symptomsValue, data.id_parent, 
-          data.symptom, data.value, type.name AS typeVal, 
-          data.typeSym
-        FROM 
-          (SELECT 
-              sym.id_section, sym.id as id_symptom, 
-              symVal.id as id_symptomsValue, sym.id_parent, 
-              sym.symptom, symVal.value, 
-              symVal.type as typeVal,sym.typeSym
-          FROM
-            (SELECT 
-                sym.id, sym.id_section, sym.name as symptom, 
-                sym.id_parent, type.name as typeSym
-            FROM
-              (SELECT 
-                  sym.* 
-              FROM 
-                  Sections as sect 
-              LEFT JOIN 
-                  Symptoms as sym ON sym.id_section = sect.id
-              WHERE 
-                  sect.id_template = ? AND sym.id_section IS NOT NULL
-              ORDER BY 
-                  sect.orderBy, sym.id) as sym
-            LEFT JOIN 
-                TypesField as type ON sym.type = type.id) as sym
+        `
+        SELECT 
+          sym.id_section, sym.id as id_symptom, 
+          symVal.id as id_symptomsValue, sym.id_parent, 
+          sym.symptom, symVal.value, sym.typeSym, type.name AS typeVal
+        FROM (
+          SELECT 
+            sym.id, sym.id_section, sym.name as symptom, 
+            sym.id_parent, type.name as typeSym
+          FROM 
+            Sections as sect 
           LEFT JOIN 
-              SymptomsValues as symVal ON sym.id = symVal.id_symptom) AS data
+            Symptoms as sym ON sym.id_section = sect.id
+          LEFT JOIN 
+            TypesField as type ON sym.type = type.id
+          WHERE 
+            sect.id_template = ? AND sym.id_section IS NOT NULL
+          ORDER BY 
+            sect.orderBy, sym.id
+          ) as sym
         LEFT JOIN 
-            TypesField as type ON data.typeVal = type.id`,
+          SymptomsValues as symVal ON sym.id = symVal.id_symptom
+        LEFT JOIN 
+          TypesField as type ON symVal.type = type.id
+        `,
         [this.state.options.template[0]],
         (_, {rows}) =>
-          this.setState({sectionsData: destructStudentCardData(rows.raw())}),
+          (this.state.sectionsData = {
+            ...this.state.sectionsData,
+            ...destructStudentCardData(rows.raw()),
+          }),
+        err => console.log('error studentPage get all symptoms', err),
       );
-    });
 
+      // получение диагнозов
+      tx.executeSql(
+        `
+        SELECT *
+        FROM Diagnosis
+        WHERE id_template IS NULL OR id_template = ?
+        `,
+        [this.state.options.template[0]],
+        (_, {rows}) =>
+          (this.state.defaultData.default_main.diagnosis = {
+            label: 'Заключение ЦПМПК',
+            requared: true,
+            type: 'droplist',
+            values: rows.raw(),
+          }),
+        err => console.log('error studentPage get Diagnosis', err),
+      );
+
+      // получение категорий
+      tx.executeSql(
+        `
+        SELECT *
+        FROM Categories
+        WHERE id <> 0
+        `,
+        [],
+        (_, {rows}) => {
+          this.state.defaultData.default_main.categories = {
+            label: 'Возрастная группа',
+            requared: true,
+            type: 'droplist',
+            values: rows.raw(),
+          };
+          if (!getStudent) {
+            this.setState({loading: false});
+          }
+        },
+        err => console.log('error studentPage get Categories', err),
+      );
+
+      if (getStudent) {
+        // получение симптоматики ученика
+        tx.executeSql(
+          `
+          SELECT 
+            cur.id_symptomsValue as id, symVal.id_symptom 
+          FROM 
+            CurrentSymptoms as cur
+          LEFT JOIN
+            SymptomsValues as symVal ON symVal.id = cur.id_symptomsValue
+          WHERE cur.id_student = ?
+          `,
+          [this.state.options.id],
+          (_, {rows}) => {
+            let data = rows.raw();
+            let newData = {};
+            data.forEach(item => {
+              newData[item.id_symptom] ??= [];
+              newData[item.id_symptom].push(item.id);
+            });
+            this.state.currentData.symptoms = newData;
+          },
+          err => console.log('error studentPage get cur symptoms', err),
+        );
+        // получение данных об ученике
+        tx.executeSql(
+          `
+          SELECT surname, name, midname, 
+              group_org, date_bd, note
+          FROM Students
+          WHERE id = ?
+          `,
+          [this.state.options.id],
+          (_, {rows}) => {
+            this.state.currentData = {
+              ...this.state.currentData,
+              ...rows.raw()[0],
+            };
+          },
+          err => console.log('error studentPage get student', err),
+        );
+
+        // получение данных родителей
+        tx.executeSql(
+          `
+          SELECT *
+          FROM ParentsStudent
+          WHERE id_student = ?
+          `,
+          [this.state.options.id],
+          (_, {rows}) => {
+            this.state.currentData.contacts = rows.raw();
+          },
+          err => console.log('error studentPage get parents', err),
+        );
+
+        // получение групп ученика
+        tx.executeSql(
+          `
+          SELECT lsg.id, g.name as 'group'
+          FROM ListStudentsGroup as lsg
+          LEFT JOIN Groups as g ON lsg.id_group = g.id
+          WHERE lsg.id_student = ?
+          `,
+          [this.state.options.id],
+          (_, {rows}) => {
+            this.state.currentData.group = rows.raw();
+            this.setState({loading: false});
+          },
+          err => console.log('error studentPage get ListStudentsGroup', err),
+        );
+      }
+    });
     switch (currentType) {
       case 'view':
         this.props.navigation.setOptions({
@@ -199,7 +323,7 @@ export default class StudentPage extends Component {
         this.props.navigation.setOptions({
           headerTitle: props => (
             <HeaderTitle
-              mainTitle="Новая ученика"
+              mainTitle="Новая карточка"
               addedTitle={this.state.options.template[1]}
             />
           ),
@@ -226,306 +350,13 @@ export default class StudentPage extends Component {
         });
         break;
     }
-
-    // if (currentType == 'view') {
-    //   db.transaction(tx => {
-    //     tx.executeSql(
-    //       'SELECT * FROM Students WHERE id = ?',
-    //       [this.state.options.id],
-    //       (_, {rows}) =>
-    //       {let data = rows.raw();
-
-    //         this.setState({
-    //           currentDataClient: data,
-    //           clientAge: Math.round(
-    //             (new Date().getTime() - new Date(data.data_bd)) /
-    //               (24 * 3600 * 365.25 * 1000),
-    //           ),
-    //           dataClient: data,
-    //         })},
-    //       (_, err) => console.log('error - ', err),
-    //     );
-    //   });
-    //   this.props.navigation.setOptions({title: 'Карточка ученика'});
-    //   // headerTitle: (
-    //   //     <View>
-    //   //       <Text>{navigation.getParam('client')}</Text>
-    //   //       <Text>{navigation.getParam('ref')}</Text>
-    //   //     </View>
-    //   //   )
-    // } else if (currentType == 'add') {
-    //   this.state.currentSymptoms = {};
-    //   this.state.currentSounds = {};
-    //   this.props.navigation.setOptions({title: 'Добавление ученика'});
-    //   this.state.editing = true;
-    // } else if (currentType == 'copy') {
-    //   console.log('test copy')
-    // }
   }
 
-  // checkData() {
-  //   for (let nameCol of this.state.requiredData) {
-  //     if (
-  //       this.state.currentDataClient[nameCol] == '' ||
-  //       this.state.currentDataClient[nameCol] == undefined
-  //     ) {
-  //       this.setState({editing: !this.state.editing});
-  //       Alert.alert(
-  //         'Ошибка ввода',
-  //         `Поля со звездочкой должны быть обязательно заполненны`,
-  //         [{text: 'Да', style: 'destructive'}],
-  //       );
-  //       return;
-  //     }
-  //   }
-  //   {
-  //     this.state.options.type == 'add'
-  //       ? (this.addBase(),
-  //         db.transaction(tx => {
-  //           tx.executeSql(
-  //             'SELECT max(id) as lastID FROM Students',
-  //             [],
-  //             (_, {rows: {_array}}) =>
-  //               this.setState({
-  //                 currentDataClient: {
-  //                   ...this.state.currentDataClient,
-  //                   ID: _array[0]['lastID'],
-  //                 },
-  //               }),
-  //             (_, err) => (
-  //               Alert.alert('Произошла какая-то ошибка'),
-  //               console.log('error getID - ', err)
-  //             ),
-  //           );
-  //         }),
-  //         this.setState({options: {...this.state.options, type: 'view'}}),
-  //         this.props.navigation.setOptions({headerTitle: 'Карточка ученика'}))
-  //       : this.updateBase();
-  //   }
-  // }
-
-  // addBase() {
-  //   const data = this.state.currentDataClient;
-  //   db.transaction(tx => {
-  //     tx.executeSql(
-  //       'INSERT INTO students (Surname, Name, Midname, Group_name, Subgroup_id, DateBD, Categori_id, Diagnos_id, violations, symptoms, sound, note) ' +
-  //         'VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
-  //       [
-  //         data.Surname,
-  //         data.Name,
-  //         data.Midname || null,
-  //         data.Group_name,
-  //         data.Subgroup_id || null,
-  //         data.DateBD,
-  //         data.Categori_id,
-  //         data.Diagnos_id,
-  //         data.Violations || null,
-  //         data.Symptoms || null,
-  //         data.Sound || null,
-  //         data.Note || null,
-  //       ],
-  //       () => Alert.alert('Данные успешно добавленны'),
-  //       (_, err) => (
-  //         Alert.alert('Произошла какая-то ошибка'),
-  //         console.log('error updateBase - ', err)
-  //       ),
-  //     );
-  //   });
-  // }
-
-  // updateDateBD(val) {
-  //   if (val != undefined) {
-  //     this.setState({
-  //       currentDataClient: {
-  //         ...this.state.currentDataClient,
-  //         DateBD: val.toISOString().slice(0, 10),
-  //       },
-  //     });
-  //   }
-  //   this.setState({
-  //     timePickerOpen: false,
-  //   });
-  // }
-
-  // updateBase() {
-  //   const data = this.state.currentDataClient;
-  //   db.transaction(tx => {
-  //     tx.executeSql(
-  //       'UPDATE Students ' +
-  //         'SET surname=?, name=?, midname=?, group_name=?, subgroup_id=?, DateBD=?, categori_id=?, diagnos_id=?, violations=?, symptoms=?, sound=?, note=? ' +
-  //         'WHERE ID=?',
-  //       [
-  //         data.Surname,
-  //         data.Name,
-  //         data.Midname,
-  //         data.Group_name,
-  //         data.Subgroup_id,
-  //         data.DateBD,
-  //         data.Categori_id,
-  //         data.Diagnos_id,
-  //         data.Violations,
-  //         data.Symptoms,
-  //         data.Sound,
-  //         data.Note,
-  //         data.ID,
-  //       ],
-  //       () => (
-  //         Alert.alert('Данные успешно обновленны'),
-  //         this.setState({
-  //           clientAge: Math.round(
-  //             (new Date().getTime() -
-  //               new Date(this.state.currentDataClient.DateBD)) /
-  //               (24 * 3600 * 365.25 * 1000),
-  //           ),
-  //         })
-  //       ),
-  //       (_, err) => (
-  //         Alert.alert('Произошла какая-то ошибка'),
-  //         console.log('error updateBase - ', err)
-  //       ),
-  //     );
-  //   });
-  //   this.setState({dataClient: this.state.currentDataClient});
-  // }
-
-  // formatDateBD() {
-  //   if (this.state.currentDataClient.DateBD != undefined) {
-  //     const currentDate = new Date(this.state.currentDataClient.DateBD);
-  //     return currentDate
-  //       .toISOString()
-  //       .slice(0, 10)
-  //       .split('-')
-  //       .reverse()
-  //       .join('.');
-  //   } else {
-  //     return 'Выберите дату';
-  //   }
-  // }
-
-  // violationSelected(check_id) {
-  //   const arrBoxes = this.state.checkedViolations;
-  //   const indexChecker = arrBoxes.indexOf(check_id);
-  //   if (indexChecker != -1) {
-  //     arrBoxes.splice(indexChecker, 1);
-  //   } else {
-  //     arrBoxes.push(check_id);
-  //   }
-  //   arrBoxes.sort(function (a, b) {
-  //     return b - a;
-  //   });
-  //   this.setState({
-  //     currentDataClient: {
-  //       ...this.state.currentDataClient,
-  //       Violations: arrBoxes.join('/'),
-  //     },
-  //   });
-  // }
-
-  // symptomsSelected(newSympt) {
-  //   this.setState({
-  //     currentSymptoms: newSympt,
-  //     currentDataClient: {
-  //       ...this.state.currentDataClient,
-  //       Symptoms: JSON.stringify(newSympt),
-  //     },
-  //   });
-  // }
-
-  // soundsSelected(newSound) {
-  //   this.setState({
-  //     currentSounds: newSound,
-  //     currentDataClient: {
-  //       ...this.state.currentDataClient,
-  //       Sound: JSON.stringify(newSound),
-  //     },
-  //   });
-  // }
-
-  // undoActions() {
-  //   this.state.options.type == 'view'
-  //     ? this.setState({
-  //         currentDataClient: this.state.dataClient,
-  //         currentSymptoms:
-  //           this.state.dataClient.Symptoms != null
-  //             ? JSON.parse(this.state.dataClient.Symptoms)
-  //             : {},
-  //         currentSounds:
-  //           this.state.dataClient.Sound != null
-  //             ? JSON.parse(this.state.dataClient.Sound)
-  //             : {},
-  //         checkedViolations:
-  //           this.state.dataClient.Violations != null
-  //             ? this.state.dataClient.Violations.split('/')
-  //             : [],
-  //       })
-  //     : this.props.navigation.goBack();
-  // }
-
-  // removeStudentConfirm() {
-  //   const student = this.state.currentDataClient;
-  //   Alert.alert(
-  //     'Подтвердите удаление',
-  //     `Вы действительно хотите удалить карточку для ${student.Surname} ${
-  //       student.Name
-  //     } ${
-  //       student.Midname || ''
-  //     } ?\nЭто также удалит связанные с ней записи в расписании.`,
-  //     [
-  //       {
-  //         text: 'Да',
-  //         onPress: () => this.removeStudent(student.ID),
-  //         style: 'destructive',
-  //       },
-  //       {text: 'Отмена', style: 'cancel'},
-  //     ],
-  //     {cancelable: true},
-  //   );
-  // }
-
-  // removeStudent(id_client) {
-  //   db.transaction(tx => {
-  //     tx.executeSql(
-  //       "DELETE FROM timetable WHERE Client_id = ? AND Type = 's'",
-  //       [id_client],
-  //       () => null,
-  //       (_, err) => console.log('error removeStudent (timetable) - ', err),
-  //     );
-  //     tx.executeSql(
-  //       'DELETE FROM students WHERE id = ?',
-  //       [id_client],
-  //       () => Alert.alert('Карточка успешно удаленна'),
-  //       (_, err) => (
-  //         Alert.alert('Произошла какая-то ошибка'),
-  //         console.log('error removeStudent (students) - ', err)
-  //       ),
-  //     );
-  //   });
-  //   this.props.navigation.goBack();
-  // }
-
-  // renderScene = ({route}) => {
-  //   switch (route.key) {
-  //     case 'first':
-  //       // return <SubTab hui="qwe" />;
-  //       return <View style={{flex: 1}} />;
-  //     case 'second':
-  //       return <View style={{flex: 1}} />;
-  //     case '3':
-  //       // return <SubTab hui="qwe" />;
-  //       return <View style={{flex: 1}} />;
-  //     case '4':
-  //       return <View style={{flex: 1}} />;
-  //     case '5':
-  //       // return <SubTab hui="qwe" />;
-  //       return <View style={{flex: 1}} />;
-  //     case '6':
-  //       return <View style={{flex: 1}} />;
-  //     default:
-  //       return null;
-  //   }
-  // };
-
   render() {
+    // КОСТЫЛЬ МБ ПОМЕНЯТЬ (уменьшает количество рендеров)
+    if (this.state.loading) {
+      return <></>;
+    }
     return (
       <>
         <View style={Styles.seqLineHeader}></View>
