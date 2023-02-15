@@ -36,11 +36,7 @@ export default function NavPage({values, onSelect, selected}) {
           width: 'auto',
         }}>
         {values.map((item, index) => {
-          return Tab(
-            item.show_label === null ? item.name : item.show_label,
-            item.id,
-            index,
-          );
+          return Tab(item.tab_name || item.name, item.id, index);
         })}
       </ScrollView>
     </View>

@@ -30,7 +30,7 @@ export default class SubTab extends Component {
           ...Styles.container,
           backgroundColor: '#fff',
         }}>
-        <Text>{this.props.hui}</Text>
+        <Text>{this.props.lable}</Text>
       </View>
     );
   }

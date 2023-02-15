@@ -146,7 +146,7 @@ export default class StudentPage extends Component {
     db.transaction(tx => {
       // получение сортированных секций
       tx.executeSql(
-        `SELECT id, name, show_label FROM Sections WHERE id_template = ? ORDER BY "orderBy"`,
+        `SELECT id, name, show_label, tab_name FROM Sections WHERE id_template = ? ORDER BY "orderBy"`,
         [this.state.options.template[0]],
         (_, {rows}) => {
           this.state.sections = rows.raw();
@@ -303,6 +303,7 @@ export default class StudentPage extends Component {
         );
       }
     });
+    // установка заголовка и соответствующей иконки вверху справа
     switch (currentType) {
       case 'view':
         this.props.navigation.setOptions({
@@ -353,7 +354,7 @@ export default class StudentPage extends Component {
   }
 
   render() {
-    // КОСТЫЛЬ МБ ПОМЕНЯТЬ (уменьшает количество рендеров)
+    // КОСТЫЛЬ МБ ПОМЕНЯТЬ (уменьшает нагрузку рендер страниц)
     if (this.state.loading) {
       return <></>;
     }
@@ -368,7 +369,9 @@ export default class StudentPage extends Component {
         <PagerView
           style={{flex: 1}}
           initialPage={0}
-          ref={pager => (this.state.pageViewer = pager)}
+          ref={pager => {
+            this.state.pageViewer = pager;
+          }}
           onPageSelected={e =>
             this.setState({selectedPageIndex: e.nativeEvent.position})
           }>
@@ -376,9 +379,9 @@ export default class StudentPage extends Component {
             return (
               <SubTab
                 key={item.id}
-                showLabel={item.showLabel != null}
-                lable={item.name}
-                hui={item.name}
+                lable={item.show_label ? item.name : null}
+                data={this.state.sectionsData[item.id]}
+                defaultData={this.state.defaultData[item.name]}
               />
             );
           })}
