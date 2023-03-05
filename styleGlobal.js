@@ -353,7 +353,7 @@ export default StyleSheet.create({
   },
 
   divDefaultLabel: {
-    width: '50%',
+    flex: 1,
     fontFamily: 'sf_regular',
     fontWeight: 400,
     fontSize: 14,
@@ -371,8 +371,9 @@ export default StyleSheet.create({
   },
 
   divDefaultValue: {
-    width: '50%',
+    flex: 1,
     fontSize: 14,
+    lineHeight: 17,
     fontFamily: 'sf_regular',
     fontWeight: 400,
     color: COLORS.darkBlue,
@@ -528,9 +529,10 @@ export default StyleSheet.create({
   emptyValue: {
     fontSize: 14,
     fontFamily: 'sf_regular',
-    fontWeight: '400',
+    fontWeight: 400,
     color: '#848484',
-    width: '100%',
+    lineHeight: 17,
+    flex: 1,
   },
 
   cardStudentSubTitle: {

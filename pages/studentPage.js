@@ -102,7 +102,7 @@ export default class StudentPage extends Component {
             requared: true,
             type: 'inputView',
           },
-          mame: {label: 'Имя', requared: true, type: 'inputView'},
+          name: {label: 'Имя', requared: true, type: 'inputView'},
           midname: {label: 'Отчество', type: 'inputView'},
           date_bd: {
             label: 'Возраст',
@@ -114,18 +114,19 @@ export default class StudentPage extends Component {
             type: 'inputView',
           },
           group: {label: 'Группы', type: 'view'},
-          note: {label: 'Заметки', type: 'text'},
+          note: {label: 'Заметки', type: 'textarea'},
         },
 
         default_contacts: {
-          label: '',
-          type: 'dynamicBlock',
-          key: 'contacts',
-          values: [
-            {label: 'ФИО', type: 'inputView', requared: true},
-            {label: 'Телефон', type: 'phone', requared: true},
-            {label: 'Кем приходится', type: 'inputView'},
-          ],
+          contacts: {
+            label: '',
+            type: 'dynamicBlock',
+            values: [
+              {label: 'ФИО', type: 'inputView', requared: true},
+              {label: 'Телефон', type: 'phone', requared: true},
+              {label: 'Кем приходится', type: 'inputView'},
+            ],
+          },
         },
       },
       // данные для секций по id
@@ -157,8 +158,7 @@ export default class StudentPage extends Component {
       // по конкретному шаблону
       tx.executeSql(
         `
-        SELECT 
-          sym.id_section, sym.id as id_symptom, 
+        SELECT sym.id as id_symptom, 
           symVal.id as id_symptomsValue, sym.id_parent, 
           sym.symptom, symVal.value, sym.typeSym, type.name AS typeVal
         FROM (
@@ -193,7 +193,7 @@ export default class StudentPage extends Component {
       // получение диагнозов
       tx.executeSql(
         `
-        SELECT *
+        SELECT id, name
         FROM Diagnosis
         WHERE id_template IS NULL OR id_template = ?
         `,
@@ -321,6 +321,7 @@ export default class StudentPage extends Component {
         });
         break;
       case 'add':
+        this.state.editing = true;
         this.props.navigation.setOptions({
           headerTitle: props => (
             <HeaderTitle
@@ -336,6 +337,7 @@ export default class StudentPage extends Component {
         });
         break;
       case 'copy':
+        this.state.editing = true;
         this.props.navigation.setOptions({
           headerTitle: props => (
             <HeaderTitle
@@ -375,13 +377,16 @@ export default class StudentPage extends Component {
           onPageSelected={e =>
             this.setState({selectedPageIndex: e.nativeEvent.position})
           }>
-          {this.state.sections.map(item => {
+          {this.state.sections.map((item, index) => {
             return (
               <SubTab
                 key={item.id}
                 lable={item.show_label ? item.name : null}
                 data={this.state.sectionsData[item.id]}
                 defaultData={this.state.defaultData[item.name]}
+                currentData={this.state.currentData}
+                editing={this.state.editing}
+                isFocused={this.state.selectedPageIndex === index}
               />
             );
           })}
@@ -398,13 +403,6 @@ export default class StudentPage extends Component {
           //   feedback ? this.checkData() : this.undoActions();
           // }}
         /> */}
-        {/* <InputView
-        value="Петров Петров Петров Петров Петров"
-        editing={true}
-        label="ФамилияФамилия Фамилия Фамилия Фамилия"
-        requared={true}
-        onChange={val => console.log('test - ', val)}
-      /> */}
       </>
     );
   }

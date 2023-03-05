@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {Text, View, TextInput} from 'react-native';
 
 export default function InputView({value, editing, label, onChange, requared}) {
@@ -11,31 +11,35 @@ export default function InputView({value, editing, label, onChange, requared}) {
   // обратный вызов:
   // - изменение значения поля -- onChange(val: string)
 
+  const [currentValue, setVal] = useState(value);
+
   const editingView = (
     <View style={Styles.divDefault__edit}>
       <Text style={Styles.divDefaultLabel__edit}>
         {label}
         {requared ? ' *' : null}
       </Text>
-
-      {editing ? (
-        <View style={Styles.inputDefaultWrap}>
-          <TextInput
-            style={Styles.inputDefault}
-            value={value}
-            onChangeText={val => onChange(val)}
-          />
-        </View>
-      ) : (
-        <Text style={Styles.divDefaultValue}>{value}</Text>
-      )}
+      <View style={Styles.inputDefaultWrap}>
+        <TextInput
+          style={Styles.inputDefault}
+          value={currentValue}
+          onChangeText={val => {
+            onChange(val);
+            setVal(val);
+          }}
+        />
+      </View>
     </View>
   );
 
   const showView = (
     <View style={Styles.divDefault}>
       <Text style={Styles.divDefaultLabel}>{label}</Text>
-      <Text style={Styles.divDefaultValue}>{value}</Text>
+      {currentValue ? (
+        <Text style={Styles.divDefaultValue}>{currentValue}</Text>
+      ) : (
+        <Text style={Styles.emptyValue}>*Пусто*</Text>
+      )}
     </View>
   );
 

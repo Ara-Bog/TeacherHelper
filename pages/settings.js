@@ -339,6 +339,7 @@ export default class Settings extends Component {
               listMode="SCROLLVIEW"
               style={Styles.dropDown}
               dropDownContainerStyle={Styles.dropDownBox}
+              dropDownDirection="BOTTOM"
             />
           </View>
           {/* шаблоны */}
@@ -365,6 +366,7 @@ export default class Settings extends Component {
               listMode="SCROLLVIEW"
               style={Styles.dropDown}
               dropDownContainerStyle={Styles.dropDownBox}
+              dropDownDirection="BOTTOM"
             />
           </View>
           {/* размер карточек */}
