@@ -9,11 +9,8 @@ import {
 } from 'react-native';
 import Styles from '../styleGlobal.js';
 import ButtonEdit from '../components/buttonEdit';
-import DropDownPicker from 'react-native-dropdown-picker';
 // import { Feather } from '@expo/vector-icons';
 import GroupListStudents from '../components/groupListStudents';
-
-DropDownPicker.setLanguage('RU');
 
 export default class GroupPage extends Component {
   constructor(props) {
@@ -294,7 +291,7 @@ export default class GroupPage extends Component {
             <Text style={Styles.cardDefaultLabel}>
               Возрастная группа{this.state.editing ? ' *' : null}
             </Text>
-            {this.state.editing ? (
+            {/* {this.state.editing ? (
               <DropDownPicker
                 zIndex={12}
                 open={this.state.dropDownsOpen.categori}
@@ -337,7 +334,7 @@ export default class GroupPage extends Component {
                     )[0].label
                   : 'Не выбранно'}
               </Text>
-            )}
+            )} */}
           </View>
           <View
             style={
@@ -348,7 +345,7 @@ export default class GroupPage extends Component {
             <Text style={Styles.cardDefaultLabel}>
               Заключение ЦПМПК{this.state.editing ? ' *' : null}
             </Text>
-            {this.state.editing ? (
+            {/* {this.state.editing ? (
               <DropDownPicker
                 zIndex={10}
                 open={this.state.dropDownsOpen.diagnos}
@@ -390,7 +387,7 @@ export default class GroupPage extends Component {
                     )[0].label
                   : 'Не выбранно'}
               </Text>
-            )}
+            )} */}
           </View>
           <View style={{...Styles.cardStudentLine, marginTop: 15}}></View>
           <View

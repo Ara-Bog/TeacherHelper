@@ -8,7 +8,6 @@ import {
   Linking,
   Alert,
 } from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker';
 import DocumentPicker from 'react-native-document-picker';
 import Modal from 'react-native-modal';
 

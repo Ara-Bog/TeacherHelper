@@ -7,13 +7,10 @@ import {
   Switch,
   TouchableOpacity,
 } from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker';
 import AddingButton from '../components/elements/buttonAdd';
 // import { MaterialCommunityIcons } from '@expo/vector-icons';
 // import { Feather } from '@expo/vector-icons';
 import EmptyData from '../components/emptyDataList';
-
-DropDownPicker.setLanguage('RU');
 
 export default class TimetableWrap extends Component {
   constructor(props) {

@@ -104,7 +104,7 @@ export default class StudentPage extends Component {
             label: 'Группа в организации',
             type: 'inputView',
           },
-          group: {label: 'Группы', type: 'viewLinks'},
+          group: {label: 'Группы', type: 'viewLinks', last: true},
           diagnos: {
             label: 'Заключение ЦПМПК',
             requared: true,
