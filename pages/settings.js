@@ -16,6 +16,7 @@ import Modal from 'react-native-modal';
 import SelectedList from '../components/selectedInList';
 import RowSwitcher from '../components/elements/switcherInLine';
 import LoadModal from '../components/loadingModal';
+import Dropdown from '../components/form/dropdown';
 
 // внешние действия
 import {importFromJson, clearData} from '../actions/importDB';
@@ -32,15 +33,15 @@ export default class Settings extends Component {
         typeCards: false,
       },
       screens: [
-        {label: 'Расписание', value: 'timetable'},
-        {label: 'Ученики', value: 'students'},
-        {label: 'Группы', value: 'groups'},
-        {label: 'Настройки', value: 'settings'},
+        {name: 'Расписание', id: 'timetable'},
+        {name: 'Ученики', id: 'students'},
+        {name: 'Группы', id: 'groups'},
+        {name: 'Настройки', id: 'settings'},
       ],
       temporaryTemplates: [...userSettings.templates],
       typesSchedule: [
-        {label: 'Календарное', value: 'calendar'},
-        {label: 'Еженедельное', value: 'week'},
+        {name: 'Календарное', id: 'calendar'},
+        {name: 'Еженедельное', id: 'week'},
       ],
       modalTemplates: false,
       loading: false,
@@ -252,7 +253,7 @@ export default class Settings extends Component {
   }
 
   // изменение вида расписание
-  async changeTypeSchedule(val) {
+  changeTypeSchedule(val, callback) {
     // много кода потому, что имеется визуальный баг
     // значение скидывается на нулевое во время Alert
 
@@ -261,63 +262,60 @@ export default class Settings extends Component {
 
     // если значение не поменялось, то и действий никаких не надо
     if (val == oldVal) {
-      return;
+      callback(false);
+      return true;
     }
 
     // меняем значение сразу (чтобы визуально отображалось новое)
     this.saveSettings('typeSchedule', val);
 
     // получаем промис от пользователя, что он согласен, что расписание зачистится
-    let confirmAction = new Promise((resolve, reject) => {
-      Alert.alert(
-        'Подтвердите действие',
-        'Изменение вида приведет к очистке расписания!',
-        [
-          {
-            text: 'Продолжить',
-            onPress: () => resolve(),
-          },
-          {
-            text: 'Отмена',
-            onPress: () => reject(),
-            style: 'cancel',
-          },
-        ],
-      );
-    });
+    Alert.alert(
+      'Подтвердите действие',
+      'Изменение вида приведет к очистке расписания!',
+      [
+        {
+          text: 'Продолжить',
+          onPress: () => {
+            // Загрузка...
+            this.setState({loading: true});
 
-    await confirmAction
-      .then(() => {
-        // Загрузка...
-        this.setState({loading: true});
-
-        // Получаем промис с очистки
-        let actionCleaning = clearData();
-        actionCleaning
-          .then(() => {
-            // сброс загрузки
-            this.setState({loading: false});
-            Alert.alert('Данные успешно очищены!');
-          })
-          .catch(() => {
-            this.setState({loading: false});
-            Alert.alert('Произошла непредвиденная ошибки.');
+            // Получаем промис с очистки
+            let actionCleaning = clearData(['Timetable']);
+            actionCleaning
+              .then(() => {
+                // сброс загрузки
+                this.setState({loading: false});
+                callback(true);
+                Alert.alert('Данные успешно очищены!');
+              })
+              .catch(er => {
+                this.setState({loading: false});
+                Alert.alert('Произошла непредвиденная ошибки.');
+                console.log('test err', er);
+                this.saveSettings('typeSchedule', oldVal);
+              });
+          },
+        },
+        {
+          text: 'Отмена',
+          onPress: () => {
+            // пользователь не согласился - возвращаем отказ
             this.saveSettings('typeSchedule', oldVal);
-          });
-      })
-      .catch(() => {
-        // пользователь не согласился - возвращаем значение
-        this.saveSettings('typeSchedule', oldVal);
-        return;
-      });
+          },
+          style: 'cancel',
+        },
+      ],
+    );
   }
 
   render() {
     return (
       <View style={Styles.container}>
         <ScrollView
+          overScrollMode={'always'}
           nestedScrollEnabled={true}
-          contentContainerStyle={{gap: 25}}>
+          contentContainerStyle={{gap: 25, flexGrow: 1}}>
           {/* баннер */}
           <TouchableOpacity
             onPress={() =>
@@ -326,22 +324,26 @@ export default class Settings extends Component {
             <Image source={require('../assets/baner.png')} />
           </TouchableOpacity>
           {/* первый экран */}
-          <View style={{...Styles.divDefault__edit, zIndex: 100}}>
-            <Text style={Styles.divDefaultLabel__edit}>Первый экран</Text>
-            <DropDownPicker
-              open={this.state.dropDownsOpen.firstScreen}
-              value={userSettings.firstScreen}
-              items={this.state.screens}
-              setOpen={val => this.closeOtherDropDown('firstScreen', val)}
-              setValue={callback =>
-                this.saveSettings('firstScreen', callback())
-              }
-              listMode="SCROLLVIEW"
-              style={Styles.dropDown}
-              dropDownContainerStyle={Styles.dropDownBox}
-              dropDownDirection="BOTTOM"
-            />
-          </View>
+          <Dropdown
+            data={this.state.screens}
+            value={userSettings.firstScreen}
+            editing={true}
+            label={'Первый экран'}
+            onChange={id => {
+              this.saveSettings('firstScreen', id);
+            }}
+          />
+          {/* вид расписания */}
+          <Dropdown
+            data={this.state.typesSchedule}
+            value={userSettings.typeSchedule}
+            editing={true}
+            label={'Вид расписания'}
+            // onChange={id => {
+            //   this.changeTypeSchedule(id);
+            // }}
+            onConfirm={(id, callback) => this.changeTypeSchedule(id, callback)}
+          />
           {/* шаблоны */}
           <View style={Styles.divDefault__edit}>
             <Text style={Styles.divDefaultLabel__edit}>Шаблоны</Text>
@@ -353,21 +355,6 @@ export default class Settings extends Component {
                 Изменить список шаблонов
               </Text>
             </TouchableOpacity>
-          </View>
-          {/* вид расписания */}
-          <View style={{...Styles.divDefault__edit, zIndex: 99}}>
-            <Text style={Styles.divDefaultLabel__edit}>Вид расписания</Text>
-            <DropDownPicker
-              open={this.state.dropDownsOpen.typeSchedule}
-              value={userSettings.typeSchedule}
-              items={this.state.typesSchedule}
-              setOpen={val => this.closeOtherDropDown('typeSchedule', val)}
-              setValue={callback => this.changeTypeSchedule(callback())}
-              listMode="SCROLLVIEW"
-              style={Styles.dropDown}
-              dropDownContainerStyle={Styles.dropDownBox}
-              dropDownDirection="BOTTOM"
-            />
           </View>
           {/* размер карточек */}
           <View style={Styles.divDefault__edit}>

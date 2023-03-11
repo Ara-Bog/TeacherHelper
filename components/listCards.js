@@ -129,6 +129,8 @@ export default class ListCards extends Component {
       });
   }
 
+  // создание новой карточки
+  // вызов выбора шаблона
   createNew() {
     if (userSettings.templates.length == 1) {
       this.props.navigation.navigate(this.state.typeData, {

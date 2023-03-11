@@ -113,10 +113,10 @@ async function getIds() {
 }
 
 // очистка строк из списка таблиц
-export async function clearData() {
+export async function clearData(tables = requiredColumns) {
   return db.transaction(tx => {
     // по каждой обязательной таблице удаляем записи
-    requiredColumns.forEach(item => {
+    tables.forEach(item => {
       sqlRequest = 'DELETE FROM ' + item;
       tx.executeSql(sqlRequest);
     });

@@ -38,7 +38,6 @@ export default StyleSheet.create({
   },
 
   container: {
-    display: 'flex',
     paddingTop: 30,
     paddingHorizontal: 20,
     flexDirection: 'column',
@@ -105,6 +104,7 @@ export default StyleSheet.create({
     lineHeight: 16,
     fontFamily: 'sf_regular',
     fontStyle: 'normal',
+    color: COLORS.darkBlue,
   },
 
   cardDelaultRowLine: {
@@ -129,7 +129,7 @@ export default StyleSheet.create({
   rowSwitchText: {
     fontSize: 14,
     fontFamily: 'sf_medium',
-    color: '#04021D',
+    color: COLORS.darkBlue,
     fontWeight: 400,
   },
 
@@ -191,13 +191,11 @@ export default StyleSheet.create({
 
   formDataTime: {
     display: 'flex',
-    borderColor: COLORS.gray,
-    borderWidth: 1,
-    backgroundColor: '#fff',
-    height: 50,
-    paddingHorizontal: 25,
-    borderRadius: 10,
+    height: '100%',
     justifyContent: 'center',
+    padding: 0,
+    margin: 0,
+    width: '100%',
   },
 
   formDataTimeText: {
@@ -205,6 +203,7 @@ export default StyleSheet.create({
     fontFamily: 'sf_regular',
     fontWeight: '400',
     lineHeight: 24,
+    color: COLORS.darkBlue,
   },
 
   rowForm: {
@@ -212,15 +211,42 @@ export default StyleSheet.create({
   },
 
   dropDown: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    paddingVertical: 13,
     paddingHorizontal: 25,
+    borderRadius: 10,
     height: 50,
     borderColor: COLORS.gray,
   },
 
+  dropDownText: {
+    fontSize: 14,
+    lineHeight: 24,
+    color: COLORS.darkBlue,
+  },
+
   dropDownBox: {
-    borderColor: COLORS.gray,
-    paddingHorizontal: 15,
-    paddingVertical: 0,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8.5,
+    borderWidth: 0,
+  },
+
+  dropDownBoxRow: {
+    paddingHorizontal: 25,
+    paddingVertical: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 1.5,
+    borderRadius: 10,
+  },
+
+  dropDownBoxRowText: {
+    fontSize: 14,
+    lineHeight: 17,
+    color: COLORS.darkBlue,
   },
 
   cardDelaultGoTo: {
@@ -304,7 +330,7 @@ export default StyleSheet.create({
     fontWeight: '500',
     fontFamily: 'sf_medium',
     marginBottom: 15,
-    color: '#04021D',
+    color: COLORS.darkBlue,
   },
 
   emptyContainer_addedText: {
@@ -361,7 +387,25 @@ export default StyleSheet.create({
     color: '#848484',
   },
 
-  // cardDefaultLabel
+  divMain: {
+    gap: 15,
+    width: '100%',
+  },
+
+  divMainTitle: {
+    fontWeight: 500,
+    fontSize: 16,
+    lineHeight: 19,
+    color: COLORS.darkBlue,
+  },
+
+  divMainValue: {
+    fontWeight: 400,
+    fontSize: 14,
+    lineHeight: 20,
+    color: COLORS.darkBlue,
+  },
+
   divDefaultLabel__edit: {
     fontFamily: 'sf_regular',
     fontWeight: 400,
@@ -562,7 +606,18 @@ export default StyleSheet.create({
     textTransform: 'uppercase',
   },
 
-  cardStudentNoteText: {
+  divNoteInput: {
+    textAlignVertical: 'top',
+    fontSize: 14,
+    fontFamily: 'sf_regular',
+    lineHeight: 20,
+    fontWeight: '400',
+    padding: 0,
+    margin: 0,
+    color: COLORS.darkBlue,
+  },
+
+  divNoteText: {
     fontSize: 14,
     fontFamily: 'sf_regular',
     lineHeight: 20,
@@ -570,19 +625,16 @@ export default StyleSheet.create({
     color: COLORS.darkBlue,
   },
 
-  cardStudentNote_edit: {
+  divNoteWrap_edit: {
     borderColor: COLORS.gray,
     borderWidth: 1,
     borderRadius: 10,
-    textAlignVertical: 'top',
     paddingHorizontal: 25,
     paddingVertical: 16,
-    fontSize: 14,
-    fontFamily: 'sf_regular',
-    lineHeight: 20,
-    fontWeight: '400',
     color: COLORS.darkBlue,
   },
+
+  divNoteWrap: {},
 
   selectedList: {
     flexGrow: 1,
@@ -891,7 +943,7 @@ export default StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
     fontWeight: 400,
-    color: '#04021D',
+    color: COLORS.darkBlue,
   },
 
   opacityButton: {

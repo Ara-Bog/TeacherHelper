@@ -26,19 +26,22 @@ export default function NavPage({values, onSelect, selected}) {
   );
 
   return (
-    <View style={{backgroundColor: '#fff'}}>
-      <ScrollView
-        horizontal={true}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{
-          display: 'flex',
-          minWidth: '100%',
-          width: 'auto',
-        }}>
-        {values.map((item, index) => {
-          return Tab(item.tab_name || item.name, item.id, index);
-        })}
-      </ScrollView>
-    </View>
+    <>
+      <View style={Styles.seqLineHeader}></View>
+      <View style={{backgroundColor: '#fff'}}>
+        <ScrollView
+          horizontal={true}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{
+            display: 'flex',
+            minWidth: '100%',
+            width: 'auto',
+          }}>
+          {values.map((item, index) => {
+            return Tab(item.tab_name || item.name, item.id, index);
+          })}
+        </ScrollView>
+      </View>
+    </>
   );
 }

@@ -107,6 +107,7 @@ export default function App() {
         options={{title: 'Фильтр'}}
         component={FilterPage}
       />
+      <Stack.Screen name="Group" component={GroupPage} />
     </Stack.Navigator>
   );
 

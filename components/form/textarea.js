@@ -1,17 +1,26 @@
 import React, {useState} from 'react';
 import {Text, View, TextInput} from 'react-native';
+import {DivDefaultCol} from '../elements/divDefault';
 
-export default function InputView({value, editing, label, onChange, requared}) {
+export default function Textarea({
+  value,
+  editing,
+  label,
+  onChange,
+  requared,
+  type,
+}) {
   // получает:
   // - режим редактирования или просмотра -- editing: Bool
   // - значение поля ввода -- value: String
   // - звездочка в поле -- requared: Bool
   // - заголовок -- label: String
+  // - дата или время или вместе -- type: String
   // --
   // обратный вызов:
   // - изменение значения поля -- onChange(val: string)
 
-  const [currentValue, setVal] = useState(value);
+  const [currentValue, setVal] = useState(value || '');
 
   const editingView = (
     <View style={Styles.divDefault__edit}>
@@ -19,30 +28,30 @@ export default function InputView({value, editing, label, onChange, requared}) {
         {label}
         {requared ? ' *' : null}
       </Text>
-      <View style={Styles.inputDefaultWrap}>
+      <View style={Styles.divNoteWrap_edit}>
         <TextInput
-          style={Styles.inputDefault}
+          multiline={true}
+          numberOfLines={5}
           value={currentValue}
-          placeholder={'Введите текст'}
+          placeholder={'Введиие текст'}
           onChangeText={val => {
-            onChange(val);
             setVal(val);
+            onChange(val);
           }}
+          style={Styles.divNoteInput}
+          editable={editing}
         />
       </View>
     </View>
   );
 
-  const showView = (
-    <View style={Styles.divDefault}>
-      <Text style={Styles.divDefaultLabel}>{label}</Text>
-      {currentValue ? (
-        <Text style={Styles.divDefaultValue}>{currentValue}</Text>
+  return (
+    <>
+      {editing ? (
+        editingView
       ) : (
-        <Text style={Styles.emptyValue}>Не указано</Text>
+        <DivDefaultCol label={label} value={currentValue} />
       )}
-    </View>
+    </>
   );
-
-  return <>{editing ? editingView : showView}</>;
 }

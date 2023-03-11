@@ -1,83 +1,115 @@
-import React, {useState, useEffect} from 'react';
-import {Text, View, TextInput} from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker';
+import React, {useState, useRef} from 'react';
+import {Text, View} from 'react-native';
+import {DivDefaultRow} from '../elements/divDefault';
+import {Dropdown} from 'react-native-element-dropdown';
 
-DropDownPicker.setLanguage('RU');
-
-export default function Dropdown({
+export default function DropdownView({
   value,
   data,
   editing,
   label,
   onChange,
   requared,
-  zIndex,
-  // currentOpen,
-  open,
-  setOpen,
-  // testIndex,
-  ref,
+  onConfirm,
 }) {
   // получает:
-  // - режим редактирования или просмотра -- editing: Bool
   // - значение поля ввода -- value: String
-  // - звездочка в поле -- requared: Bool
+  // - массив объектов заполняемых значений дроплиста -- data: Array<Object>
+  // - режим редактирования или просмотра -- editing: Bool
   // - заголовок -- label: String
-  // - zIndex блока -- zIndex: int
+  // - звездочка в поле -- requared: Bool
   // --
   // обратный вызов:
   // - изменение значения поля -- onChange(val: string)
+  // - при выборе, требующий подтверждения, отправляется
+  // выбранный id и в случае успеха = вызывается afterConfirm
+  // для изменения состояний компонента  -- onConfirm(id: int, afterConfirm: Function)
 
   const [currentValue, setVal] = useState(value);
-  // const [open123, setOpen] = useState();
   const [items, setItems] = useState(data);
+  const [name, setName] = useState(
+    value
+      ? data.find(item => {
+          return item.id == value;
+        }).name
+      : null,
+  );
+  // ссылка на список, чтобы закрывать его
+  const drop = useRef();
+
+  // кастомный элемент выпадающего списка
+  const itemRender = (item, selected) => {
+    return (
+      <View
+        style={{
+          ...Styles.dropDownBoxRow,
+          backgroundColor: selected ? 'rgba(85, 74, 240, 0.1)' : '#fff',
+        }}>
+        <Text
+          style={{
+            ...Styles.dropDownBoxRowText,
+            color: selected ? '#554AF0' : '#04021D',
+          }}>
+          {item.name}
+        </Text>
+      </View>
+    );
+  };
 
   const editingView = (
-    <View style={{...Styles.divDefault__edit, zIndex: zIndex}}>
+    <View style={Styles.divDefault__edit}>
       <Text style={Styles.divDefaultLabel__edit}>
         {label}
         {requared ? ' *' : null}
       </Text>
-      <DropDownPicker
-        schema={{
-          label: 'name',
-          value: 'id',
-        }}
-        // open={test === testIndex}
-        open={open}
-        value={currentValue}
-        items={items}
-        setOpen={val => {
-          setOpen(val);
-        }}
-        setValue={setVal}
-        setItems={setItems}
-        listMode="SCROLLVIEW"
+      <Dropdown
+        ref={drop}
         style={Styles.dropDown}
-        dropDownContainerStyle={Styles.dropDownBox}
-        disabled={!editing}
-        dropDownDirection="BOTTOM"
+        selectedTextStyle={Styles.dropDownText}
+        itemContainerStyle={{borderRadius: 10}}
+        maxHeight={250}
+        containerStyle={Styles.dropDownBox}
+        activeColor="transparent"
+        backgroundColor="rgba(4, 2, 29, 0.3)"
+        fontFamily="sf_regular"
+        labelField="name"
+        valueField="id"
+        value={currentValue}
+        // проверка на необходимость подтверждения
+        confirmSelectItem={onConfirm instanceof Function}
+        onChange={item => {
+          // возвращаем колбэк
+          onChange(item.id);
+          // устанавливаем новое значение для списка
+          setVal(item.id);
+          // устанавливаем имя для отображения
+          setName(item.name);
+        }}
+        onConfirmSelectItem={item => {
+          // вызываем функцию подтверждения
+          onConfirm(item.id, change => {
+            // когда подтвеждение выполненно успешно
+            if (change) {
+              // устанавливаем значение
+              setVal(item.id);
+              // устанавливаем имя
+              setName(item.name);
+              // вызов колбэка не нужен, т.к. он обрабатывается в подтверждении
+            }
+            // закрываем список
+            drop.current.close();
+          });
+        }}
+        // автоскролл до выбранного значения
+        autoScroll={false}
+        data={items}
+        // кастомный элемент списка
+        renderItem={itemRender}
       />
     </View>
   );
-  const showView = (
-    <View style={Styles.divDefault}>
-      <Text style={Styles.divDefaultLabel}>{label}</Text>
-      {currentValue ? (
-        <Text style={Styles.divDefaultValue}>
-          {
-            items.find(item => {
-              return (item.id = currentValue);
-            }).name
-          }
-        </Text>
-      ) : (
-        <Text style={Styles.emptyValue}>
-          *Пустоasdasdasdasdasdasdasdasdasdasdasdasdasdas*
-        </Text>
-      )}
-    </View>
-  );
 
-  return <>{editing ? editingView : showView}</>;
+  return (
+    <>{editing ? editingView : <DivDefaultRow label={label} value={name} />}</>
+  );
 }

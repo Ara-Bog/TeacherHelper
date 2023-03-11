@@ -1,14 +1,5 @@
 import React, {Component} from 'react';
-import {
-  Text,
-  View,
-  ScrollView,
-  Alert,
-  TouchableOpacity,
-  TextInput,
-  FlatList,
-  Animated,
-} from 'react-native';
+import {Text, View, ScrollView, Alert, TouchableOpacity} from 'react-native';
 import ButtonEdit from '../components/buttonEdit';
 import SubTab from '../components/generatorPages';
 import EmptyData from '../components/emptyDataList';
@@ -107,25 +98,35 @@ export default class StudentPage extends Component {
           date_bd: {
             label: 'Возраст',
             labelEdit: 'Дата рождения',
-            type: 'dateTime',
+            type: 'dateTime-date',
           },
           group_org: {
             label: 'Группа в организации',
             type: 'inputView',
           },
-          group: {label: 'Группы', type: 'view'},
-          note: {label: 'Заметки', type: 'textarea'},
+          group: {label: 'Группы', type: 'viewLinks'},
+          diagnos: {
+            label: 'Заключение ЦПМПК',
+            requared: true,
+            type: 'droplist',
+          },
+          category: {
+            label: 'Возрастная группа',
+            requared: true,
+            type: 'droplist',
+          },
+          note: {label: 'Заметки', type: 'textarea', last: true},
         },
 
         default_contacts: {
           contacts: {
             label: '',
             type: 'dynamicBlock',
-            values: [
-              {label: 'ФИО', type: 'inputView', requared: true},
-              {label: 'Телефон', type: 'phone', requared: true},
-              {label: 'Кем приходится', type: 'inputView'},
-            ],
+            childrens: {
+              1: {label: 'ФИО', type: 'inputView', requared: true},
+              2: {label: 'Телефон', type: 'phone', requared: true},
+              3: {label: 'Кем приходится', type: 'inputView'},
+            },
           },
         },
       },
@@ -135,8 +136,12 @@ export default class StudentPage extends Component {
       // текущие данные ученика
       currentData: {},
 
+      // состояние загрузки данных с бд
       loading: true,
+
+      funcAdd: [],
     };
+
     // способ открытия страницы
     currentType = this.state.options.type;
     // флаг, для запроса данных ученика
@@ -144,6 +149,7 @@ export default class StudentPage extends Component {
     // для уменьшения количества рендеров
     // данные обновляются без setState
     // в последней транзакции 2-х блоков меняется флаг загрузки
+    // ДОРАБОТАТЬ ЛОГИКУ copy и add
     db.transaction(tx => {
       // получение сортированных секций
       tx.executeSql(
@@ -158,7 +164,7 @@ export default class StudentPage extends Component {
       // по конкретному шаблону
       tx.executeSql(
         `
-        SELECT sym.id as id_symptom, 
+        SELECT sym.id_section, sym.id as id_symptom, 
           symVal.id as id_symptomsValue, sym.id_parent, 
           sym.symptom, symVal.value, sym.typeSym, type.name AS typeVal
         FROM (
@@ -199,12 +205,7 @@ export default class StudentPage extends Component {
         `,
         [this.state.options.template[0]],
         (_, {rows}) =>
-          (this.state.defaultData.default_main.diagnosis = {
-            label: 'Заключение ЦПМПК',
-            requared: true,
-            type: 'droplist',
-            values: rows.raw(),
-          }),
+          (this.state.defaultData.default_main.diagnos.values = rows.raw()),
         err => console.log('error studentPage get Diagnosis', err),
       );
 
@@ -217,12 +218,7 @@ export default class StudentPage extends Component {
         `,
         [],
         (_, {rows}) => {
-          this.state.defaultData.default_main.categories = {
-            label: 'Возрастная группа',
-            requared: true,
-            type: 'droplist',
-            values: rows.raw(),
-          };
+          this.state.defaultData.default_main.category.values = rows.raw();
           if (!getStudent) {
             this.setState({loading: false});
           }
@@ -230,8 +226,9 @@ export default class StudentPage extends Component {
         err => console.log('error studentPage get Categories', err),
       );
 
+      // получение текущих данных студента
       if (getStudent) {
-        // получение симптоматики ученика
+        // симптоматика ученика
         tx.executeSql(
           `
           SELECT 
@@ -254,11 +251,14 @@ export default class StudentPage extends Component {
           },
           err => console.log('error studentPage get cur symptoms', err),
         );
-        // получение данных об ученике
+
+        // данные об ученике
         tx.executeSql(
           `
           SELECT surname, name, midname, 
-              group_org, date_bd, note
+              group_org, date_bd, note,
+              id_diagnos as diagnos,
+              id_category as category
           FROM Students
           WHERE id = ?
           `,
@@ -296,7 +296,7 @@ export default class StudentPage extends Component {
           `,
           [this.state.options.id],
           (_, {rows}) => {
-            this.state.currentData.group = rows.raw();
+            this.state.currentData.groups = rows.raw();
             this.setState({loading: false});
           },
           err => console.log('error studentPage get ListStudentsGroup', err),
@@ -307,14 +307,15 @@ export default class StudentPage extends Component {
     switch (currentType) {
       case 'view':
         this.props.navigation.setOptions({
-          headerTitle: props => (
+          headerTitle: () => (
             <HeaderTitle
               mainTitle="Карточка ученика"
               addedTitle={this.state.options.template[1]}
             />
           ),
           headerRight: () => (
-            <TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => this.setState({editing: !this.state.editing})}>
               <Icons.Feather name="edit" size={24} color="#554AF0" />
             </TouchableOpacity>
           ),
@@ -323,14 +324,14 @@ export default class StudentPage extends Component {
       case 'add':
         this.state.editing = true;
         this.props.navigation.setOptions({
-          headerTitle: props => (
+          headerTitle: () => (
             <HeaderTitle
               mainTitle="Новая карточка"
               addedTitle={this.state.options.template[1]}
             />
           ),
           headerRight: () => (
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => console.log('remove card')}>
               <Icons.Feather name="trash" size={24} color="#DC5F5A" />
             </TouchableOpacity>
           ),
@@ -339,14 +340,14 @@ export default class StudentPage extends Component {
       case 'copy':
         this.state.editing = true;
         this.props.navigation.setOptions({
-          headerTitle: props => (
+          headerTitle: () => (
             <HeaderTitle
               mainTitle="Копия карточки"
               addedTitle={this.state.options.template[1]}
             />
           ),
           headerRight: () => (
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => console.log('remove card')}>
               <Icons.Feather name="trash" size={24} color="#DC5F5A" />
             </TouchableOpacity>
           ),
@@ -360,9 +361,9 @@ export default class StudentPage extends Component {
     if (this.state.loading) {
       return <></>;
     }
+
     return (
       <>
-        <View style={Styles.seqLineHeader}></View>
         <NavPage
           values={this.state.sections}
           selected={this.state.selectedPageIndex}
@@ -378,19 +379,24 @@ export default class StudentPage extends Component {
             this.setState({selectedPageIndex: e.nativeEvent.position})
           }>
           {this.state.sections.map((item, index) => {
+            const assignData = {
+              ...this.state.defaultData[item.name],
+              ...this.state.sectionsData[item.id],
+            };
             return (
               <SubTab
                 key={item.id}
                 lable={item.show_label ? item.name : null}
-                data={this.state.sectionsData[item.id]}
-                defaultData={this.state.defaultData[item.name]}
+                data={assignData}
                 currentData={this.state.currentData}
                 editing={this.state.editing}
-                isFocused={this.state.selectedPageIndex === index}
+                indexParent={item.id}
+                useDynamic={() => this.state.funcAdd.push(index)}
               />
             );
           })}
         </PagerView>
+        {console.log('test state', this.state.funcAdd)}
         {/* <ButtonEdit
           // changeState={() =>
           //   this.setState({
