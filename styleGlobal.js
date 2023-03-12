@@ -168,27 +168,6 @@ export default StyleSheet.create({
     elevation: 20,
   },
 
-  float_btEdit_Check: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 50,
-    backgroundColor: '#A1DDAB',
-    padding: 16,
-    shadowColor: 'rgba(4, 2, 29, 0.7)',
-    elevation: 20,
-  },
-
-  float_btEdit_Close: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 50,
-    backgroundColor: '#FBEFEF',
-    padding: 16,
-    marginBottom: 20,
-    shadowColor: 'rgba(4, 2, 29, 0.7)',
-    elevation: 20,
-  },
-
   formDataTime: {
     display: 'flex',
     height: '100%',
@@ -959,5 +938,27 @@ export default StyleSheet.create({
     fontSize: 15,
     lineHeight: 18,
     fontWeight: 600,
+  },
+
+  viewLinksWrap: {
+    columnGap: 5,
+    rowGap: 10,
+    flexWrap: 'wrap',
+    flexDirection: 'row',
+  },
+
+  viewLinksItem: {
+    borderRadius: 15,
+    backgroundColor: 'rgba(85, 74, 240, 0.1)',
+    paddingVertical: 3,
+    paddingHorizontal: 10,
+  },
+
+  viewLinksItemText: {
+    fontSize: 12,
+    lineHeight: 24,
+    fontWeight: 400,
+    color: '#554AF0',
+    fontFamily: 'sf_medium',
   },
 });
