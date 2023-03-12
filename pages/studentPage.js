@@ -1,11 +1,12 @@
 import React, {Component} from 'react';
 import {Text, View, ScrollView, Alert, TouchableOpacity} from 'react-native';
-import ButtonEdit from '../components/buttonEdit';
+import ButtonEdit from '../components/elements/buttonEdit';
 import SubTab from '../components/generatorPages';
 import EmptyData from '../components/emptyDataList';
 import PagerView from 'react-native-pager-view';
 import NavPage from '../components/navPage';
 import HeaderTitle from '../components/elements/headerTitle';
+import setHeaderNavigation from '../actions/changeHeader';
 
 // import {TabView, SceneMap} from 'react-native-tab-view';
 
@@ -104,7 +105,7 @@ export default class StudentPage extends Component {
             label: 'Группа в организации',
             type: 'inputView',
           },
-          group: {label: 'Группы', type: 'viewLinks', last: true},
+          groups: {label: 'Группы', type: 'viewLinks', last: true},
           diagnos: {
             label: 'Заключение ЦПМПК',
             requared: true,
@@ -123,9 +124,9 @@ export default class StudentPage extends Component {
             label: '',
             type: 'dynamicBlock',
             childrens: {
-              1: {label: 'ФИО', type: 'inputView', requared: true},
-              2: {label: 'Телефон', type: 'phone', requared: true},
-              3: {label: 'Кем приходится', type: 'inputView'},
+              name: {label: 'ФИО', type: 'inputView', requared: true},
+              type: {label: 'Кем приходится', type: 'inputView'},
+              phone: {label: 'Телефон', type: 'phone', requared: true},
             },
           },
         },
@@ -139,9 +140,12 @@ export default class StudentPage extends Component {
       // состояние загрузки данных с бд
       loading: true,
 
-      funcAdd: [],
-    };
+      // отношение индексов страниц к функции динамического редактирвония
+      funcAdd: {},
 
+      // временное хранилище значений
+      valuesStorage: {},
+    };
     // способ открытия страницы
     currentType = this.state.options.type;
     // флаг, для запроса данных ученика
@@ -154,7 +158,7 @@ export default class StudentPage extends Component {
       // получение сортированных секций
       tx.executeSql(
         `SELECT id, name, show_label, tab_name FROM Sections WHERE id_template = ? ORDER BY "orderBy"`,
-        [this.state.options.template[0]],
+        [this.state.options.template.id],
         (_, {rows}) => {
           this.state.sections = rows.raw();
         },
@@ -187,7 +191,7 @@ export default class StudentPage extends Component {
         LEFT JOIN 
           TypesField as type ON symVal.type = type.id
         `,
-        [this.state.options.template[0]],
+        [this.state.options.template.id],
         (_, {rows}) =>
           (this.state.sectionsData = {
             ...this.state.sectionsData,
@@ -203,7 +207,7 @@ export default class StudentPage extends Component {
         FROM Diagnosis
         WHERE id_template IS NULL OR id_template = ?
         `,
-        [this.state.options.template[0]],
+        [this.state.options.template.id],
         (_, {rows}) =>
           (this.state.defaultData.default_main.diagnos.values = rows.raw()),
         err => console.log('error studentPage get Diagnosis', err),
@@ -248,6 +252,7 @@ export default class StudentPage extends Component {
               newData[item.id_symptom].push(item.id);
             });
             this.state.currentData.symptoms = newData;
+            this.state.valuesStorage.symptoms = newData;
           },
           err => console.log('error studentPage get cur symptoms', err),
         );
@@ -264,9 +269,14 @@ export default class StudentPage extends Component {
           `,
           [this.state.options.id],
           (_, {rows}) => {
+            let data = rows.raw()[0];
             this.state.currentData = {
               ...this.state.currentData,
-              ...rows.raw()[0],
+              ...data,
+            };
+            this.state.valuesStorage = {
+              ...this.state.valuesStorage,
+              ...data,
             };
           },
           err => console.log('error studentPage get student', err),
@@ -275,13 +285,14 @@ export default class StudentPage extends Component {
         // получение данных родителей
         tx.executeSql(
           `
-          SELECT *
+          SELECT id, name, type, phone
           FROM ParentsStudent
           WHERE id_student = ?
           `,
           [this.state.options.id],
           (_, {rows}) => {
             this.state.currentData.contacts = rows.raw();
+            this.state.valuesStorage.contacts = rows.raw();
           },
           err => console.log('error studentPage get parents', err),
         );
@@ -289,7 +300,7 @@ export default class StudentPage extends Component {
         // получение групп ученика
         tx.executeSql(
           `
-          SELECT lsg.id, g.name as 'group'
+          SELECT lsg.id, g.name
           FROM ListStudentsGroup as lsg
           LEFT JOIN Groups as g ON lsg.id_group = g.id
           WHERE lsg.id_student = ?
@@ -297,63 +308,66 @@ export default class StudentPage extends Component {
           [this.state.options.id],
           (_, {rows}) => {
             this.state.currentData.groups = rows.raw();
+            this.state.valuesStorage.groups = rows.raw();
             this.setState({loading: false});
           },
           err => console.log('error studentPage get ListStudentsGroup', err),
         );
       }
     });
+    this.setNavView = () =>
+      setHeaderNavigation({
+        mainTitle: 'Карточка ученика',
+        addedTitle: this.state.options.template.name,
+        onPressIcon: () => {
+          this.setState({editing: true});
+          setHeaderNavigation({
+            mainTitle: 'Редактирование карточки',
+            addedTitle: this.state.options.template.name,
+            onPressIcon: () => console.log('remove card'),
+            navigation: this.props.navigation,
+            IconStyle: 'remove',
+          });
+        },
+        navigation: this.props.navigation,
+        IconStyle: 'edit',
+      });
+
     // установка заголовка и соответствующей иконки вверху справа
     switch (currentType) {
       case 'view':
-        this.props.navigation.setOptions({
-          headerTitle: () => (
-            <HeaderTitle
-              mainTitle="Карточка ученика"
-              addedTitle={this.state.options.template[1]}
-            />
-          ),
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={() => this.setState({editing: !this.state.editing})}>
-              <Icons.Feather name="edit" size={24} color="#554AF0" />
-            </TouchableOpacity>
-          ),
-        });
+        this.setNavView();
         break;
       case 'add':
         this.state.editing = true;
-        this.props.navigation.setOptions({
-          headerTitle: () => (
-            <HeaderTitle
-              mainTitle="Новая карточка"
-              addedTitle={this.state.options.template[1]}
-            />
-          ),
-          headerRight: () => (
-            <TouchableOpacity onPress={() => console.log('remove card')}>
-              <Icons.Feather name="trash" size={24} color="#DC5F5A" />
-            </TouchableOpacity>
-          ),
+        setHeaderNavigation({
+          mainTitle: 'Новая карточка',
+          addedTitle: this.state.options.template.name,
+          onPressIcon: () => console.log('remove card'),
+          navigation: this.props.navigation,
+          IconStyle: 'remove',
         });
         break;
       case 'copy':
         this.state.editing = true;
-        this.props.navigation.setOptions({
-          headerTitle: () => (
-            <HeaderTitle
-              mainTitle="Копия карточки"
-              addedTitle={this.state.options.template[1]}
-            />
-          ),
-          headerRight: () => (
-            <TouchableOpacity onPress={() => console.log('remove card')}>
-              <Icons.Feather name="trash" size={24} color="#DC5F5A" />
-            </TouchableOpacity>
-          ),
+
+        setHeaderNavigation({
+          mainTitle: 'Копия карточки',
+          addedTitle: this.state.options.template.name,
+          onPressIcon: () => console.log('remove card'),
+          navigation: this.props.navigation,
+          IconStyle: 'remove',
         });
         break;
     }
+  }
+
+  confirmEdit() {
+    Object.keys(this.state.defaultData.default_main).forEach(key => {
+      if (this.state.defaultData.default_main[key].requared) {
+        console.log('test', this.state.valuesStorage[key] == 0);
+      }
+    });
   }
 
   render() {
@@ -361,7 +375,6 @@ export default class StudentPage extends Component {
     if (this.state.loading) {
       return <></>;
     }
-
     return (
       <>
         <NavPage
@@ -388,27 +401,31 @@ export default class StudentPage extends Component {
                 key={item.id}
                 lable={item.show_label ? item.name : null}
                 data={assignData}
-                currentData={this.state.currentData}
+                currentData={this.state.valuesStorage}
                 editing={this.state.editing}
                 indexParent={item.id}
-                useDynamic={() => this.state.funcAdd.push(index)}
+                useDynamic={func => (this.state.funcAdd[index] = func)}
+                navigation={this.props.navigation}
               />
             );
           })}
         </PagerView>
-        {console.log('test state', this.state.funcAdd)}
-        {/* <ButtonEdit
-          // changeState={() =>
-          //   this.setState({
-          //     editing: !this.state.editing,
-          //     dropDownsOpen: {subgroup: false, categori: false, diagnos: false},
-          //   })
-          // }
-          editing={this.state.editing}
-          // confirm={feedback => {
-          //   feedback ? this.checkData() : this.undoActions();
-          // }}
-        /> */}
+        {this.state.editing ? (
+          <ButtonEdit
+            onChangeState={() => {
+              this.setState({
+                editing: false,
+                valuesStorage: JSON.parse(
+                  JSON.stringify(this.state.currentData),
+                ),
+              });
+              this.setNavView();
+            }}
+            funcAdd={this.state.funcAdd[this.state.selectedPageIndex]}
+            onUpdate={() => this.forceUpdate()}
+            onConfirm={() => this.confirmEdit()}
+          />
+        ) : null}
       </>
     );
   }

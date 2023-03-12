@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import Styles from '../styleGlobal.js';
-import ButtonEdit from '../components/buttonEdit';
+// import ButtonEdit from '../components/buttonEdit';
 // import { Feather } from '@expo/vector-icons';
 import GroupListStudents from '../components/groupListStudents';
 
@@ -408,7 +408,7 @@ export default class GroupPage extends Component {
           </View>
           <View style={Styles.crutch}></View>
         </ScrollView>
-        <ButtonEdit
+        {/* <ButtonEdit
           changeState={() =>
             this.setState({
               editing: !this.state.editing,
@@ -419,7 +419,7 @@ export default class GroupPage extends Component {
           confirm={feedback => {
             feedback ? this.checkData() : this.undoActions();
           }}
-        />
+        /> */}
       </View>
     );
   }

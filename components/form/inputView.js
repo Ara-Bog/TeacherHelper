@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {Text, View, TextInput} from 'react-native';
 
 export default function InputView({value, editing, label, onChange, requared}) {
@@ -12,6 +12,10 @@ export default function InputView({value, editing, label, onChange, requared}) {
   // - изменение значения поля -- onChange(val: string)
 
   const [currentValue, setVal] = useState(value);
+
+  useEffect(() => {
+    setVal(value);
+  }, [editing]);
 
   const editingView = (
     <View style={Styles.divDefault__edit}>

@@ -36,7 +36,6 @@ export default class ListStudentsWrap extends Component {
       // флаг больших карточек
       bigSizeCards: userSettings.bigCardStudent,
     };
-
     // добавление кнопки фильтра (фильтр идет страницей в стаке в App)
     this.props.navigation.setOptions({
       headerRight: () => (

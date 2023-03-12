@@ -25,7 +25,7 @@ import DynamicBlock from './form/dynamicBlock';
 // +-- inputView
 // -- phone
 // +-- dateTime
-// -- dynamicBlock
+// =-- dynamicBlock
 // +-- droplist
 // -- label
 // -- checker_only
@@ -40,8 +40,9 @@ function getComponent({
   indexParent,
   currentVals,
   callback,
-  nasting = false,
   addPlus,
+  navigation,
+  nasting = false,
 }) {
   // общее хранилище элементов
   let massObjects = [];
@@ -56,7 +57,7 @@ function getComponent({
       isNumber = false;
     }
     // копирование объекта
-    const curObj = JSON.parse(JSON.stringify(data[key]));
+    const curObj = data[key];
     // приведение индекса к дереву
     const index = [indexParent, indexEl].join('.');
     // пропсы по умолчанию
@@ -89,89 +90,108 @@ function getComponent({
       curObj.type = 'dateTime';
     }
 
+    let asd = [];
     // КОСТЫЛЬ
     // когда элемент является dynamicBlock необходимо вернуть callback,
     // что нужно добавить кнопку add в панель управления
     if (curObj.type === 'dynamicBlock') {
-      addPlus();
+      // let increment = currentVals[key].length;
+      // currentVals[key].forEach((item, indexEl) => {
+      //   asd.push(
+      //     ...getComponent({
+      //       data: curObj.childrens,
+      //       indexParent: [index, indexEl].join('.'),
+      //       currentVals: item,
+      //       callback: callback,
+      //       nasting: true,
+      //     }),
+      //   );
+      // });
+      // addPlus(() => {
+      //   asd.push(
+      //     ...getComponent({
+      //       data: curObj.childrens,
+      //       indexParent: [index, increment].join('.'),
+      //       currentVals: {},
+      //       callback: callback,
+      //       nasting: true,
+      //     }),
+      //   );
+      //   increment++;
+      // });
+    } else if (curObj.childrens != undefined) {
+      // asd = getComponent({
+      //   data: curObj.childrens,
+      //   indexParent: index,
+      //   currentVals: currentVals,
+      //   callback: callback,
+      //   nasting: true,
+      // });
     }
-
-    let asd;
-    if (curObj.childrens != undefined) {
-      asd = getComponent({
-        data: curObj.childrens,
-        indexParent: index,
-        currentVals: currentVals,
-        callback: callback,
-        nasting: true,
-      });
-    }
-
-    console.log('test lab', curObj.label);
-    console.log('test asd', asd);
 
     // добавляем в массив функции параметром
     // режим редактирования -- curEditing: Bool
-    currMass.push(curEditing => {
-      switch (curObj.type) {
-        case 'inputView':
-          return <InputView {...defData} editing={curEditing} />;
-          break;
-        case 'droplist':
-          return (
-            <Dropdown
-              {...defData}
-              editing={curEditing}
-              // датасет для списка
-              data={curObj.values}
-            />
-          );
-          break;
-        case 'dateTime':
-          // ПЕРЕДЕЛАТЬ
-          return (
-            <BirhdayView
-              {...defData}
-              editing={curEditing}
-              // тип пикера
-              type={postfix}
-              // заголовок при редактировании
-              labelEdit={curObj.labelEdit}
-            />
-          );
-          break;
-        case 'textarea':
-          // {
-          //   data,
-          //   indexParent,
-          //   currentVals,
-          //   callback,
-          //   nasting = false,
-          //   addPlus,
-          // }
-          return <Textarea {...defData} editing={curEditing} />;
-          break;
-        case 'dynamicBlock':
-          return (
-            <DynamicBlock {...defData} editing={curEditing} childrens={asd} />
-          );
-          break;
-        // ЖДЕМ ДИЗАЙН
-        // case 'viewLinks':
-        //   return (
-        //     <ViewLinks {...defData} editing={curEditing} />
-        //   );
-        //   break;
-        // ЗАГЛУШКА
-        default:
-          return (
-            <Text key={defData.key} style={{color: '#04021D'}}>
-              {defData.label}
-            </Text>
-          );
-          break;
-      }
-    });
+    currMass.push([
+      key,
+      (curEditing, dataset) => {
+        switch (curObj.type) {
+          case 'inputView':
+            return <InputView {...defData} editing={curEditing} />;
+            break;
+          case 'droplist':
+            return (
+              <Dropdown
+                {...defData}
+                editing={curEditing}
+                // датасет для списка
+                data={curObj.values}
+              />
+            );
+            break;
+          case 'dateTime':
+            // ПЕРЕДЕЛАТЬ
+            return (
+              <BirhdayView
+                {...defData}
+                editing={curEditing}
+                // тип пикера
+                type={postfix}
+                // заголовок при редактировании
+                labelEdit={curObj.labelEdit}
+              />
+            );
+            break;
+          case 'textarea':
+            return <Textarea {...defData} editing={curEditing} />;
+            break;
+          // ДОРАБОТАТЬ
+          // case 'dynamicBlock':
+          //   return (
+          //     <DynamicBlock {...defData} editing={curEditing} childrens={asd} />
+          //   );
+          //   break;
+          case 'viewLinks':
+            return (
+              <ViewLinks
+                {...defData}
+                editing={curEditing}
+                navigate={curId =>
+                  navigation.navigate('Group', {type: 'view', id: curId})
+                }
+              />
+            );
+            break;
+          // ЗАГЛУШКА
+          default:
+            return (
+              <Text key={defData.key} style={{color: '#04021D', fontSize: 16}}>
+                {defData.label}
+              </Text>
+            );
+            break;
+        }
+      },
+    ]);
   });
   return [...massObjects, ...massLastObjects];
 }
@@ -181,23 +201,22 @@ export default class SubTab extends Component {
     super(props);
     this.state = {
       defaultSrtuct: JSON.parse(JSON.stringify(this.props.data)),
-      defaultData: JSON.parse(JSON.stringify(this.props.currentData)),
-      currentData: JSON.parse(JSON.stringify(this.props.currentData)),
+      defaultData: this.props.currentData,
       defContent: [],
       mainContent: [],
       editing: this.props.editing,
       indexParent: this.props.indexParent,
     };
-
     if (this.state.defaultSrtuct != undefined) {
       this.state.defContent = getComponent({
         data: this.state.defaultSrtuct,
         indexParent: this.state.indexParent,
-        currentVals: this.state.defaultData,
+        currentVals: this.props.currentData,
         callback: (key, val) => {
-          this.state.defaultData[key] = val;
+          this.props.currentData[key] = val;
         },
-        addPlus: () => this.props.useDynamic(),
+        addPlus: func => this.props.useDynamic(func),
+        navigation: this.props.navigation,
       });
     }
   }
@@ -208,22 +227,39 @@ export default class SubTab extends Component {
     }
   }
 
+  // componentDidUpdate(prevProps, prevState) {
+  //   if (prevProps.editing != this.props.editing) {
+  //     if (
+  //       JSON.stringify(prevProps.currentData) !=
+  //       JSON.stringify(this.props.currentData)
+  //     ) {
+  //       console.log('hui', this.props.currentData.name);
+  //       console.log('ne hui', prevProps.currentData.name);
+  //       this.forceUpdate();
+  //     }
+  //   }
+  // }
+
   render() {
     if (this.state.editing != this.props.editing) {
       this.state.editing = this.props.editing;
     }
+
+    // if (this.state.indexParent === 1) {
+    //   console.log('test 1', this.state.defaultData.name);
+    //   console.log('test 2', this.props.currentData.name);
+    // }
+
     return (
       <View
         style={{
           ...Styles.container,
           backgroundColor: '#fff',
         }}>
-        <ScrollView
-          nestedScrollEnabled={true}
-          contentContainerStyle={{gap: 25}}>
+        <ScrollView contentContainerStyle={{gap: 25}}>
           {this.props.lable === null ? null : <Text>{this.props.lable}</Text>}
           {this.state.defContent.map(item => {
-            return item(this.state.editing);
+            return item[1](this.state.editing, this.props.currentData[item[0]]);
           })}
           {/* пустое пространство */}
           <View style={Styles.crutch}></View>

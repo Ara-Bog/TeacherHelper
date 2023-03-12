@@ -30,17 +30,20 @@ export default function DynamicBlock({
       <View style={Styles.inputDefaultWrap}></View>
     </View>
   );
-  console.debug('qwe', childrens);
+
   const showView = (
-    <View style={Styles.divDefault}>
-      <Text style={Styles.divDefaultLabel}>{label}</Text>
-      {currentValue ? (
-        <Text style={Styles.divDefaultValue}>asd</Text>
-      ) : (
-        <Text style={Styles.emptyValue}>Не указано</Text>
-      )}
-    </View>
+    <>
+      {childrens.map(item => {
+        return item(editing);
+      })}
+    </>
   );
 
-  return <>{editing ? editingView : showView}</>;
+  return (
+    <>
+      {childrens.map(item => {
+        return item(editing);
+      })}
+    </>
+  );
 }

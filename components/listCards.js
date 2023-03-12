@@ -31,7 +31,7 @@ export default class ListCards extends Component {
       // id карточки, которую зажали
       holdIdCard: 0,
       // id_template карточки которую зажали
-      holdCardTemplate: [],
+      holdCardTemplate: {},
       // открытие модалки выбора шаблона
       selectTemplateShow: false,
     };
@@ -164,7 +164,7 @@ export default class ListCards extends Component {
                   : this.props.navigation.navigate(this.state.typeData, {
                       type: 'view',
                       id: item.ID,
-                      template: [item.id_template, item.RightTop],
+                      template: {id: item.id_template, name: item.RightTop},
                     });
               }}
               onCallLong={() => {
@@ -175,7 +175,10 @@ export default class ListCards extends Component {
                   : this.setState({
                       onHold: true,
                       holdIdCard: item.ID,
-                      holdCardTemplate: [item.id_template, item.RightTop],
+                      holdCardTemplate: {
+                        id: item.id_template,
+                        name: item.RightTop,
+                      },
                     });
               }}
             />
@@ -226,7 +229,7 @@ export default class ListCards extends Component {
                 this.props.navigation.navigate(this.state.typeData, {
                   type: 'add',
                   id: undefined,
-                  template: [id, name],
+                  template: {id: id, name: name},
                 });
               }}
             />
