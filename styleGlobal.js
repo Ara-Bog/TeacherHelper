@@ -961,4 +961,10 @@ export default StyleSheet.create({
     color: '#554AF0',
     fontFamily: 'sf_medium',
   },
+
+  phoneStyle: {
+    fontSize: 18,
+    lineHeight: 24,
+    color: COLORS.blue,
+  },
 });

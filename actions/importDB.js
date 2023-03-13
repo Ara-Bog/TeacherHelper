@@ -6,7 +6,14 @@ var RNFS = require('react-native-fs');
 SQLite.enablePromise(true);
 
 // список таблиц для редактирования (переделать на общий модуль)
-const requiredColumns = ['Students', 'Timetable', 'Groups', 'CurrentSymptoms'];
+const requiredColumns = [
+  'Students',
+  'Timetable',
+  'Groups',
+  'CurrentSymptoms',
+  'ParentsStudent',
+  'ListStudentsGroup',
+];
 
 export async function importFromJson(uriMasterBase, saveData) {
   let newData; // хранилище данных

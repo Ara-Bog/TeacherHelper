@@ -7,8 +7,10 @@ import PagerView from 'react-native-pager-view';
 import NavPage from '../components/navPage';
 import HeaderTitle from '../components/elements/headerTitle';
 import setHeaderNavigation from '../actions/changeHeader';
+import {insertInto} from '../actions/sqlGenerator';
+import SQLite from 'react-native-sqlite-storage';
 
-// import {TabView, SceneMap} from 'react-native-tab-view';
+SQLite.enablePromise(true);
 
 // форматирование данных симптоматики и знеачений с базы
 function destructStudentCardData(data) {
@@ -362,12 +364,138 @@ export default class StudentPage extends Component {
     }
   }
 
+  // подтверждение изменений
   confirmEdit() {
-    Object.keys(this.state.defaultData.default_main).forEach(key => {
+    // флаг ошибки проверки
+    let flagError = false;
+    // проверка обязательных полей данных по умолчанию
+    for (const key of Object.keys(this.state.defaultData.default_main)) {
       if (this.state.defaultData.default_main[key].requared) {
-        console.log('test', this.state.valuesStorage[key] == 0);
+        if (this.state.valuesStorage[key] == undefined) {
+          console.log('error confirm1', key);
+          flagError = true;
+          break;
+        }
       }
+    }
+
+    // проверка обязательных полей в контактах (динамический список, надо переделать)
+    if (!flagError) {
+      // хранилище обязательных ключей
+      let massRequired = [];
+      // поля ввода контактов
+      let childrensContacts =
+        this.state.defaultData.default_contacts.contacts.childrens;
+      // добавляем обязательные поля ввода в массив
+      Object.keys(childrensContacts).forEach(keyItem => {
+        if (childrensContacts[keyItem].requared) {
+          massRequired.push(keyItem);
+        }
+      });
+      // проверка обязательных полей контактов
+      for (const item of this.state.valuesStorage.contacts) {
+        for (const itemReq of massRequired) {
+          if (item[itemReq] == undefined) {
+            console.log('error confirm2', itemReq);
+            flagError = true;
+            break;
+          }
+        }
+        if (flagError) break;
+      }
+    }
+
+    // есть не заполненные обязательные поля
+    if (flagError) {
+      Alert.alert(
+        'Ошибка ввода',
+        `Поля со звездочкой должны быть обязательно заполненны`,
+        [{text: 'Ок', style: 'destructive'}],
+        {cancelable: true},
+      );
+      return;
+    }
+
+    // проверка пройдена - обновляем текущие данные
+    this.setState({
+      currentData: JSON.parse(JSON.stringify(this.state.valuesStorage)),
     });
+
+    // обновляем или дополняем базу
+    if (this.state.options.type == 'view') {
+      this.updateBase();
+    } else {
+      console.log('create new user');
+    }
+  }
+
+  // обновление данных
+  async updateBase() {
+    // для удобства
+    const data = this.state.currentData;
+
+    await db.transaction(tx => {
+      // данные пользователя
+      tx.executeSql(
+        `
+        UPDATE Students
+        SET surname = ?,
+            name = ?,
+            midname = ?,
+            group_org = ?,
+            date_bd = ?,
+            id_diagnos = ?,
+            id_category = ?,
+            note = ?
+        WHERE id = ?
+        `,
+        [
+          data.surname || null,
+          data.name || null,
+          data.midname || null,
+          data.group_org || null,
+          data.date_bd || null,
+          data.diagnos || null,
+          data.category || null,
+          data.note || null,
+          this.state.options.id,
+        ],
+        () => (
+          Alert.alert('Данные успешно обновленны!'),
+          // возвращаем заголовки
+          this.setNavView(),
+          this.setState({editing: false})
+        ),
+        err => (
+          Alert.alert('Произошла ошибка!'),
+          console.log('error studentPage updateBase', err)
+        ),
+      );
+      // удаляем данные родителей
+      tx.executeSql(
+        `
+        DELETE FROM ParentsStudent
+        WHERE id_student = ?
+        `,
+        [this.state.options.id],
+        () => {
+          console.log('delete parents');
+        },
+      );
+    });
+
+    this.addNewData(this.state.options.id);
+  }
+
+  // добавление новых записей в дб
+  async addNewData(id) {
+    // для удобства
+    const dataContacts = this.state.currentData.contacts;
+    await insertInto(dataContacts, 'ParentsStudent', id, 'id_student');
+    console.log('test');
+    // db.transaction(tx => {
+    //   tx.executeSql()
+    // })
   }
 
   render() {
@@ -375,6 +503,7 @@ export default class StudentPage extends Component {
     if (this.state.loading) {
       return <></>;
     }
+
     return (
       <>
         <NavPage

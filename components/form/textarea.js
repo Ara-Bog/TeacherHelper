@@ -1,26 +1,24 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {Text, View, TextInput} from 'react-native';
 import {DivDefaultCol} from '../elements/divDefault';
 
-export default function Textarea({
-  value,
-  editing,
-  label,
-  onChange,
-  requared,
-  type,
-}) {
+export default function Textarea({value, editing, label, onChange, requared}) {
   // получает:
   // - режим редактирования или просмотра -- editing: Bool
   // - значение поля ввода -- value: String
   // - звездочка в поле -- requared: Bool
   // - заголовок -- label: String
-  // - дата или время или вместе -- type: String
   // --
   // обратный вызов:
   // - изменение значения поля -- onChange(val: string)
 
   const [currentValue, setVal] = useState(value || '');
+
+  useEffect(() => {
+    if (value != currentValue) {
+      setVal(value);
+    }
+  }, [editing]);
 
   const editingView = (
     <View style={Styles.divDefault__edit}>

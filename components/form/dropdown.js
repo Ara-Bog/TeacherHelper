@@ -1,4 +1,4 @@
-import React, {useState, useRef} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import {Text, View} from 'react-native';
 import {DivDefaultRow} from '../elements/divDefault';
 import {Dropdown} from 'react-native-element-dropdown';
@@ -25,15 +25,26 @@ export default function DropdownView({
   // выбранный id и в случае успеха = вызывается afterConfirm
   // для изменения состояний компонента  -- onConfirm(id: int, afterConfirm: Function)
 
+  const findName = () => {
+    if (value != undefined) {
+      return data.find(item => {
+        return item.id == value;
+      }).name;
+    }
+    return null;
+  };
+
   const [currentValue, setVal] = useState(value);
   const [items, setItems] = useState(data);
-  const [name, setName] = useState(
-    value
-      ? data.find(item => {
-          return item.id == value;
-        }).name
-      : null,
-  );
+  const [name, setName] = useState(findName());
+
+  useEffect(() => {
+    if (value != currentValue) {
+      setVal(value);
+      setName(findName());
+    }
+  }, [editing]);
+
   // ссылка на список, чтобы закрывать его
   const drop = useRef();
 
@@ -67,6 +78,8 @@ export default function DropdownView({
         style={Styles.dropDown}
         selectedTextStyle={Styles.dropDownText}
         itemContainerStyle={{borderRadius: 10}}
+        placeholder={'Выберите значение'}
+        placeholderStyle={{...Styles.dropDownText, color: '#848484'}}
         maxHeight={250}
         containerStyle={Styles.dropDownBox}
         activeColor="transparent"

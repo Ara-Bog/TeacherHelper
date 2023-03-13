@@ -18,12 +18,13 @@ import BirhdayView from './form/birthday';
 import ViewLinks from './form/viewLinks';
 import Textarea from './form/textarea';
 import DynamicBlock from './form/dynamicBlock';
+import PhoneView from './form/phoneView';
 
 // типы полей:
-// =-- viewLinks
+// +-- viewLinks
 // +-- textarea
 // +-- inputView
-// -- phone
+// =-- phone
 // +-- dateTime
 // =-- dynamicBlock
 // +-- droplist
@@ -63,8 +64,8 @@ function getComponent({
     // пропсы по умолчанию
     let defData = {
       key: index,
-      // текущее значение поля
-      value: currentVals[key],
+      // // текущее значение поля
+      // value: currentVals[key],
       // обязательность поля
       requared: curObj.requared || false,
       // заголовок поля
@@ -90,35 +91,47 @@ function getComponent({
       curObj.type = 'dateTime';
     }
 
-    let asd = [];
+    let storageChildrens = [];
     // КОСТЫЛЬ
     // когда элемент является dynamicBlock необходимо вернуть callback,
     // что нужно добавить кнопку add в панель управления
     if (curObj.type === 'dynamicBlock') {
-      // let increment = currentVals[key].length;
-      // currentVals[key].forEach((item, indexEl) => {
-      //   asd.push(
-      //     ...getComponent({
-      //       data: curObj.childrens,
-      //       indexParent: [index, indexEl].join('.'),
-      //       currentVals: item,
-      //       callback: callback,
-      //       nasting: true,
-      //     }),
-      //   );
-      // });
-      // addPlus(() => {
-      //   asd.push(
-      //     ...getComponent({
-      //       data: curObj.childrens,
-      //       indexParent: [index, increment].join('.'),
-      //       currentVals: {},
-      //       callback: callback,
-      //       nasting: true,
-      //     }),
-      //   );
-      //   increment++;
-      // });
+      let increment = currentVals[key].length;
+      let includeValues = currentVals[key];
+
+      currentVals[key].forEach((item, indexEl) => {
+        storageChildrens.push(
+          getComponent({
+            data: curObj.childrens,
+            indexParent: [index, indexEl].join('.'),
+            currentVals: item,
+            callback: (keyChild, val) => {
+              includeValues[indexEl][keyChild] = val;
+              callback(key, includeValues);
+            },
+            nasting: true,
+          }),
+        );
+      });
+      addPlus(() => {
+        callback(key, [...currentVals[key], {}]);
+        includeValues.push({});
+        storageChildrens.push(
+          getComponent({
+            data: curObj.childrens,
+            indexParent: [index, increment].join('.'),
+            currentVals: {},
+            callback: (keyChild, val) => {
+              console.warn('test', includeValues, increment);
+              includeValues[increment][keyChild] ??= undefined;
+              includeValues[increment][keyChild] = val;
+              callback(key, includeValues);
+            },
+            nasting: true,
+          }),
+        );
+        increment++;
+      });
     } else if (curObj.childrens != undefined) {
       // asd = getComponent({
       //   data: curObj.childrens,
@@ -133,16 +146,19 @@ function getComponent({
     // режим редактирования -- curEditing: Bool
     currMass.push([
       key,
-      (curEditing, dataset) => {
+      (curEditing, value) => {
         switch (curObj.type) {
           case 'inputView':
-            return <InputView {...defData} editing={curEditing} />;
+            return (
+              <InputView {...defData} value={value} editing={curEditing} />
+            );
             break;
           case 'droplist':
             return (
               <Dropdown
                 {...defData}
                 editing={curEditing}
+                value={value}
                 // датасет для списка
                 data={curObj.values}
               />
@@ -154,6 +170,7 @@ function getComponent({
               <BirhdayView
                 {...defData}
                 editing={curEditing}
+                value={value}
                 // тип пикера
                 type={postfix}
                 // заголовок при редактировании
@@ -162,23 +179,34 @@ function getComponent({
             );
             break;
           case 'textarea':
-            return <Textarea {...defData} editing={curEditing} />;
+            return <Textarea {...defData} value={value} editing={curEditing} />;
             break;
           // ДОРАБОТАТЬ
-          // case 'dynamicBlock':
-          //   return (
-          //     <DynamicBlock {...defData} editing={curEditing} childrens={asd} />
-          //   );
-          //   break;
+          case 'dynamicBlock':
+            return (
+              <DynamicBlock
+                {...defData}
+                editing={curEditing}
+                value={value}
+                childrens={storageChildrens}
+              />
+            );
+            break;
           case 'viewLinks':
             return (
               <ViewLinks
                 {...defData}
                 editing={curEditing}
+                value={value}
                 navigate={curId =>
                   navigation.navigate('Group', {type: 'view', id: curId})
                 }
               />
+            );
+            break;
+          case 'phone':
+            return (
+              <PhoneView {...defData} editing={curEditing} value={value} />
             );
             break;
           // ЗАГЛУШКА
@@ -227,28 +255,10 @@ export default class SubTab extends Component {
     }
   }
 
-  // componentDidUpdate(prevProps, prevState) {
-  //   if (prevProps.editing != this.props.editing) {
-  //     if (
-  //       JSON.stringify(prevProps.currentData) !=
-  //       JSON.stringify(this.props.currentData)
-  //     ) {
-  //       console.log('hui', this.props.currentData.name);
-  //       console.log('ne hui', prevProps.currentData.name);
-  //       this.forceUpdate();
-  //     }
-  //   }
-  // }
-
   render() {
     if (this.state.editing != this.props.editing) {
       this.state.editing = this.props.editing;
     }
-
-    // if (this.state.indexParent === 1) {
-    //   console.log('test 1', this.state.defaultData.name);
-    //   console.log('test 2', this.props.currentData.name);
-    // }
 
     return (
       <View

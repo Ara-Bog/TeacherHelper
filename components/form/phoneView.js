@@ -1,7 +1,9 @@
 import React, {useState, useEffect} from 'react';
-import {Text, View, TextInput} from 'react-native';
+import {TouchableOpacity} from 'react-native';
+import {Text, View, TextInput, Linking} from 'react-native';
+import {MaskedTextInput, MaskedText} from 'react-native-mask-text';
 
-export default function InputView({value, editing, label, onChange, requared}) {
+export default function PhoneView({value, editing, label, onChange, requared}) {
   // получает:
   // - режим редактирования или просмотра -- editing: Bool
   // - значение поля ввода -- value: String
@@ -11,11 +13,11 @@ export default function InputView({value, editing, label, onChange, requared}) {
   // обратный вызов:
   // - изменение значения поля -- onChange(val: string)
 
-  const [currentValue, setVal] = useState(value);
+  const [currentValue, setVal] = useState(String(value));
 
   useEffect(() => {
     if (value != currentValue) {
-      setVal(value);
+      setVal(value || '');
     }
   }, [editing]);
 
@@ -26,27 +28,26 @@ export default function InputView({value, editing, label, onChange, requared}) {
         {requared ? ' *' : null}
       </Text>
       <View style={Styles.inputDefaultWrap}>
-        <TextInput
+        <MaskedTextInput
           style={Styles.inputDefault}
           value={currentValue}
-          placeholder={'Введите текст'}
-          onChangeText={val => {
-            onChange(val || undefined);
-            setVal(val || undefined);
+          mask="+9 (999) 999-99-99"
+          onChangeText={(text, rawText) => {
+            onChange(rawText.replace(/\D/g, ''));
           }}
+          keyboardType="numeric"
         />
       </View>
     </View>
   );
 
   const showView = (
-    <View style={Styles.divDefault}>
-      <Text style={Styles.divDefaultLabel}>{label}</Text>
-      {currentValue ? (
-        <Text style={Styles.divDefaultValue}>{currentValue}</Text>
-      ) : (
-        <Text style={Styles.emptyValue}>Не указано</Text>
-      )}
+    <View style={Styles.divMain}>
+      <TouchableOpacity onPress={() => Linking.openURL(`tel:${currentValue}`)}>
+        <MaskedText style={Styles.phoneStyle} mask="+9 (999) 999-99-99">
+          {currentValue}
+        </MaskedText>
+      </TouchableOpacity>
     </View>
   );
 
