@@ -22,10 +22,15 @@ export async function insertInto(data, tableName, idCont, fillCont) {
   `;
 
   await db.transaction(tx => {
-    tx.executeSql(sqlText, valuesMass, () => console.log('trans finish'));
+    tx.executeSql(
+      sqlText,
+      valuesMass,
+      () => {},
+      err => {
+        console.log('error INSERT', err);
+      },
+    );
   });
-
-  console.log('trans end');
 }
 
 // async function execute(text, values) {

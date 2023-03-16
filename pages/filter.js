@@ -118,7 +118,7 @@ export default class FilterPage extends Component {
         </ScrollView>
         <View style={Styles.filterButtons}>
           <TouchableOpacity
-            style={Styles.filterCancel}
+            style={Styles.buttonRed}
             onPress={() => {
               this.setState({
                 listChecked: {
@@ -128,7 +128,7 @@ export default class FilterPage extends Component {
                 },
               });
             }}>
-            <Text style={Styles.filterCancelText}>Сбросить</Text>
+            <Text style={Styles.buttonRedText}>Сбросить</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={Styles.submitBtn}

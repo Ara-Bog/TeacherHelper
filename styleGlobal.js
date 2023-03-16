@@ -150,12 +150,21 @@ export default StyleSheet.create({
   },
 
   float_btnRow: {
-    display: 'flex',
-    flexDirection: 'column',
+    gap: 40,
+    paddingVertical: 20,
+    paddingHorizontal: 15,
+    backgroundColor: '#fff',
+    borderRadius: 86,
+    shadowColor: 'rgba(4, 2, 29, 0.9)',
+    elevation: 20,
+    shadowOffset: {height: 20, width: 20},
     position: 'absolute',
-    bottom: 40,
+    bottom: 26,
     right: 20,
-    alignItems: 'flex-end',
+    borderWidth: 1,
+    borderColor: '#EBEBEB',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   float_btEdit: {
@@ -846,7 +855,7 @@ export default StyleSheet.create({
     color: COLORS.darkBlue,
   },
 
-  filterCancel: {
+  buttonRed: {
     backgroundColor: '#FBEFEF',
     justifyContent: 'center',
     alignItems: 'center',
@@ -855,7 +864,7 @@ export default StyleSheet.create({
     width: '100%',
   },
 
-  filterCancelText: {
+  buttonRedText: {
     color: '#DC5F5A',
     fontWeight: 600,
     fontFamily: 'sf_regular',
@@ -966,5 +975,30 @@ export default StyleSheet.create({
     fontSize: 18,
     lineHeight: 24,
     color: COLORS.blue,
+  },
+
+  contactButton: {
+    borderWidth: 1,
+    borderColor: '#EBEBEB',
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 50,
+    height: 50,
+  },
+
+  contactItem: {
+    gap: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderWidth: 1,
+    borderColor: '#EBEBEB',
+    borderRadius: 10,
+  },
+
+  contactItem_edit: {
+    borderTopWidth: 2,
+    borderColor: '#EBEBEB',
+    paddingTop: 15,
   },
 });

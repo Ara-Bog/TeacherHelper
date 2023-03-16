@@ -253,8 +253,9 @@ export default class StudentPage extends Component {
               newData[item.id_symptom] ??= [];
               newData[item.id_symptom].push(item.id);
             });
-            this.state.currentData.symptoms = newData;
-            this.state.valuesStorage.symptoms = newData;
+            let stringJson = JSON.stringify(newData);
+            this.state.currentData.symptoms = JSON.parse(stringJson);
+            this.state.valuesStorage.symptoms = JSON.parse(stringJson);
           },
           err => console.log('error studentPage get cur symptoms', err),
         );
@@ -271,14 +272,14 @@ export default class StudentPage extends Component {
           `,
           [this.state.options.id],
           (_, {rows}) => {
-            let data = rows.raw()[0];
+            let stringJson = JSON.stringify(rows.raw()[0]);
             this.state.currentData = {
               ...this.state.currentData,
-              ...data,
+              ...JSON.parse(stringJson),
             };
             this.state.valuesStorage = {
               ...this.state.valuesStorage,
-              ...data,
+              ...JSON.parse(stringJson),
             };
           },
           err => console.log('error studentPage get student', err),
@@ -293,8 +294,16 @@ export default class StudentPage extends Component {
           `,
           [this.state.options.id],
           (_, {rows}) => {
-            this.state.currentData.contacts = rows.raw();
-            this.state.valuesStorage.contacts = rows.raw();
+            let data = rows.raw();
+            let getValues = () =>
+              Object.assign(
+                {},
+                ...data.map((item, idnex) => {
+                  return {[idnex + 1]: item};
+                }),
+              );
+            this.state.currentData.contacts = getValues();
+            this.state.valuesStorage.contacts = getValues();
           },
           err => console.log('error studentPage get parents', err),
         );
@@ -309,8 +318,9 @@ export default class StudentPage extends Component {
           `,
           [this.state.options.id],
           (_, {rows}) => {
-            this.state.currentData.groups = rows.raw();
-            this.state.valuesStorage.groups = rows.raw();
+            let stringJson = JSON.stringify(rows.raw());
+            this.state.currentData.groups = JSON.parse(stringJson);
+            this.state.valuesStorage.groups = JSON.parse(stringJson);
             this.setState({loading: false});
           },
           err => console.log('error studentPage get ListStudentsGroup', err),
@@ -393,7 +403,9 @@ export default class StudentPage extends Component {
         }
       });
       // проверка обязательных полей контактов
-      for (const item of this.state.valuesStorage.contacts) {
+      for (const itemInd of Object.keys(this.state.valuesStorage.contacts)) {
+        const item = this.state.valuesStorage.contacts[itemInd];
+        console.log('test', item);
         for (const itemReq of massRequired) {
           if (item[itemReq] == undefined) {
             console.log('error confirm2', itemReq);
@@ -478,9 +490,6 @@ export default class StudentPage extends Component {
         WHERE id_student = ?
         `,
         [this.state.options.id],
-        () => {
-          console.log('delete parents');
-        },
       );
     });
 
@@ -490,9 +499,11 @@ export default class StudentPage extends Component {
   // добавление новых записей в дб
   async addNewData(id) {
     // для удобства
-    const dataContacts = this.state.currentData.contacts;
-    await insertInto(dataContacts, 'ParentsStudent', id, 'id_student');
-    console.log('test');
+    const dataContacts = Object.values(this.state.currentData.contacts);
+
+    if (dataContacts.length) {
+      await insertInto(dataContacts, 'ParentsStudent', id, 'id_student');
+    }
     // db.transaction(tx => {
     //   tx.executeSql()
     // })
@@ -543,14 +554,18 @@ export default class StudentPage extends Component {
           <ButtonEdit
             onChangeState={() => {
               this.setState({
-                editing: false,
                 valuesStorage: JSON.parse(
                   JSON.stringify(this.state.currentData),
                 ),
+                editing: false,
               });
               this.setNavView();
             }}
-            funcAdd={this.state.funcAdd[this.state.selectedPageIndex]}
+            funcAdd={() =>
+              this.state.funcAdd[this.state.selectedPageIndex](
+                this.state.valuesStorage,
+              )
+            }
             onUpdate={() => this.forceUpdate()}
             onConfirm={() => this.confirmEdit()}
           />

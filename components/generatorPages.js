@@ -43,7 +43,6 @@ function getComponent({
   callback,
   addPlus,
   navigation,
-  nasting = false,
 }) {
   // общее хранилище элементов
   let massObjects = [];
@@ -64,8 +63,6 @@ function getComponent({
     // пропсы по умолчанию
     let defData = {
       key: index,
-      // // текущее значение поля
-      // value: currentVals[key],
       // обязательность поля
       requared: curObj.requared || false,
       // заголовок поля
@@ -91,46 +88,25 @@ function getComponent({
       curObj.type = 'dateTime';
     }
 
-    let storageChildrens = [];
-    // КОСТЫЛЬ
+    // хранилище дочерних элементов
+    let storageChildrens = {};
     // когда элемент является dynamicBlock необходимо вернуть callback,
     // что нужно добавить кнопку add в панель управления
     if (curObj.type === 'dynamicBlock') {
-      let increment = currentVals[key].length;
       let includeValues = currentVals[key];
-
-      currentVals[key].forEach((item, indexEl) => {
-        storageChildrens.push(
-          getComponent({
-            data: curObj.childrens,
-            indexParent: [index, indexEl].join('.'),
-            currentVals: item,
-            callback: (keyChild, val) => {
-              includeValues[indexEl][keyChild] = val;
-              callback(key, includeValues);
-            },
-            nasting: true,
-          }),
-        );
-      });
-      addPlus(() => {
-        callback(key, [...currentVals[key], {}]);
-        includeValues.push({});
-        storageChildrens.push(
-          getComponent({
-            data: curObj.childrens,
-            indexParent: [index, increment].join('.'),
-            currentVals: {},
-            callback: (keyChild, val) => {
-              console.warn('test', includeValues, increment);
-              includeValues[increment][keyChild] ??= undefined;
-              includeValues[increment][keyChild] = val;
-              callback(key, includeValues);
-            },
-            nasting: true,
-          }),
-        );
-        increment++;
+      // создаем блоки с дочерними элементами по значениям
+      Object.keys(currentVals[key]).forEach(indexEl => {
+        let item = currentVals[key][indexEl];
+        storageChildrens[indexEl] = getComponent({
+          data: curObj.childrens,
+          indexParent: [index, indexEl].join('.'),
+          currentVals: item,
+          callback: (keyChild, val) => {
+            includeValues[indexEl][keyChild] ??= undefined;
+            includeValues[indexEl][keyChild] = val;
+            callback(key, includeValues);
+          },
+        });
       });
     } else if (curObj.childrens != undefined) {
       // asd = getComponent({
@@ -142,15 +118,23 @@ function getComponent({
       // });
     }
 
-    // добавляем в массив функции параметром
+    // добавляем в массив объект ключа(по которому смотрятся значения) и функцию рендера
     // режим редактирования -- curEditing: Bool
-    currMass.push([
-      key,
-      (curEditing, value) => {
+    // значение (может быть массив) -- value: String || Int || Array<Object>
+    // функция колбэка для телефона -- addedAction: Function
+    // добавочное значение для отслеживания изменений в родителе -- addedValue: String || Int || Array<Object>
+    currMass.push({
+      key: key,
+      render: (curEditing, value, addedAction, addedValue) => {
         switch (curObj.type) {
           case 'inputView':
             return (
-              <InputView {...defData} value={value} editing={curEditing} />
+              <InputView
+                {...defData}
+                value={value}
+                editing={curEditing}
+                addedValue={addedValue}
+              />
             );
             break;
           case 'droplist':
@@ -181,7 +165,7 @@ function getComponent({
           case 'textarea':
             return <Textarea {...defData} value={value} editing={curEditing} />;
             break;
-          // ДОРАБОТАТЬ
+          // DEV УДАЛЕНИЕ
           case 'dynamicBlock':
             return (
               <DynamicBlock
@@ -189,6 +173,31 @@ function getComponent({
                 editing={curEditing}
                 value={value}
                 childrens={storageChildrens}
+                getElements={(indexEl, vals) => {
+                  return getComponent({
+                    data: curObj.childrens,
+                    indexParent: [index, indexEl].join('.'),
+                    currentVals: {},
+                    callback: (keyChild, val) => {
+                      vals[indexEl][keyChild] ??= undefined;
+                      vals[indexEl][keyChild] = val;
+                      callback(key, vals);
+                    },
+                  });
+                }}
+                funcAdd={increment =>
+                  addPlus(vals =>
+                    callback(key, {
+                      ...vals[key],
+                      [increment++]: Object.assign(
+                        {},
+                        ...Object.keys(curObj.childrens).map(item => {
+                          return {[item]: undefined};
+                        }),
+                      ),
+                    }),
+                  )
+                }
               />
             );
             break;
@@ -206,21 +215,27 @@ function getComponent({
             break;
           case 'phone':
             return (
-              <PhoneView {...defData} editing={curEditing} value={value} />
+              <PhoneView
+                {...defData}
+                editing={curEditing}
+                value={value}
+                callAction={val => addedAction(val)}
+              />
             );
             break;
           // ЗАГЛУШКА
           default:
             return (
               <Text key={defData.key} style={{color: '#04021D', fontSize: 16}}>
-                {defData.label}
+                ЗАГЛУШКА
               </Text>
             );
             break;
         }
       },
-    ]);
+    });
   });
+
   return [...massObjects, ...massLastObjects];
 }
 
@@ -229,12 +244,12 @@ export default class SubTab extends Component {
     super(props);
     this.state = {
       defaultSrtuct: JSON.parse(JSON.stringify(this.props.data)),
-      defaultData: this.props.currentData,
       defContent: [],
       mainContent: [],
       editing: this.props.editing,
       indexParent: this.props.indexParent,
     };
+
     if (this.state.defaultSrtuct != undefined) {
       this.state.defContent = getComponent({
         data: this.state.defaultSrtuct,
@@ -269,7 +284,10 @@ export default class SubTab extends Component {
         <ScrollView contentContainerStyle={{gap: 25}}>
           {this.props.lable === null ? null : <Text>{this.props.lable}</Text>}
           {this.state.defContent.map(item => {
-            return item[1](this.state.editing, this.props.currentData[item[0]]);
+            return item.render(
+              this.state.editing,
+              this.props.currentData[item.key],
+            );
           })}
           {/* пустое пространство */}
           <View style={Styles.crutch}></View>

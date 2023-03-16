@@ -1,7 +1,14 @@
 import React, {useState, useEffect} from 'react';
 import {Text, View, TextInput} from 'react-native';
 
-export default function InputView({value, editing, label, onChange, requared}) {
+export default function InputView({
+  value,
+  editing,
+  label,
+  onChange,
+  requared,
+  addedValue,
+}) {
   // получает:
   // - режим редактирования или просмотра -- editing: Bool
   // - значение поля ввода -- value: String
@@ -18,6 +25,13 @@ export default function InputView({value, editing, label, onChange, requared}) {
       setVal(value);
     }
   }, [editing]);
+
+  // когда передаем значение с родителя на прямую
+  useEffect(() => {
+    if (addedValue != undefined && addedValue != currentValue) {
+      setVal(addedValue);
+    }
+  }, [addedValue]);
 
   const editingView = (
     <View style={Styles.divDefault__edit}>

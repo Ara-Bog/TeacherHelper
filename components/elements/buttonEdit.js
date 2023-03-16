@@ -1,5 +1,5 @@
-import React from 'react';
-import {View, TouchableOpacity, Alert} from 'react-native';
+import React, {useState, useEffect} from 'react';
+import {Keyboard, View, TouchableOpacity, Alert} from 'react-native';
 
 export default function ButtonEdit({
   onChangeState,
@@ -7,6 +7,22 @@ export default function ButtonEdit({
   onUpdate,
   onConfirm,
 }) {
+  const [keyboardStatus, setKeyboardStatus] = useState(false);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardStatus(true);
+    });
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardStatus(false);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
   const closeConfirm = () => {
     Alert.alert(
       'Подтвердите действие',
@@ -19,46 +35,22 @@ export default function ButtonEdit({
         },
         {text: 'Отмена', style: 'cancel'},
       ],
-      {cancelable: true},
     );
   };
 
   const submitConfirm = () => {
-    Alert.alert(
-      'Подтвердите действие',
-      `Сохранить внесенные изменения ?`,
-      [
-        {
-          text: 'Да',
-          onPress: () => onConfirm(),
-          style: 'destructive',
-        },
-        {text: 'Отмена', style: 'cancel'},
-      ],
-      {cancelable: true},
-    );
+    Alert.alert('Подтвердите действие', `Сохранить внесенные изменения ?`, [
+      {
+        text: 'Да',
+        onPress: () => onConfirm(),
+        style: 'destructive',
+      },
+      {text: 'Отмена', style: 'cancel'},
+    ]);
   };
 
-  return (
-    <View
-      style={{
-        // ...Styles.float_btnRow,
-        gap: 40,
-        paddingVertical: 20,
-        paddingHorizontal: 15,
-        backgroundColor: '#fff',
-        borderRadius: 86,
-        shadowColor: 'rgba(4, 2, 29, 0.9)',
-        elevation: 20,
-        shadowOffset: {height: 20, width: 20},
-        position: 'absolute',
-        bottom: 26,
-        right: 20,
-        borderWidth: 1,
-        borderColor: '#EBEBEB',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}>
+  return keyboardStatus ? null : (
+    <View style={Styles.float_btnRow}>
       <TouchableOpacity onPress={() => closeConfirm()}>
         <Icons.MaterialIcons name="close" size={25} color="#DC5F5A" />
       </TouchableOpacity>
