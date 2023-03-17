@@ -24,9 +24,9 @@ import PhoneView from './form/phoneView';
 // +-- viewLinks
 // +-- textarea
 // +-- inputView
-// =-- phone
+// +-- phone
 // +-- dateTime
-// =-- dynamicBlock
+// +-- dynamicBlock
 // +-- droplist
 // -- label
 // -- checker_only
