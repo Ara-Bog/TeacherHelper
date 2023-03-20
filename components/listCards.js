@@ -3,7 +3,7 @@ import {View, ScrollView, Alert} from 'react-native';
 import ButtonAdd from './elements/buttonAdd';
 import EmptyData from './emptyDataList';
 import DefaultCard from './elements/defaultCard';
-import MenuActions from './elements/menuActions';
+import MenuActions from './menuActions';
 import SelectorTemplates from './selecterTemplate';
 import Modal from 'react-native-modal';
 

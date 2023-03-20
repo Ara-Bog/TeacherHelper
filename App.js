@@ -168,7 +168,7 @@ export default function App() {
       <NavigationContainer>
         <Tab.Navigator
           id="mainTab"
-          initialRouteName={userSettings.firstScreen}
+          initialRouteName={userSettings.firstScreen || 'settings'}
           screenOptions={({route}) => ({
             tabBarStyle: {
               ...Styles.tabBar,

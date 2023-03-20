@@ -1,12 +1,14 @@
 import HeaderTitle from '../components/elements/headerTitle';
-import {TouchableOpacity} from 'react-native';
+import {TouchableOpacity, BackHandler} from 'react-native';
+import {HeaderBackButton} from '@react-navigation/elements';
 
 export default function setHeaderNavigation({
   mainTitle,
   addedTitle,
-  onPressIcon,
+  onPressLeft,
+  onPressRight,
   navigation,
-  IconStyle,
+  mode,
 }) {
   navigation.setOptions({
     headerTitle: () => (
@@ -14,24 +16,32 @@ export default function setHeaderNavigation({
     ),
   });
 
-  const Icon = () => {
-    switch (IconStyle) {
-      case 'remove':
-        return <Icons.Feather name="trash" size={24} color="#DC5F5A" />;
-        break;
-      case 'edit':
-        return <Icons.Feather name="edit" size={24} color="#554AF0" />;
-        break;
-    }
-  };
-
-  if (Icon != undefined) {
-    navigation.setOptions({
-      headerRight: () => (
-        <TouchableOpacity onPress={() => onPressIcon()}>
-          {Icon()}
-        </TouchableOpacity>
-      ),
-    });
+  switch (mode) {
+    case 'edit':
+      navigation.setOptions({
+        headerBackVisible: false,
+        headerLeft: () => (
+          <TouchableOpacity onPress={() => onPressLeft()}>
+            <Icons.MaterialIcons name="close" size={25} color="#DC5F5A" />
+          </TouchableOpacity>
+        ),
+        headerRight: () => (
+          <TouchableOpacity onPress={() => onPressRight()}>
+            <Icons.MaterialIcons name="check" size={25} color="#15AA2C" />
+          </TouchableOpacity>
+        ),
+      });
+      break;
+    case 'menu':
+      navigation.setOptions({
+        headerBackVisible: undefined,
+        headerLeft: undefined,
+        headerRight: () => (
+          <TouchableOpacity onPress={() => onPressRight()}>
+            <Icons.Feather name="menu" size={24} color="#554AF0" />
+          </TouchableOpacity>
+        ),
+      });
+      break;
   }
 }

@@ -9,8 +9,10 @@ export default function MenuActions({
   callMove,
   callDelete,
   callResetSelected,
+  callChange,
   visible,
   isSelected,
+  onCard,
 }) {
   // получает:
   // - текущее значение свича -- includeCard: bool
@@ -19,13 +21,18 @@ export default function MenuActions({
   // возврат:
   // - событие на LongPress -- onCallLong()
 
+  // обработка события
   function actionClose(action) {
+    // вызов переданной функции
     action();
+    // закрытие модалки
     callClose();
   }
 
+  // выбор карточки
   const selectCard = (
     <TouchableOpacity
+      key={1}
       style={Styles.holdMenuButton}
       onPress={() => actionClose(callSelect)}>
       <Icons.Octicons name="check" size={20} color="#554AF0" />
@@ -33,8 +40,10 @@ export default function MenuActions({
     </TouchableOpacity>
   );
 
+  // копирование
   const copyCard = (
     <TouchableOpacity
+      key={2}
       style={Styles.holdMenuButton}
       onPress={() => actionClose(callCopy)}>
       <Icons.Octicons name="copy" size={20} color="#554AF0" />
@@ -42,8 +51,10 @@ export default function MenuActions({
     </TouchableOpacity>
   );
 
+  // переход к карточке
   const moveToCard = (
     <TouchableOpacity
+      key={3}
       style={Styles.holdMenuButton}
       onPress={() => actionClose(callMove)}>
       <Icons.Ionicons
@@ -55,9 +66,10 @@ export default function MenuActions({
     </TouchableOpacity>
   );
 
-  // !!!!
+  // удаление
   const deleteCards = (
     <TouchableOpacity
+      key={4}
       style={Styles.holdMenuButton}
       onPress={() => actionClose(callDelete)}>
       <Icons.AntDesign name="delete" size={20} color="#DC5F5A" />
@@ -67,14 +79,27 @@ export default function MenuActions({
     </TouchableOpacity>
   );
 
+  // убрать выделения
   const removeSelection = (
     <TouchableOpacity
+      key={5}
       style={Styles.holdMenuButton}
       onPress={() => actionClose(callResetSelected)}>
       <Icons.MaterialCommunityIcons name="cancel" size={20} color="#DC5F5A" />
       <Text style={{...Styles.holdMenuButtonText, color: '#DC5F5A'}}>
         Отменить веделение
       </Text>
+    </TouchableOpacity>
+  );
+
+  // переход в режим редактирования
+  const changeMode = (
+    <TouchableOpacity
+      key={6}
+      style={Styles.holdMenuButton}
+      onPress={() => actionClose(callChange)}>
+      <Icons.Feather name="edit" size={20} color="#554AF0" />
+      <Text style={Styles.holdMenuButtonText}>Редактировать</Text>
     </TouchableOpacity>
   );
 
@@ -85,10 +110,12 @@ export default function MenuActions({
       onBackButtonPress={() => callClose()}
       onBackdropPress={() => callClose()}>
       <View style={Styles.holdMenu}>
-        {isSelected ? null : selectCard}
-        {isSelected ? null : copyCard}
-        {callMove == undefined ? null : moveToCard}
-        {isSelected ? removeSelection : null}
+        {onCard
+          ? [changeMode, copyCard]
+          : [
+              isSelected ? removeSelection : [selectCard, copyCard],
+              callMove == undefined ? null : moveToCard,
+            ]}
         {deleteCards}
       </View>
     </Modal>

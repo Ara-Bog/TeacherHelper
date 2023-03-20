@@ -9,6 +9,12 @@ import HeaderTitle from '../components/elements/headerTitle';
 import setHeaderNavigation from '../actions/changeHeader';
 import {insertInto} from '../actions/sqlGenerator';
 import SQLite from 'react-native-sqlite-storage';
+import MenuActions from '../components/menuActions';
+import {
+  saveConfirm,
+  removeConfirm,
+  undoConfirm,
+} from '../actions/confirmAction';
 
 SQLite.enablePromise(true);
 
@@ -147,6 +153,9 @@ export default class StudentPage extends Component {
 
       // временное хранилище значений
       valuesStorage: {},
+
+      // состояние меню
+      menuShow: false,
     };
     // способ открытия страницы
     currentType = this.state.options.type;
@@ -331,18 +340,33 @@ export default class StudentPage extends Component {
       setHeaderNavigation({
         mainTitle: 'Карточка ученика',
         addedTitle: this.state.options.template.name,
-        onPressIcon: () => {
-          this.setState({editing: true});
-          setHeaderNavigation({
-            mainTitle: 'Редактирование карточки',
-            addedTitle: this.state.options.template.name,
-            onPressIcon: () => console.log('remove card'),
-            navigation: this.props.navigation,
-            IconStyle: 'remove',
+        onPressRight: () => {
+          this.setState({menuShow: true});
+        },
+        navigation: this.props.navigation,
+        mode: 'menu',
+      });
+
+    this.setNavChange = () =>
+      setHeaderNavigation({
+        mainTitle: 'Редактирование карточки',
+        addedTitle: this.state.options.template.name,
+        onPressRight: () => {
+          saveConfirm(() => {
+            this.confirmEdit();
+          });
+        },
+        onPressLeft: () => {
+          undoConfirm(() => {
+            this.setState({
+              valuesStorage: JSON.parse(JSON.stringify(this.state.currentData)),
+              editing: false,
+            });
+            this.setNavView();
           });
         },
         navigation: this.props.navigation,
-        IconStyle: 'edit',
+        mode: 'edit',
       });
 
     // установка заголовка и соответствующей иконки вверху справа
@@ -405,10 +429,11 @@ export default class StudentPage extends Component {
       // проверка обязательных полей контактов
       for (const itemInd of Object.keys(this.state.valuesStorage.contacts)) {
         const item = this.state.valuesStorage.contacts[itemInd];
-        console.log('test', item);
         for (const itemReq of massRequired) {
           if (item[itemReq] == undefined) {
+            // DEV Тут есть ебаная ошибка с незаполненными данными в контактах
             console.log('error confirm2', itemReq);
+            console.log('studentPage test', this.state.valuesStorage);
             flagError = true;
             break;
           }
@@ -544,32 +569,23 @@ export default class StudentPage extends Component {
                 currentData={this.state.valuesStorage}
                 editing={this.state.editing}
                 indexParent={item.id}
-                useDynamic={func => (this.state.funcAdd[index] = func)}
                 navigation={this.props.navigation}
               />
             );
           })}
         </PagerView>
-        {this.state.editing ? (
-          <ButtonEdit
-            onChangeState={() => {
-              this.setState({
-                valuesStorage: JSON.parse(
-                  JSON.stringify(this.state.currentData),
-                ),
-                editing: false,
-              });
-              this.setNavView();
-            }}
-            funcAdd={() =>
-              this.state.funcAdd[this.state.selectedPageIndex](
-                this.state.valuesStorage,
-              )
-            }
-            onUpdate={() => this.forceUpdate()}
-            onConfirm={() => this.confirmEdit()}
-          />
-        ) : null}
+
+        <MenuActions
+          visible={this.state.menuShow}
+          callClose={() => this.setState({menuShow: false})}
+          callCopy={() => console.log('COPY CARD')}
+          callDelete={() => console.log('REMOVE CARD')}
+          callChange={() => {
+            this.setState({editing: true});
+            this.setNavChange();
+          }}
+          onCard={true}
+        />
       </>
     );
   }

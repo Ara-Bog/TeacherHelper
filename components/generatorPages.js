@@ -11,6 +11,8 @@ import {
 import SymptomsForm from './form/radioBlock';
 import TableSounds from '../components/elements/tableSounds';
 import RadioBlock from './form/radioBlock';
+import AddingButton from './elements/buttonAdd';
+
 // блоки редактирования
 import InputView from '../components/form/inputView';
 import Dropdown from './form/dropdown';
@@ -165,7 +167,6 @@ function getComponent({
           case 'textarea':
             return <Textarea {...defData} value={value} editing={curEditing} />;
             break;
-          // DEV УДАЛЕНИЕ
           case 'dynamicBlock':
             return (
               <DynamicBlock
@@ -248,6 +249,7 @@ export default class SubTab extends Component {
       mainContent: [],
       editing: this.props.editing,
       indexParent: this.props.indexParent,
+      addPlus: undefined,
     };
 
     if (this.state.defaultSrtuct != undefined) {
@@ -258,7 +260,9 @@ export default class SubTab extends Component {
         callback: (key, val) => {
           this.props.currentData[key] = val;
         },
-        addPlus: func => this.props.useDynamic(func),
+        addPlus: func => {
+          this.state.addPlus = func;
+        },
         navigation: this.props.navigation,
       });
     }
@@ -292,6 +296,14 @@ export default class SubTab extends Component {
           {/* пустое пространство */}
           <View style={Styles.crutch}></View>
         </ScrollView>
+        {this.state.addPlus != undefined && this.state.editing ? (
+          <AddingButton
+            onPress={() => {
+              this.state.addPlus(this.props.currentData);
+              this.forceUpdate();
+            }}
+          />
+        ) : null}
       </View>
     );
   }
