@@ -465,34 +465,29 @@ export default StyleSheet.create({
     marginBottom: 10,
   },
 
-  cardStudentElement: {
+  textCheckerWrap: {
     marginTop: 6,
     paddingHorizontal: 10,
+    paddingVertical: 3,
     borderRadius: 15,
     backgroundColor: COLORS.whiteGray,
+  },
+
+  textCheckerWrap__active: {
+    backgroundColor: COLORS.blue,
+  },
+
+  textCheckerText: {
     textAlign: 'center',
     fontFamily: 'sf_regular',
     fontWeight: '400',
     fontSize: 14,
     color: COLORS.darkBlue,
-    paddingVertical: 3,
-    marginRight: 5,
     lineHeight: 24,
   },
 
-  cardStudentElement_active: {
-    marginTop: 6,
-    paddingHorizontal: 10,
-    borderRadius: 15,
-    backgroundColor: COLORS.blue,
-    textAlign: 'center',
-    fontFamily: 'sf_regular',
-    fontWeight: '400',
-    fontSize: 14,
+  textCheckerText__active: {
     color: '#fff',
-    paddingVertical: 3,
-    marginRight: 5,
-    lineHeight: 24,
   },
 
   cardStudentElement_radio: {
@@ -809,19 +804,23 @@ export default StyleSheet.create({
   dropdownList: {
     gap: 15,
     overflow: 'hidden',
+    paddingHorizontal: 14,
   },
 
-  dropdownLabel: {
+  dropdownListWrap: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 15,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: '#EEEDFE',
+    borderRadius: 8,
   },
 
-  dropdownLabelText: {
+  dropdownListText: {
     fontWeight: 500,
     fontSize: 16,
     lineHeight: 19,
-    color: COLORS.darkBlue,
+    color: COLORS.blue,
   },
 
   checkbox: {

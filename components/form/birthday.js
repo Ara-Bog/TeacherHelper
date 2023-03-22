@@ -10,7 +10,7 @@ export default function BirhdayView({
   label,
   onChange,
   requared,
-  type,
+  type, // потом надо будет
   labelEdit,
 }) {
   // получает:
@@ -36,8 +36,10 @@ export default function BirhdayView({
   const calcAge = val => {
     if (val != null) {
       let days = new Date().getTime() - new Date(val); // считаем разницу в милисекундах
-      days = Math.round(days / (24 * 3600 * 365.25 * 1000)); // делим на милисекунды в год
-      return days;
+      let calcData = days / (24 * 3600 * 365.25 * 1000); // делим на милисекунды в год
+      let age = Math.round(calcData);
+      let month = Math.round(12 * (calcData - age));
+      return `${age} лет${month ? ` и ${month} месяцев` : ''}`;
     }
     return null;
   };

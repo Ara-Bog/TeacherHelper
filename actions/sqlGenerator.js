@@ -3,6 +3,10 @@ import SQLite from 'react-native-sqlite-storage';
 SQLite.enablePromise(true);
 
 export async function insertInto(data, tableName, idCont, fillCont) {
+  if (!data.length) {
+    return;
+  }
+
   let keysMass = Object.keys(data[0] || {});
   let valuesMass = [];
 
@@ -27,7 +31,7 @@ export async function insertInto(data, tableName, idCont, fillCont) {
       valuesMass,
       () => {},
       err => {
-        console.log('error INSERT', err);
+        console.log('error sqlGenerator INSERT', err);
       },
     );
   });

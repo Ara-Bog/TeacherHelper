@@ -96,52 +96,57 @@ export default class FilterPage extends Component {
 
   render() {
     return (
-      <View style={Styles.container}>
-        <ScrollView contentContainerStyle={{gap: 5}}>
-          {Object.keys(this.state.data).map((label, index) => (
-            <DropList
-              key={index}
-              id={index}
-              label={label}
-              data={this.state.data[label]}
-              show={this.state.showLabels.includes(index)}
-              setCheck={() => this.setLabels(index)}>
-              <Checkbox
-                isSelected={valueChildren =>
-                  this.state.listChecked[label].includes(valueChildren)
-                }
-                callBack={valueChildren => this.setCheck(label, valueChildren)}
-              />
-            </DropList>
-          ))}
-          <View style={Styles.crutch}></View>
-        </ScrollView>
-        <View style={Styles.filterButtons}>
-          <TouchableOpacity
-            style={Styles.buttonRed}
-            onPress={() => {
-              this.setState({
-                listChecked: {
-                  'Возрастная группа': [],
-                  Шаблон: [],
-                  'Заключение ЦПМПК': [],
-                },
-              });
-            }}>
-            <Text style={Styles.buttonRedText}>Сбросить</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={Styles.submitBtn}
-            onPress={() => {
-              this.props.navigation.navigate(this.state.pageBack, {
-                listChecked: this.state.listChecked,
-                showLabels: this.state.showLabels,
-              });
-            }}>
-            <Text style={Styles.submitBtnText}>Применить</Text>
-          </TouchableOpacity>
+      <>
+        <View style={Styles.seqLineHeader}></View>
+        <View style={{...Styles.container, backgroundColor: '#fff'}}>
+          <ScrollView contentContainerStyle={{gap: 15}}>
+            {Object.keys(this.state.data).map((label, index) => (
+              <DropList
+                key={index}
+                id={index}
+                label={label}
+                data={this.state.data[label]}
+                show={this.state.showLabels.includes(index)}
+                setCheck={() => this.setLabels(index)}>
+                <Checkbox
+                  isSelected={valueChildren =>
+                    this.state.listChecked[label].includes(valueChildren)
+                  }
+                  callBack={valueChildren =>
+                    this.setCheck(label, valueChildren)
+                  }
+                />
+              </DropList>
+            ))}
+            <View style={Styles.crutch}></View>
+          </ScrollView>
+          <View style={Styles.filterButtons}>
+            <TouchableOpacity
+              style={Styles.buttonRed}
+              onPress={() => {
+                this.setState({
+                  listChecked: {
+                    'Возрастная группа': [],
+                    Шаблон: [],
+                    'Заключение ЦПМПК': [],
+                  },
+                });
+              }}>
+              <Text style={Styles.buttonRedText}>Сбросить</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={Styles.submitBtn}
+              onPress={() => {
+                this.props.navigation.navigate(this.state.pageBack, {
+                  listChecked: this.state.listChecked,
+                  showLabels: this.state.showLabels,
+                });
+              }}>
+              <Text style={Styles.submitBtnText}>Применить</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </>
     );
   }
 }

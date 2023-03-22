@@ -1,8 +1,8 @@
 import React, {useState} from 'react';
 import {Text, View, TouchableOpacity} from 'react-native';
 
-export default function DropdownList(props) {
-  // Маханизм выпадающего списка
+export default function SymptomBlock(props) {
+  // Маханизм выпадающего списка для блока симптоматикии ей подобных
   // props:
   // - id текущего списка -- id: int || str
   // - данные для заполнения дочернего элемент -- data: array

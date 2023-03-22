@@ -21,6 +21,7 @@ import ViewLinks from './form/viewLinks';
 import Textarea from './form/textarea';
 import DynamicBlock from './form/dynamicBlock';
 import PhoneView from './form/phoneView';
+import CheckLabels from './form/checkLabels';
 
 // типы полей:
 // +-- viewLinks
@@ -36,7 +37,7 @@ import PhoneView from './form/phoneView';
 // -- table
 // -- checkbox
 // -- custom
-// -- check_labels
+// +-- check_labels
 
 function getComponent({
   data,
@@ -45,6 +46,7 @@ function getComponent({
   callback,
   addPlus,
   navigation,
+  nasting = false,
 }) {
   // общее хранилище элементов
   let massObjects = [];
@@ -52,11 +54,20 @@ function getComponent({
   let massLastObjects = [];
   // флаг проверки, что начались объекты по умолчанию
   let isNumber = true;
+  // хранилище списка значений
+  let values;
+  // экзэмпляр функции
+  let onChange;
   // обход переданных полей
   Object.keys(data).forEach((key, indexEl) => {
     // когда ключ будет не число - флаг сниматеся
     if (isNaN(Number(key))) {
       isNumber = false;
+      values = currentVals[key];
+      onChange = val => callback(key, val);
+    } else {
+      onChange = val => callback(key, val, true);
+      values = currentVals.symptoms[key];
     }
     // копирование объекта
     const curObj = data[key];
@@ -70,7 +81,9 @@ function getComponent({
       // заголовок поля
       label: curObj.label,
       // колбэк на изменение значения в поле
-      onChange: val => callback(key, val),
+      onChange: onChange,
+      // значения заполнения
+      data: JSON.parse(JSON.stringify(curObj.values || [])),
     };
 
     // ссылка на текущий массив
@@ -83,7 +96,7 @@ function getComponent({
       currMass = massObjects;
     }
 
-    // получение постфикса для реализации доп функционала
+    // получение постфикса для реализации доп функционала блока dateTime
     let postfix;
     if (curObj.type.startsWith('dateTime')) {
       postfix = curObj.type.split('-')[1];
@@ -95,29 +108,24 @@ function getComponent({
     // когда элемент является dynamicBlock необходимо вернуть callback,
     // что нужно добавить кнопку add в панель управления
     if (curObj.type === 'dynamicBlock') {
-      let includeValues = currentVals[key];
       // создаем блоки с дочерними элементами по значениям
-      Object.keys(currentVals[key]).forEach(indexEl => {
-        let item = currentVals[key][indexEl];
+      Object.keys(values).forEach(indexEl => {
+        let item = values[indexEl];
         storageChildrens[indexEl] = getComponent({
           data: curObj.childrens,
           indexParent: [index, indexEl].join('.'),
           currentVals: item,
           callback: (keyChild, val) => {
-            includeValues[indexEl][keyChild] ??= undefined;
-            includeValues[indexEl][keyChild] = val;
-            callback(key, includeValues);
+            values[indexEl][keyChild] ??= undefined;
+            values[indexEl][keyChild] = val;
+            callback(key, values, isNumber);
           },
         });
       });
+    } else if (curObj.type === 'table') {
+      // отдельное поведение для таблицы
     } else if (curObj.childrens != undefined) {
-      // asd = getComponent({
-      //   data: curObj.childrens,
-      //   indexParent: index,
-      //   currentVals: currentVals,
-      //   callback: callback,
-      //   nasting: true,
-      // });
+      // console.log('test', curObj.childrens);
     }
 
     // добавляем в массив объект ключа(по которому смотрятся значения) и функцию рендера
@@ -140,15 +148,7 @@ function getComponent({
             );
             break;
           case 'droplist':
-            return (
-              <Dropdown
-                {...defData}
-                editing={curEditing}
-                value={value}
-                // датасет для списка
-                data={curObj.values}
-              />
-            );
+            return <Dropdown {...defData} editing={curEditing} value={value} />;
             break;
           case 'dateTime':
             // ПЕРЕДЕЛАТЬ
@@ -224,6 +224,11 @@ function getComponent({
               />
             );
             break;
+          case 'check_labels':
+            return (
+              <CheckLabels {...defData} value={value} editing={curEditing} />
+            );
+            break;
           // ЗАГЛУШКА
           default:
             return (
@@ -245,24 +250,32 @@ export default class SubTab extends Component {
     super(props);
     this.state = {
       defaultSrtuct: JSON.parse(JSON.stringify(this.props.data)),
-      defContent: [],
-      mainContent: [],
+      defContent: [], // хранилище элементов рендеринга
       editing: this.props.editing,
-      indexParent: this.props.indexParent,
-      addPlus: undefined,
+      indexParent: this.props.indexParent, // индекс страницы
+      addPlus: undefined, // функция добавления нового элемента
     };
 
+    // получаем элементы рендера в виде функций
     if (this.state.defaultSrtuct != undefined) {
       this.state.defContent = getComponent({
+        // структура страницы
         data: this.state.defaultSrtuct,
+        // индекс родителя (для корректного определения key)
         indexParent: this.state.indexParent,
+        // текущие значения блоков
         currentVals: this.props.currentData,
-        callback: (key, val) => {
-          this.props.currentData[key] = val;
+        // колбэк на смену значений
+        callback: (key, val, isNumber) => {
+          isNumber
+            ? (this.props.currentData.symptoms[key] = val)
+            : (this.props.currentData[key] = val);
         },
+        // добавление функции в состояние для добавления новых блоков в страницу
         addPlus: func => {
           this.state.addPlus = func;
         },
+        // родительская навигация
         navigation: this.props.navigation,
       });
     }
@@ -290,12 +303,15 @@ export default class SubTab extends Component {
           {this.state.defContent.map(item => {
             return item.render(
               this.state.editing,
-              this.props.currentData[item.key],
+              isNaN(Number(item.key))
+                ? this.props.currentData[item.key]
+                : this.props.currentData.symptoms[item.key],
             );
           })}
           {/* пустое пространство */}
           <View style={Styles.crutch}></View>
         </ScrollView>
+        {/* кнопка добавления для динамических страниц */}
         {this.state.addPlus != undefined && this.state.editing ? (
           <AddingButton
             onPress={() => {

@@ -1,5 +1,12 @@
 import React, {Component} from 'react';
-import {Text, View, ScrollView, Alert, TouchableOpacity} from 'react-native';
+import {
+  Text,
+  View,
+  ScrollView,
+  Alert,
+  TouchableOpacity,
+  BackHandler,
+} from 'react-native';
 import ButtonEdit from '../components/elements/buttonEdit';
 import SubTab from '../components/generatorPages';
 import EmptyData from '../components/emptyDataList';
@@ -76,6 +83,8 @@ function destructStudentCardData(data) {
   });
   return newData;
 }
+
+// DEV провести обработку внесения в базу
 
 export default class StudentPage extends Component {
   constructor(props) {
@@ -398,6 +407,44 @@ export default class StudentPage extends Component {
     }
   }
 
+  // когда мы в режиме редактирования добавляем алерт при аппаратному "назад"
+  backAction = () => {
+    undoConfirm(() => {
+      this.setState({
+        valuesStorage: JSON.parse(JSON.stringify(this.state.currentData)),
+        editing: false,
+      });
+      this.setNavView();
+    });
+    return true;
+  };
+
+  // устанавливаем прослушку на кнопку назад (аппаратную)
+  componentDidMount() {
+    this.backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      this.backAction,
+    );
+  }
+
+  // прослушка должна устанавливатся только когда мы в режиме редактирования
+  shouldComponentUpdate(nextProps, nextState) {
+    if (nextState.editing) {
+      this.backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        this.backAction,
+      );
+    } else {
+      this.backHandler.remove();
+    }
+    return true;
+  }
+
+  // убираем прослушку
+  componentWillUnmount() {
+    this.backHandler.remove();
+  }
+
   // подтверждение изменений
   confirmEdit() {
     // флаг ошибки проверки
@@ -516,6 +563,14 @@ export default class StudentPage extends Component {
         `,
         [this.state.options.id],
       );
+      // удаляем симптоматику
+      tx.executeSql(
+        `
+        DELETE FROM CurrentSymptoms
+        WHERE id_student = ?
+        `,
+        [this.state.options.id],
+      );
     });
 
     this.addNewData(this.state.options.id);
@@ -523,15 +578,19 @@ export default class StudentPage extends Component {
 
   // добавление новых записей в дб
   async addNewData(id) {
-    // для удобства
-    const dataContacts = Object.values(this.state.currentData.contacts);
-
-    if (dataContacts.length) {
-      await insertInto(dataContacts, 'ParentsStudent', id, 'id_student');
-    }
-    // db.transaction(tx => {
-    //   tx.executeSql()
-    // })
+    await insertInto(
+      Object.values(this.state.currentData.contacts),
+      'ParentsStudent',
+      id,
+      'id_student',
+    );
+    let newData = [];
+    Object.keys(this.state.currentData.symptoms).forEach(key => {
+      this.state.currentData.symptoms[key].forEach(item => {
+        newData.push({id_symptomsValue: item});
+      });
+    });
+    await insertInto(newData, 'CurrentSymptoms', id, 'id_student');
   }
 
   render() {
@@ -542,11 +601,13 @@ export default class StudentPage extends Component {
 
     return (
       <>
+        {/* верхняя навигация подстраниц */}
         <NavPage
           values={this.state.sections}
           selected={this.state.selectedPageIndex}
           onSelect={index => this.state.pageViewer.setPage(index)}
         />
+        {/* слайдер страниц */}
         <PagerView
           style={{flex: 1}}
           initialPage={0}
@@ -561,6 +622,7 @@ export default class StudentPage extends Component {
               ...this.state.defaultData[item.name],
               ...this.state.sectionsData[item.id],
             };
+            // сгенерированные страницы
             return (
               <SubTab
                 key={item.id}
@@ -575,6 +637,8 @@ export default class StudentPage extends Component {
           })}
         </PagerView>
 
+        {/* меню действий с карточкой */}
+        {/* DEV */}
         <MenuActions
           visible={this.state.menuShow}
           callClose={() => this.setState({menuShow: false})}
