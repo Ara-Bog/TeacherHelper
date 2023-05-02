@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {View, TouchableOpacity, ScrollView, Text} from 'react-native';
-import DropList from '../components/elements/dropdownList';
+import DropList from '../components/elements/dropdownLabel';
 import Checkbox from '../components/form/checkbox';
 
 export default class FilterPage extends Component {

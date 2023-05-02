@@ -80,7 +80,7 @@ export default function PhoneView({
         </TouchableOpacity>
         <View style={{...Styles.inputDefaultWrap, width: 'auto', flex: 1}}>
           <MaskedTextInput
-            style={{...Styles.inputDefault, width: 'auto'}}
+            style={{...Styles.inputDefault, width: 'auto', flex: 1}}
             value={currentValue}
             mask="+9 (999) 999-99-99"
             onChangeText={(text, rawText) => {
