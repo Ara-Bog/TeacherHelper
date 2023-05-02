@@ -140,11 +140,8 @@ export default class StudentPage extends Component {
           contacts: {
             label: '',
             type: 'dynamicBlock',
-            childrens: {
-              name: {label: 'ФИО', type: 'inputView', requared: true},
-              type: {label: 'Кем приходится', type: 'inputView'},
-              phone: {label: 'Телефон', type: 'phone', requared: true},
-            },
+            element: 'contactCard',
+            defStruct: {name: true, type: false, phone: true},
           },
         },
       },
@@ -313,15 +310,17 @@ export default class StudentPage extends Component {
           [this.state.options.id],
           (_, {rows}) => {
             let data = rows.raw();
-            let getValues = () =>
+            let stringJson = JSON.stringify(
               Object.assign(
                 {},
                 ...data.map((item, idnex) => {
                   return {[idnex + 1]: item};
                 }),
-              );
-            this.state.currentData.contacts = getValues();
-            this.state.valuesStorage.contacts = getValues();
+              ),
+            );
+
+            this.state.currentData.contacts = JSON.parse(stringJson);
+            this.state.valuesStorage.contacts = JSON.parse(stringJson);
           },
           err => console.log('error studentPage get parents', err),
         );
@@ -345,6 +344,7 @@ export default class StudentPage extends Component {
         );
       }
     });
+
     this.setNavView = () =>
       setHeaderNavigation({
         mainTitle: 'Карточка ученика',
@@ -367,8 +367,10 @@ export default class StudentPage extends Component {
         },
         onPressLeft: () => {
           undoConfirm(() => {
+            this.state.valuesStorage = JSON.parse(
+              JSON.stringify(this.state.currentData),
+            );
             this.setState({
-              valuesStorage: JSON.parse(JSON.stringify(this.state.currentData)),
               editing: false,
             });
             this.setNavView();
@@ -465,11 +467,10 @@ export default class StudentPage extends Component {
       // хранилище обязательных ключей
       let massRequired = [];
       // поля ввода контактов
-      let childrensContacts =
-        this.state.defaultData.default_contacts.contacts.childrens;
+      let fields = this.state.defaultData.default_contacts.contacts.defStruct;
       // добавляем обязательные поля ввода в массив
-      Object.keys(childrensContacts).forEach(keyItem => {
-        if (childrensContacts[keyItem].requared) {
+      Object.keys(fields).forEach(keyItem => {
+        if (fields[keyItem]) {
           massRequired.push(keyItem);
         }
       });
@@ -598,7 +599,6 @@ export default class StudentPage extends Component {
     if (this.state.loading) {
       return <></>;
     }
-
     return (
       <>
         {/* верхняя навигация подстраниц */}
