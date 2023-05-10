@@ -81,10 +81,9 @@ function destructStudentCardData(data) {
     }
     newData[item.id_section][selectIndex] = currentObject;
   });
+
   return newData;
 }
-
-// DEV провести обработку внесения в базу
 
 export default class StudentPage extends Component {
   constructor(props) {
@@ -145,20 +144,18 @@ export default class StudentPage extends Component {
           },
         },
       },
+
       // данные для секций по id
       sectionsData: {},
 
       // текущие данные ученика
-      currentData: {},
+      currentData: {contacts: {}, symptoms: {}},
 
       // состояние загрузки данных с бд
       loading: true,
 
-      // отношение индексов страниц к функции динамического редактирвония
-      funcAdd: {},
-
       // временное хранилище значений
-      valuesStorage: {},
+      valuesStorage: {contacts: {}, symptoms: {}},
 
       // состояние меню
       menuShow: false,
@@ -174,7 +171,7 @@ export default class StudentPage extends Component {
     db.transaction(tx => {
       // получение сортированных секций
       tx.executeSql(
-        `SELECT id, name, show_label, tab_name FROM Sections WHERE id_template = ? ORDER BY "orderBy"`,
+        `SELECT id, name, show_label, tab_name, footer FROM Sections WHERE id_template = ? ORDER BY "orderBy"`,
         [this.state.options.template.id],
         (_, {rows}) => {
           this.state.sections = rows.raw();
@@ -253,11 +250,9 @@ export default class StudentPage extends Component {
         tx.executeSql(
           `
           SELECT 
-            cur.id_symptomsValue as id, symVal.id_symptom 
+            cur.id_symptomsValue as id, cur.id_symptom 
           FROM 
             CurrentSymptoms as cur
-          LEFT JOIN
-            SymptomsValues as symVal ON symVal.id = cur.id_symptomsValue
           WHERE cur.id_student = ?
           `,
           [this.state.options.id],
@@ -381,6 +376,7 @@ export default class StudentPage extends Component {
       });
 
     // установка заголовка и соответствующей иконки вверху справа
+    // DEV ПЕРЕДЕЛАТЬ НАВИГАЦИЮ ДЛЯ РАЗНЫХ ТИПОВ ОТКРЫТИЯ
     switch (currentType) {
       case 'view':
         this.setNavView();
@@ -455,7 +451,6 @@ export default class StudentPage extends Component {
     for (const key of Object.keys(this.state.defaultData.default_main)) {
       if (this.state.defaultData.default_main[key].requared) {
         if (this.state.valuesStorage[key] == undefined) {
-          console.log('error confirm1', key);
           flagError = true;
           break;
         }
@@ -475,19 +470,15 @@ export default class StudentPage extends Component {
         }
       });
       // проверка обязательных полей контактов
-      for (const itemInd of Object.keys(this.state.valuesStorage.contacts)) {
-        const item = this.state.valuesStorage.contacts[itemInd];
-        for (const itemReq of massRequired) {
-          if (item[itemReq] == undefined) {
-            // DEV Тут есть ебаная ошибка с незаполненными данными в контактах
-            console.log('error confirm2', itemReq);
-            console.log('studentPage test', this.state.valuesStorage);
+      Object.values(this.state.valuesStorage.contacts).forEach(block => {
+        massRequired.forEach(itemReq => {
+          if (block[itemReq] == undefined) {
             flagError = true;
-            break;
+            return;
           }
-        }
-        if (flagError) break;
-      }
+          if (flagError) return;
+        });
+      });
     }
 
     // есть не заполненные обязательные поля
@@ -588,7 +579,7 @@ export default class StudentPage extends Component {
     let newData = [];
     Object.keys(this.state.currentData.symptoms).forEach(key => {
       this.state.currentData.symptoms[key].forEach(item => {
-        newData.push({id_symptomsValue: item});
+        newData.push({id_symptomsValue: item, id_symptom: key});
       });
     });
     await insertInto(newData, 'CurrentSymptoms', id, 'id_student');
@@ -617,7 +608,7 @@ export default class StudentPage extends Component {
           onPageSelected={e =>
             this.setState({selectedPageIndex: e.nativeEvent.position})
           }>
-          {this.state.sections.map((item, index) => {
+          {this.state.sections.map(item => {
             const assignData = {
               ...this.state.defaultData[item.name],
               ...this.state.sectionsData[item.id],
@@ -626,6 +617,7 @@ export default class StudentPage extends Component {
             return (
               <SubTab
                 key={item.id}
+                footer={Boolean(item.footer)}
                 lable={item.show_label ? item.name : null}
                 data={assignData}
                 currentData={this.state.valuesStorage}
