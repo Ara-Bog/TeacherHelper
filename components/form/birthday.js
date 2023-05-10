@@ -34,7 +34,7 @@ export default function BirhdayView({
   };
 
   const calcAge = val => {
-    if (val != null) {
+    if (val) {
       let days = new Date().getTime() - new Date(val); // считаем разницу в милисекундах
       let calcData = days / (24 * 3600 * 365.25 * 1000); // делим на милисекунды в год
       let age = Math.round(calcData);

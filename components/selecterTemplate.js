@@ -40,8 +40,9 @@ export default class SelectorTemplates extends Component {
             style={{...Styles.cardBlock, height: 200}}
             contentContainerStyle={{gap: 15}}>
             <RadioBlock
-              currentVall={[null]}
+              values={[null]}
               data={this.state.dataset}
+              editing={true}
               onCallBack={(key, val) =>
                 this.setState({selectId: key, selectValue: val})
               }
