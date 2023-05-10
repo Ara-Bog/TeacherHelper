@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {View, TouchableOpacity, ScrollView, Text} from 'react-native';
-import DropList from '../components/elements/dropdownLabel';
+import DropdownLabel from '../components/elements/dropdownLabel';
 import Checkbox from '../components/form/checkbox';
 
 export default class FilterPage extends Component {
@@ -19,7 +19,7 @@ export default class FilterPage extends Component {
     const params = {...this.props.route.params};
 
     this.state = {
-      listChecked: {...params.currentFilter},
+      listChecked: params.currentFilter,
       data: {},
       showLabels: [...params.showLabels],
       pageBack: params.pageBack,
@@ -29,43 +29,46 @@ export default class FilterPage extends Component {
     // для групп, categories убрать where
     db.transaction(tx => {
       tx.executeSql(
-        `SELECT * FROM Categories WHERE id > 0`,
+        `SELECT id, name as label FROM Categories WHERE id > 0`,
         [],
         (_, {rows}) => {
-          this.setState({
-            data: {...this.state.data, ['Возрастная группа']: rows.raw()},
-          });
+          this.state.data = {
+            ...this.state.data,
+            ['Возрастная группа']: rows.raw(),
+          };
         },
         (_, err) => console.log('error getData (Categories) - ', err),
       );
       tx.executeSql(
-        `SELECT * FROM Templates`,
+        `SELECT id, name as label FROM Templates`,
         [],
         (_, {rows}) => {
-          this.setState({data: {...this.state.data, ['Шаблон']: rows.raw()}});
+          this.state.data = {...this.state.data, ['Шаблон']: rows.raw()};
         },
         (_, err) => console.log('error getData (Templates) - ', err),
       );
       tx.executeSql(
         `
-        SELECT MIN(id) as id, name 
+        SELECT MIN(id) as id, name as label
         FROM Diagnosis
-        GROUP BY name
+        GROUP BY label
         ORDER BY id
         `,
         [],
         (_, {rows}) => {
-          this.setState({
-            data: {...this.state.data, ['Заключение ЦПМПК']: rows.raw()},
-          });
+          this.state.data = {
+            ...this.state.data,
+            ['Заключение ЦПМПК']: rows.raw(),
+          };
+          this.forceUpdate();
         },
         (_, err) => console.log('error getData (Diagnosis) - ', err),
       );
     });
   }
 
-  setCheck(label, val) {
-    let currentList = [...this.state.listChecked[label]];
+  selectVal(label, val) {
+    let currentList = this.state.listChecked[label];
     let indexVal = currentList.indexOf(val);
 
     if (indexVal >= 0) {
@@ -74,12 +77,12 @@ export default class FilterPage extends Component {
       currentList.push(val);
     }
 
-    // не через setState - т.к. ререндер происходит
+    // не через setState - т.к. происходит ререндер
     // изменение состояние объекта происходит на прямую
     this.state.listChecked[label] = currentList;
   }
 
-  setLabels(val) {
+  labelAction(val) {
     let currentList = [...this.state.showLabels];
     let indexVal = currentList.indexOf(val);
 
@@ -89,7 +92,7 @@ export default class FilterPage extends Component {
       currentList.push(val);
     }
 
-    // не через setState - т.к. ререндер происходит
+    // не через setState - т.к. происходит ререндер
     // изменение состояние объекта происходит на прямую
     this.state.showLabels = currentList;
   }
@@ -101,22 +104,21 @@ export default class FilterPage extends Component {
         <View style={{...Styles.container, backgroundColor: '#fff'}}>
           <ScrollView contentContainerStyle={{gap: 15}}>
             {Object.keys(this.state.data).map((label, index) => (
-              <DropList
+              <DropdownLabel
                 key={index}
                 id={index}
                 label={label}
                 data={this.state.data[label]}
                 show={this.state.showLabels.includes(index)}
-                setCheck={() => this.setLabels(index)}>
+                editing={true}
+                setCheck={() => this.labelAction(index)}>
                 <Checkbox
-                  isSelected={valueChildren =>
-                    this.state.listChecked[label].includes(valueChildren)
-                  }
-                  callBack={valueChildren =>
-                    this.setCheck(label, valueChildren)
+                  callBack={val => this.selectVal(label, val)}
+                  isSelected={val =>
+                    this.state.listChecked[label].includes(val)
                   }
                 />
-              </DropList>
+              </DropdownLabel>
             ))}
             <View style={Styles.crutch}></View>
           </ScrollView>

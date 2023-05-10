@@ -466,7 +466,6 @@ export default StyleSheet.create({
   },
 
   textCheckerWrap: {
-    marginTop: 6,
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 15,
@@ -807,6 +806,13 @@ export default StyleSheet.create({
     paddingHorizontal: 14,
   },
 
+  dropdownList__showMod: {
+    gap: 12,
+    display: 'flex',
+    overflow: 'hidden',
+    paddingHorizontal: 7,
+  },
+
   dropdownListWrap: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -821,6 +827,8 @@ export default StyleSheet.create({
     fontSize: 16,
     lineHeight: 19,
     color: COLORS.blue,
+    marginRight: 20,
+    flex: 1,
   },
 
   checkbox: {
@@ -912,18 +920,30 @@ export default StyleSheet.create({
     backgroundColor: '#EBEBEB',
   },
 
-  radioCircle: {
-    borderWidth: 1.5,
+  radioCircle_outer: {
+    borderWidth: 2,
     borderColor: '#B1B1B1',
     borderRadius: 22,
     width: 22,
     height: 22,
     backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
-  radioCircle__active: {
-    borderWidth: 6,
+  radioCircle_outer__active: {
     borderColor: '#554AF0',
+  },
+
+  radioCircle_inner: {
+    backgroundColor: 'transparent',
+    borderRadius: 10,
+    width: 10,
+    height: 10,
+  },
+
+  radioCircle_inner__active: {
+    backgroundColor: '#554AF0',
   },
 
   radioText: {
@@ -999,5 +1019,26 @@ export default StyleSheet.create({
     borderTopWidth: 2,
     borderColor: '#EBEBEB',
     paddingTop: 15,
+  },
+
+  subtabPage_title: {
+    fontSize: 14,
+    color: '#B1B1B1',
+    textAlign: 'center',
+    lineHeight: 17,
+  },
+
+  subtabPage_footerLabel: {
+    fontSize: 16,
+    lineHeight: 19,
+    color: COLORS.darkBlue,
+    fontWeight: 500,
+  },
+
+  subtabPage_footerItems: {
+    fontSize: 14,
+    lineHeight: 17,
+    color: '#B1B1B1',
+    fontWeight: 400,
   },
 });

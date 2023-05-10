@@ -130,9 +130,10 @@ export default class ListStudentsWrap extends Component {
   getData() {
     db.transaction(tx => {
       tx.executeSql(
-        `SELECT st.id as ID, ct.name as LeftBot, dg.name as RightBot, 
+        `SELECT st.id as ID, ct.name as LeftBot, ct.id as LeftBot_id, 
+                dg.name as RightBot, dg.id as RightBot_id, 
                 st.surname || ' ' || st.name || ' ' || COALESCE(st.midname, '') as LeftTop,
-                tp.name as RightTop, tp.id as id_template 
+                tp.name as RightTop, tp.id as RightTop_id, tp.id as id_template 
         FROM Students as st 
         INNER JOIN Templates as tp ON st.id_template = tp.id
         INNER JOIN Diagnosis as dg ON st.id_diagnos = dg.id
@@ -175,11 +176,13 @@ export default class ListStudentsWrap extends Component {
     // когда 0 - фильтр сбрасывается
     if (Object.values(currentValues).flat().length > 0) {
       // фильтруем учеников на соответсвие выходных данных фильтра
+      // console.log('test', this.state.defaultData);
+      // console.log('test2', currentValues);
       newData = this.state.defaultData.filter(
         item =>
-          currentValues['Возрастная группа'].includes(item.LeftBot) ||
-          currentValues['Шаблон'].includes(item.RightTop) ||
-          currentValues['Заключение ЦПМПК'].includes(item.RightBot),
+          currentValues['Возрастная группа'].includes(item.LeftBot_id) ||
+          currentValues['Шаблон'].includes(item.RightTop_id) ||
+          currentValues['Заключение ЦПМПК'].includes(item.RightBot_id),
       );
       // фильтр используется
       this.setState({filterUsed: true});
