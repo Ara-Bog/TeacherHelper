@@ -10,18 +10,20 @@ import {
 
 import SymptomsForm from './form/radioBlock';
 import TableSounds from '../components/elements/tableSounds';
-import RadioBlock from './form/radioBlock';
 import AddingButton from './elements/buttonAdd';
 
 // блоки редактирования
 import InputView from '../components/form/inputView';
 import Dropdown from './form/dropdown';
 import BirhdayView from './form/birthday';
-import ViewLinks from './form/viewLinks';
+import ViewLinks from './viewLinks';
 import Textarea from './form/textarea';
 import DynamicBlock from './form/dynamicBlock';
 import PhoneView from './form/phoneView';
 import CheckLabels from './form/checkLabels';
+import DropdownLabel from './elements/dropdownLabel';
+import Checkbox from './form/checkbox';
+import RadioBlock from './form/radioBlock';
 
 // типы полей {
 // +-- viewLinks
@@ -31,229 +33,23 @@ import CheckLabels from './form/checkLabels';
 // +-- dateTime
 // +-- dynamicBlock
 // +-- droplist
-// -- label
-// -- checker_only
-// -- radio
-// -- table
-// -- checkbox
+// +-- label
+// +-- radio
+// +-- checkbox
 // -- custom
+// -- -- checker_only
+// -- table
 // +-- check_labels
-// }
-
-// function getComponent({
-//   data,
-//   indexParent,
-//   currentVals,
-//   callback,
-//   addPlus,
-//   navigation,
-//   nasting = false,
-// }) {
-//   // общее хранилище элементов
-//   let massObjects = [];
-//   // хранилище последних элементов страницы
-//   let massLastObjects = [];
-//   // флаг проверки, что начались объекты по умолчанию
-//   let isNumber = true;
-//   // хранилище списка значений
-//   let values;
-//   // экзэмпляр функции
-//   let onChange;
-//   // обход переданных полей
-//   Object.keys(data).forEach((key, indexEl) => {
-//     // когда ключ будет не число - флаг сниматеся
-//     if (isNaN(Number(key))) {
-//       isNumber = false;
-//       values = currentVals[key];
-//       onChange = val => callback(key, val);
-//     } else {
-//       onChange = val => callback(key, val, true);
-//       values = currentVals.symptoms[key];
-//     }
-//     // копирование объекта
-//     const curObj = data[key];
-//     // приведение индекса к дереву
-//     const index = [indexParent, indexEl].join('.');
-//     // пропсы по умолчанию
-//     let defData = {
-//       key: index,
-//       // обязательность поля
-//       requared: curObj.requared || false,
-//       // заголовок поля
-//       label: curObj.label,
-//       // колбэк на изменение значения в поле
-//       onChange: onChange,
-//       // значения заполнения
-//       data: JSON.parse(JSON.stringify(curObj.values || [])),
-//     };
-
-//     // ссылка на текущий массив
-//     let currMass;
-//     // когда у объекта стоит флаг last<Bool> или ключ этого объекта число
-//     // он будет добавлен в массив последних элементов
-//     if (curObj.last || isNumber) {
-//       currMass = massLastObjects;
-//     } else {
-//       currMass = massObjects;
-//     }
-
-//     // получение постфикса для реализации доп функционала блока dateTime
-//     let postfix;
-//     if (curObj.type.startsWith('dateTime')) {
-//       postfix = curObj.type.split('-')[1];
-//       curObj.type = 'dateTime';
-//     }
-
-//     // хранилище дочерних элементов
-//     let storageChildrens = {};
-//     // когда элемент является dynamicBlock необходимо вернуть callback,
-//     // что нужно добавить кнопку add в панель управления
-//     if (curObj.type === 'dynamicBlock') {
-//       // создаем блоки с дочерними элементами по значениям
-//       Object.keys(values).forEach(indexEl => {
-//         let item = values[indexEl];
-//         storageChildrens[indexEl] = getComponent({
-//           data: curObj.childrens,
-//           indexParent: [index, indexEl].join('.'),
-//           currentVals: item,
-//           callback: (keyChild, val) => {
-//             values[indexEl][keyChild] ??= undefined;
-//             values[indexEl][keyChild] = val;
-//             callback(key, values, isNumber);
-//           },
-//         });
-//       });
-//     } else if (curObj.type === 'table') {
-//       // отдельное поведение для таблицы
-//     } else if (curObj.childrens != undefined) {
-//       // console.log('test', curObj.childrens);
-//     }
-
-//     // добавляем в массив объект ключа(по которому смотрятся значения) и функцию рендера
-//     // режим редактирования -- curEditing: Bool
-//     // значение (может быть массив) -- value: String || Int || Array<Object>
-//     // функция колбэка для телефона -- addedAction: Function
-//     // добавочное значение для отслеживания изменений в родителе -- addedValue: String || Int || Array<Object>
-//     currMass.push({
-//       key: key,
-//       render: (curEditing, value, addedAction, addedValue) => {
-//         switch (curObj.type) {
-//           case 'inputView':
-//             return (
-//               <InputView
-//                 {...defData}
-//                 value={value}
-//                 editing={curEditing}
-//                 addedValue={addedValue}
-//               />
-//             );
-//             break;
-//           case 'droplist':
-//             return <Dropdown {...defData} editing={curEditing} value={value} />;
-//             break;
-//           case 'dateTime':
-//             // ПЕРЕДЕЛАТЬ
-//             return (
-//               <BirhdayView
-//                 {...defData}
-//                 editing={curEditing}
-//                 value={value}
-//                 // тип пикера
-//                 type={postfix}
-//                 // заголовок при редактировании
-//                 labelEdit={curObj.labelEdit}
-//               />
-//             );
-//             break;
-//           case 'textarea':
-//             return <Textarea {...defData} value={value} editing={curEditing} />;
-//             break;
-//           case 'dynamicBlock':
-//             return (
-//               <DynamicBlock
-//                 {...defData}
-//                 editing={curEditing}
-//                 value={value}
-//                 childrens={storageChildrens}
-//                 getElements={(indexEl, vals) => {
-//                   return getComponent({
-//                     data: curObj.childrens,
-//                     indexParent: [index, indexEl].join('.'),
-//                     currentVals: {},
-//                     callback: (keyChild, val) => {
-//                       vals[indexEl][keyChild] ??= undefined;
-//                       vals[indexEl][keyChild] = val;
-//                       callback(key, vals);
-//                     },
-//                   });
-//                 }}
-//                 funcAdd={increment =>
-//                   addPlus(vals =>
-//                     callback(key, {
-//                       ...vals[key],
-//                       [increment++]: Object.assign(
-//                         {},
-//                         ...Object.keys(curObj.childrens).map(item => {
-//                           return {[item]: undefined};
-//                         }),
-//                       ),
-//                     }),
-//                   )
-//                 }
-//               />
-//             );
-//             break;
-//           case 'viewLinks':
-//             return (
-//               <ViewLinks
-//                 {...defData}
-//                 editing={curEditing}
-//                 value={value}
-//                 navigate={curId =>
-//                   navigation.navigate('Group', {type: 'view', id: curId})
-//                 }
-//               />
-//             );
-//             break;
-//           case 'phone':
-//             return (
-//               <PhoneView
-//                 {...defData}
-//                 editing={curEditing}
-//                 value={value}
-//                 callAction={val => addedAction(val)}
-//               />
-//             );
-//             break;
-//           case 'check_labels':
-//             return (
-//               <CheckLabels {...defData} value={value} editing={curEditing} />
-//             );
-//             break;
-//           // ЗАГЛУШКА
-//           default:
-//             return (
-//               <Text key={defData.key} style={{color: '#04021D', fontSize: 16}}>
-//                 ЗАГЛУШКА
-//               </Text>
-//             );
-//             break;
-//         }
-//       },
-//     });
-//   });
-
-//   return [...massObjects, ...massLastObjects];
+// +--- nasting
 // }
 
 function getComponent({
   data,
   indexParent,
   currentVals,
-  callback,
   addPlus,
   navigation,
-  nasting = false,
+  showBlocks,
 }) {
   // общее хранилище элементов
   let massObjects = [];
@@ -261,21 +57,22 @@ function getComponent({
   let massLastObjects = [];
   // флаг проверки, что начались объекты по умолчанию
   let isNumber = true;
-  // хранилище списка значений
-  let values;
-  // экзэмпляр функции
-  let onChange;
   // обход переданных полей
   Object.keys(data).forEach((key, indexEl) => {
+    // ссылка на список значений
+    let values;
+    // экзэмпляр функции
+    let onChange;
     // когда ключ будет не число - флаг сниматеся
     if (isNaN(Number(key))) {
       isNumber = false;
       values = currentVals[key];
-      onChange = val => callback(key, val);
+      onChange = val => (currentVals[key] = val);
     } else {
       isNumber = true;
+      currentVals.symptoms[key] ??= [];
       values = currentVals.symptoms[key];
-      onChange = val => callback(key, val, true);
+      onChange = val => (currentVals.symptoms[key] = val);
     }
     // копирование объекта
     const curObj = data[key];
@@ -292,6 +89,8 @@ function getComponent({
       onChange: onChange,
       // значения заполнения
       data: JSON.parse(JSON.stringify(curObj.values || [])),
+      // дочерние элементы
+      childrenElements: [],
     };
 
     // ссылка на текущий массив
@@ -309,6 +108,19 @@ function getComponent({
     if (curObj.type.startsWith('dateTime')) {
       postfix = curObj.type.split('-')[1];
       curObj.type = 'dateTime';
+    }
+
+    if (curObj.type == 'table') {
+      // console.log('TABLE CHILDRENS');
+    } else if (curObj.childrens != undefined) {
+      defData.childrenElements = getComponent({
+        data: curObj.childrens,
+        indexParent: index,
+        currentVals: currentVals,
+        addPlus: addPlus,
+        navigation: navigation,
+        showBlocks: showBlocks[key].childrens,
+      });
     }
 
     // добавляем в массив объект ключа(по которому смотрятся значения) и функцию рендера
@@ -351,17 +163,49 @@ function getComponent({
       case 'check_labels':
         element = <CheckLabels {...defData} />;
         break;
+      case 'checkbox':
+        element = (
+          <DropdownLabel
+            {...defData}
+            show={showBlocks[key].show}
+            setCheck={() => (showBlocks[key].show = !showBlocks[key].show)}>
+            <Checkbox
+              callBack={val => {
+                let indexVal = values.indexOf(val);
+
+                if (indexVal >= 0) {
+                  values.splice(indexVal, 1);
+                } else {
+                  values.push(val);
+                }
+              }}
+              isSelected={val => values.includes(val)}
+            />
+          </DropdownLabel>
+        );
+        break;
+      case 'label':
+        element = (
+          <DropdownLabel
+            {...defData}
+            show={showBlocks[key].show}
+            setCheck={() => {
+              showBlocks[key].show = !showBlocks[key].show;
+            }}
+          />
+        );
+        break;
       case 'dynamicBlock':
         element = (
           <DynamicBlock
             key={index}
             element={curObj.element}
             onChange={vals => {
-              callback(key, vals, isNumber);
+              onChange(vals);
             }}
             funcAdd={increment =>
               addPlus(vals =>
-                callback(key, {
+                onChange({
                   ...vals[key],
                   [increment++]: Object.assign(
                     {},
@@ -373,6 +217,18 @@ function getComponent({
               )
             }
           />
+        );
+        break;
+      case 'radio':
+        element = (
+          <DropdownLabel
+            {...defData}
+            show={showBlocks[key].show}
+            childView={true}
+            values={values}
+            setCheck={() => (showBlocks[key].show = !showBlocks[key].show)}>
+            <RadioBlock onCallBack={(val, _) => onChange(val ? [val] : [])} />
+          </DropdownLabel>
         );
         break;
       default:
@@ -393,14 +249,31 @@ function getComponent({
   return [...massObjects, ...massLastObjects];
 }
 
+function getStructShowBlocks(data, sub = false) {
+  return Object.keys(data).map(key => {
+    let currentBlock = {
+      show: sub ? userSettings.showSubCategories : userSettings.showCategories,
+    };
+    if (data[key].childrens != undefined) {
+      currentBlock.childrens = Object.fromEntries(
+        getStructShowBlocks(data[key].childrens, true),
+      );
+    }
+    return [key, currentBlock];
+  });
+}
+
 export default class SubTab extends Component {
   constructor(props) {
     super(props);
     this.state = {
       defContent: [], // хранилище элементов рендеринга
       addPlus: undefined, // функция добавления нового элемента
+      showBlocks: {},
     };
-
+    this.state.showBlocks = Object.fromEntries(
+      getStructShowBlocks(this.props.data),
+    );
     // получаем элементы рендера в виде элементов
     if (this.props.data != undefined) {
       this.state.defContent = getComponent({
@@ -410,18 +283,13 @@ export default class SubTab extends Component {
         indexParent: this.props.indexParent,
         // текущие значения блоков
         currentVals: this.props.currentData,
-        // колбэк на смену значений
-        callback: (key, val, isNumber) => {
-          isNumber
-            ? (this.props.currentData.symptoms[key] = val)
-            : (this.props.currentData[key] = val);
-        },
         // добавление функции в состояние для добавления новых блоков в страницу
         addPlus: func => {
           this.state.addPlus = func;
         },
         // родительская навигация
         navigation: this.props.navigation,
+        showBlocks: this.state.showBlocks,
       });
     }
   }
@@ -432,7 +300,16 @@ export default class SubTab extends Component {
     }
   }
 
+  checkValues(itemKey) {
+    val = isNaN(Number(itemKey))
+      ? this.props.currentData[itemKey]
+      : this.props.currentData.symptoms[itemKey];
+    return val;
+  }
+
   render() {
+    let showSeparate = false;
+    let emptyFields = [];
     return (
       <View
         style={{
@@ -440,15 +317,79 @@ export default class SubTab extends Component {
           backgroundColor: '#fff',
         }}>
         <ScrollView contentContainerStyle={{gap: 25}}>
-          {this.props.lable === null ? null : <Text>{this.props.lable}</Text>}
+          {/* заголовок при наличии */}
+          {this.props.lable === null ? null : (
+            <>
+              <Text style={Styles.subtabPage_title}>
+                {this.props.lable.toUpperCase()}
+              </Text>
+              <View style={Styles.seqLineHeader}></View>
+            </>
+          )}
+          {/* основной контент */}
           {this.state.defContent.map(item => {
+            let val = this.checkValues(item.key);
+            let sub_vals = {};
+            let flag_Empty = true;
+
+            if (this.props.data[item.key].childrens) {
+              sub_vals = Object.fromEntries(
+                Object.keys(this.props.data[item.key].childrens).map(
+                  itemKey => {
+                    val = this.checkValues(itemKey);
+                    if (
+                      this.props.footer &&
+                      !(val || []).length &&
+                      !this.props.editing
+                    ) {
+                      emptyFields.push(
+                        this.props.data[item.key].childrens[itemKey].label,
+                      );
+                    } else {
+                      flag_Empty = false;
+                    }
+                    return [itemKey, this.checkValues(itemKey)];
+                  },
+                ),
+              );
+            }
+
+            if (
+              this.props.footer &&
+              !(val || []).length &&
+              !this.props.editing &&
+              flag_Empty
+            ) {
+              emptyFields.push(this.props.data[item.key].label);
+              return null;
+            }
+
+            if (!showSeparate) showSeparate = true;
+
             return React.cloneElement(item.element, {
               editing: this.props.editing,
-              value: isNaN(Number(item.key))
-                ? this.props.currentData[item.key]
-                : this.props.currentData.symptoms[item.key],
+              value: val,
+              child_values: sub_vals,
             });
           })}
+          {/* блок отсутствующий значий, который отображается при наличии соответствующего флага */}
+          {this.props.footer && !this.props.editing && emptyFields.length ? (
+            <>
+              {showSeparate ? <View style={Styles.seqLineHeader}></View> : null}
+              <View style={{gap: 15}}>
+                <Text style={Styles.subtabPage_footerLabel}>Не указано</Text>
+                <View style={{gap: 20}}>
+                  {emptyFields.map((label, index) => {
+                    return (
+                      <Text key={index} style={Styles.subtabPage_footerItems}>
+                        {label}
+                      </Text>
+                    );
+                  })}
+                </View>
+              </View>
+            </>
+          ) : null}
           {/* пустое пространство */}
           <View style={Styles.crutch}></View>
         </ScrollView>
