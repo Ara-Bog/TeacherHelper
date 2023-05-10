@@ -50,7 +50,7 @@ async function checkFillData(base) {
 
 // создание стандартных таблиц с колонками
 export async function createBase(base) {
-  console.log('create database');
+  console.log('CREATE DEFAULT BASE');
   return new Promise(resolve => {
     base
       .transaction(tx => {
@@ -62,6 +62,7 @@ export async function createBase(base) {
 
 // вставка данных по умолчанию
 export async function insertDefaultData(base) {
+  console.log('INSERT DEFAULT DATA');
   return new Promise(resolve => {
     base
       .transaction(tx => {
