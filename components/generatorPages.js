@@ -50,6 +50,7 @@ function getComponent({
   addPlus,
   navigation,
   showBlocks,
+  nasting = false,
 }) {
   // общее хранилище элементов
   let massObjects = [];
@@ -91,6 +92,8 @@ function getComponent({
       data: JSON.parse(JSON.stringify(curObj.values || [])),
       // дочерние элементы
       childrenElements: [],
+      // упрощенное представление для вложенных droplabel
+      simpleShow: nasting,
     };
 
     // ссылка на текущий массив
@@ -120,6 +123,7 @@ function getComponent({
         addPlus: addPlus,
         navigation: navigation,
         showBlocks: showBlocks[key].childrens,
+        nasting: true,
       });
     }
 
@@ -249,6 +253,7 @@ function getComponent({
   return [...massObjects, ...massLastObjects];
 }
 
+// создание структуры {show, childrens:{show, childrens...}} для отображения раскрытия списков
 function getStructShowBlocks(data, sub = false) {
   return Object.keys(data).map(key => {
     let currentBlock = {
@@ -289,17 +294,13 @@ export default class SubTab extends Component {
         },
         // родительская навигация
         navigation: this.props.navigation,
+        // состояния раскрытия списков
         showBlocks: this.state.showBlocks,
       });
     }
   }
 
-  componentDidMount() {
-    if (this.state.defContent.length == 0) {
-      return false;
-    }
-  }
-
+  // возврат значения по ключу
   checkValues(itemKey) {
     val = isNaN(Number(itemKey))
       ? this.props.currentData[itemKey]
@@ -308,7 +309,9 @@ export default class SubTab extends Component {
   }
 
   render() {
+    // флаг отображения разделителя
     let showSeparate = false;
+    // хранилище ключей полей с пустыми значениями
     let emptyFields = [];
     return (
       <View
@@ -328,51 +331,65 @@ export default class SubTab extends Component {
           )}
           {/* основной контент */}
           {this.state.defContent.map(item => {
+            // текущие значения блока
             let val = this.checkValues(item.key);
+            // вложеные значения
             let sub_vals = {};
+            // флаг отсутствия значений у ОСНОВНОГО блока
             let flag_Empty = true;
 
+            // проверка вложенных полей
             if (this.props.data[item.key].childrens) {
               sub_vals = Object.fromEntries(
                 Object.keys(this.props.data[item.key].childrens).map(
                   itemKey => {
+                    // получем текущее значение вложенного блока
                     val = this.checkValues(itemKey);
+                    // проверка на пустоту, при включенном футере
                     if (
                       this.props.footer &&
                       !(val || []).length &&
                       !this.props.editing
                     ) {
+                      // добавляем ключ пустого вложенного блока
                       emptyFields.push(
                         this.props.data[item.key].childrens[itemKey].label,
                       );
                     } else {
+                      // поле не пустое, снимаем флаг
                       flag_Empty = false;
                     }
-                    return [itemKey, this.checkValues(itemKey)];
+                    // возвращаем ключ (id блока) и значение
+                    return [itemKey, val];
                   },
                 ),
               );
             }
 
+            // проверка на пустоту, при включенном футере
+            // доп проверка флага нужна для отображения основного блока, если в нем есть вложенные заполненные поля
             if (
               this.props.footer &&
               !(val || []).length &&
               !this.props.editing &&
               flag_Empty
             ) {
+              // блок не будет выведен в основном контенте
               emptyFields.push(this.props.data[item.key].label);
               return null;
             }
 
-            if (!showSeparate) showSeparate = true;
+            // есть заполненные блок, значит нужен разделитель
+            showSeparate = true;
 
+            // возвращаем элемент с текущими данными
             return React.cloneElement(item.element, {
               editing: this.props.editing,
               value: val,
               child_values: sub_vals,
             });
           })}
-          {/* блок отсутствующий значий, который отображается при наличии соответствующего флага */}
+          {/* блок отсутствующих значий, который отображается при наличии соответствующего флага */}
           {this.props.footer && !this.props.editing && emptyFields.length ? (
             <>
               {showSeparate ? <View style={Styles.seqLineHeader}></View> : null}

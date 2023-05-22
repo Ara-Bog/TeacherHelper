@@ -18,11 +18,14 @@ export default function DropdownLabel(props) {
   const [show, setShow] = useState(props.show);
   // обход переданных данных, для создания детей с передачей им необходимых props
   const mainContent = props.childView
-    ? React.cloneElement(props.children, {
-        data: props.data,
-        editing: props.editing,
-        values: props.values,
-      })
+    ? [
+        React.cloneElement(props.children, {
+          key: [props.id, 0].join('.'),
+          data: props.data,
+          editing: props.editing,
+          values: props.values,
+        }),
+      ]
     : props.data.map((item, index) => {
         let newId = [props.id, index].join('.');
 
@@ -34,12 +37,18 @@ export default function DropdownLabel(props) {
         });
       });
 
+  // вложенный контент
   const subContent = props.childrenElements.map(item => {
-    // let newId = [props.id, item.key].join('.');
-    return React.cloneElement(item.element, {
-      editing: props.editing,
-    });
+    // проверка пустого значения
+    if ((props.child_values[item.key] || []).length) {
+      return React.cloneElement(item.element, {
+        editing: props.editing,
+      });
+    } else {
+      return null;
+    }
   });
+
   // меняем текущее значение и отправляем колбэк, что состояние сменилось
   const changeShow = state => {
     props.setCheck();
@@ -49,14 +58,20 @@ export default function DropdownLabel(props) {
   return (
     <View style={props.editing ? {gap: 25} : {gap: 12}}>
       <TouchableOpacity
-        style={props.editing ? Styles.dropdownListWrap : null}
+        style={
+          props.editing
+            ? props.simpleShow
+              ? Styles.dropdownListWrap__nasted
+              : Styles.dropdownListWrap
+            : null
+        }
         onPress={() => changeShow(!show)}>
         <Text
           style={[
-            Styles.dropdownListText,
-            !props.editing
-              ? {color: '#04021D', fontSize: 14, lineHeight: 17}
-              : null,
+            props.simpleShow
+              ? Styles.dropdownListText__nested
+              : Styles.dropdownListText,
+            !props.editing ? Styles.dropdownListText__show : null,
           ]}>
           {props.label}
         </Text>
@@ -68,21 +83,24 @@ export default function DropdownLabel(props) {
             show ? {transform: [{rotate: '180deg'}]} : null,
           ]}
           size={20}
-          color={'#554AF0'}
+          color={props.simpleShow ? '#B1B1B1' : '#554AF0'}
         />
       </TouchableOpacity>
       {show || !props.editing ? (
         <>
-          <View
-            style={[
-              show ? {display: 'flex'} : {display: 'none'},
-              !props.editing
-                ? Styles.dropdownList__showMod
-                : Styles.dropdownList,
-            ]}>
-            {mainContent}
-          </View>
-          <View>{subContent}</View>
+          {mainContent.length ? (
+            <View
+              style={[
+                show ? {display: 'flex'} : {display: 'none'},
+                !props.editing
+                  ? Styles.dropdownList__showMod
+                  : Styles.dropdownList,
+              ]}>
+              {mainContent}
+            </View>
+          ) : null}
+
+          <View style={{gap: 25}}>{subContent}</View>
         </>
       ) : null}
     </View>

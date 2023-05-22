@@ -822,6 +822,12 @@ export default StyleSheet.create({
     borderRadius: 8,
   },
 
+  dropdownListWrap__nasted: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+  },
+
   dropdownListText: {
     fontWeight: 500,
     fontSize: 16,
@@ -829,6 +835,21 @@ export default StyleSheet.create({
     color: COLORS.blue,
     marginRight: 20,
     flex: 1,
+  },
+
+  dropdownListText__nested: {
+    fontWeight: 400,
+    fontSize: 14,
+    lineHeight: 17,
+    color: COLORS.darkBlue,
+    marginRight: 20,
+    flex: 1,
+  },
+
+  dropdownListText__show: {
+    color: '#04021D',
+    fontSize: 14,
+    lineHeight: 17,
   },
 
   checkbox: {
