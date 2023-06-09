@@ -250,7 +250,7 @@ export default class StudentPage extends Component {
         tx.executeSql(
           `
           SELECT 
-            cur.id_symptomsValue as id, cur.id_symptom 
+            cur.id_symptomsValue as id, cur.id_symptom, cur.id_group 
           FROM 
             CurrentSymptoms as cur
           WHERE cur.id_student = ?
@@ -261,7 +261,15 @@ export default class StudentPage extends Component {
             let newData = {};
             data.forEach(item => {
               newData[item.id_symptom] ??= [];
-              newData[item.id_symptom].push(item.id);
+              // отдельная логика для сгруппированных блоков
+              if (item.id_group === null) {
+                // блок без группировки - значения = id's
+                newData[item.id_symptom].push(item.id);
+              } else {
+                // блок с группировкой - значение = списки id's
+                newData[item.id_symptom][item.id_group - 1] ??= [];
+                newData[item.id_symptom][item.id_group - 1].push(item.id);
+              }
             });
             let stringJson = JSON.stringify(newData);
             this.state.currentData.symptoms = JSON.parse(stringJson);
@@ -379,7 +387,11 @@ export default class StudentPage extends Component {
     // DEV ПЕРЕДЕЛАТЬ НАВИГАЦИЮ ДЛЯ РАЗНЫХ ТИПОВ ОТКРЫТИЯ
     switch (currentType) {
       case 'view':
+        // DEV На время теста
         this.setNavView();
+
+        // this.state.editing = true;
+        // this.setNavChange();
         break;
       case 'add':
         this.state.editing = true;
@@ -577,11 +589,27 @@ export default class StudentPage extends Component {
       'id_student',
     );
     let newData = [];
-    Object.keys(this.state.currentData.symptoms).forEach(key => {
-      this.state.currentData.symptoms[key].forEach(item => {
+
+    for (let key of Object.keys(this.state.currentData.symptoms)) {
+      for (let [index, item] of this.state.currentData.symptoms[
+        key
+      ].entries()) {
+        if (Array.isArray(item)) {
+          let subData = [];
+          item.forEach(subItem => {
+            subData.push({
+              id_symptomsValue: subItem,
+              id_symptom: key,
+              id_group: index + 1,
+            });
+          });
+          await insertInto(subData, 'CurrentSymptoms', id, 'id_student');
+          continue;
+        }
         newData.push({id_symptomsValue: item, id_symptom: key});
-      });
-    });
+      }
+    }
+
     await insertInto(newData, 'CurrentSymptoms', id, 'id_student');
   }
 

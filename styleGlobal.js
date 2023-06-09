@@ -1,10 +1,12 @@
 import {StyleSheet} from 'react-native';
+import {Colors} from 'react-native/Libraries/NewAppScreen';
 
 const COLORS = {
   gray: '#EBEBEB',
   darkBlue: '#04021D',
   blue: '#554AF0',
   whiteGray: '#F2F1F1',
+  lightGray: '#B1B1B1',
 };
 
 export default StyleSheet.create({
@@ -162,7 +164,7 @@ export default StyleSheet.create({
     bottom: 26,
     right: 20,
     borderWidth: 1,
-    borderColor: '#EBEBEB',
+    borderColor: COLORS.gray,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -325,7 +327,7 @@ export default StyleSheet.create({
     fontSize: 14,
     fontWeight: '400',
     fontFamily: 'sf_regular',
-    color: '#B1B1B1',
+    color: COLORS.lightGray,
     textAlign: 'center',
   },
 
@@ -502,19 +504,6 @@ export default StyleSheet.create({
     marginRight: 'auto',
   },
 
-  cardStudentElement_table: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 15,
-    backgroundColor: COLORS.whiteGray,
-    fontFamily: 'sf_regular',
-    fontWeight: '400',
-    fontSize: 12,
-    color: COLORS.darkBlue,
-    lineHeight: 24,
-    marginRight: 5,
-  },
-
   // cardStudentLine: {
   //   height: 3,
   //   backgroundColor: COLORS.gray,
@@ -570,22 +559,6 @@ export default StyleSheet.create({
     marginBottom: 5,
     width: '48%',
     marginRight: '2%',
-  },
-
-  TableRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-
-  TableHeadText: {
-    width: '10%',
-    fontFamily: 'sf_medium',
-    fontWeight: '500',
-    fontSize: 16,
-    lineHeight: 19,
-    color: COLORS.darkBlue,
-    textTransform: 'uppercase',
   },
 
   divNoteInput: {
@@ -804,6 +777,7 @@ export default StyleSheet.create({
     gap: 15,
     overflow: 'hidden',
     paddingHorizontal: 14,
+    marginTop: 25,
   },
 
   dropdownList__showMod: {
@@ -811,6 +785,7 @@ export default StyleSheet.create({
     display: 'flex',
     overflow: 'hidden',
     paddingHorizontal: 7,
+    marginTop: 12,
   },
 
   dropdownListWrap: {
@@ -847,9 +822,9 @@ export default StyleSheet.create({
   },
 
   dropdownListText__show: {
-    color: '#04021D',
-    fontSize: 14,
-    lineHeight: 17,
+    color: COLORS.darkBlue,
+    fontSize: 16,
+    lineHeight: 19,
   },
 
   checkbox: {
@@ -883,6 +858,14 @@ export default StyleSheet.create({
     color: COLORS.darkBlue,
   },
 
+  checkboxTextSub: {
+    fontFamily: 'sf_regular',
+    fontSize: 10,
+    lineHeight: 15,
+    fontWeight: 400,
+    color: COLORS.lightGray,
+  },
+
   buttonRed: {
     backgroundColor: '#FBEFEF',
     justifyContent: 'center',
@@ -895,7 +878,6 @@ export default StyleSheet.create({
   buttonRedText: {
     color: '#DC5F5A',
     fontWeight: 600,
-    fontFamily: 'sf_regular',
     fontSize: 15,
     lineHeight: 18,
   },
@@ -920,7 +902,7 @@ export default StyleSheet.create({
   },
 
   navPageTabText: {
-    color: '#B1B1B1',
+    color: COLORS.lightGray,
     fontSize: 14,
     lineHeight: 17,
     fontWeight: 500,
@@ -928,7 +910,7 @@ export default StyleSheet.create({
   },
 
   headerAddedTitleStyle: {
-    color: '#B1B1B1',
+    color: COLORS.lightGray,
     fontSize: 12,
     lineHeight: 14,
     fontWeight: 400,
@@ -938,12 +920,12 @@ export default StyleSheet.create({
   seqLineHeader: {
     width: '100%',
     height: 1,
-    backgroundColor: '#EBEBEB',
+    backgroundColor: COLORS.gray,
   },
 
   radioCircle_outer: {
     borderWidth: 2,
-    borderColor: '#B1B1B1',
+    borderColor: COLORS.lightGray,
     borderRadius: 22,
     width: 22,
     height: 22,
@@ -1019,7 +1001,7 @@ export default StyleSheet.create({
 
   contactButton: {
     borderWidth: 1,
-    borderColor: '#EBEBEB',
+    borderColor: COLORS.gray,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1032,19 +1014,19 @@ export default StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 15,
     borderWidth: 1,
-    borderColor: '#EBEBEB',
+    borderColor: COLORS.gray,
     borderRadius: 10,
   },
 
   contactItem_edit: {
     borderTopWidth: 2,
-    borderColor: '#EBEBEB',
+    borderColor: COLORS.gray,
     paddingTop: 15,
   },
 
   subtabPage_title: {
     fontSize: 14,
-    color: '#B1B1B1',
+    color: COLORS.lightGray,
     textAlign: 'center',
     lineHeight: 17,
   },
@@ -1059,7 +1041,89 @@ export default StyleSheet.create({
   subtabPage_footerItems: {
     fontSize: 14,
     lineHeight: 17,
-    color: '#B1B1B1',
+    color: COLORS.lightGray,
     fontWeight: 400,
+  },
+
+  tableWrap: {
+    borderWidth: 1,
+    borderColor: COLORS.gray,
+    borderRadius: 15,
+    overflow: 'hidden',
+  },
+
+  table_header: {
+    gap: 10,
+    flexDirection: 'row',
+    marginVertical: 5,
+  },
+
+  table_headerText: {
+    flex: 1,
+    textAlign: 'center',
+    color: COLORS.darkBlue,
+    fontWeight: 500,
+    fontSize: 12,
+    lineHeight: 14,
+  },
+
+  table_row: {
+    gap: 10,
+    flexDirection: 'row',
+    borderTopColor: COLORS.gray,
+    borderTopWidth: 1,
+    paddingVertical: 5,
+  },
+
+  table_rowText: {
+    alignSelf: 'center',
+    paddingVertical: 3,
+    paddingHorizontal: 10,
+    backgroundColor: COLORS.whiteGray,
+    fontSize: 12,
+    lineHeight: 14,
+    color: COLORS.darkBlue,
+    fontWeight: 400,
+    borderRadius: 5,
+  },
+
+  table_empty: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 12,
+    lineHeight: 14,
+    color: COLORS.darkBlue,
+  },
+
+  table_modalWrap: {
+    borderRadius: 10,
+    backgroundColor: '#FFF',
+    padding: 25,
+    gap: 20,
+  },
+
+  table_modalTitle: {
+    fontSize: 16,
+    lineHeight: 19,
+    color: '#04021D',
+    alignSelf: 'center',
+    fontWeight: 500,
+  },
+
+  table_modal_item: {
+    alignItems: 'center',
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#EBEBEB',
+    justifyContent: 'center',
+    flex: 1,
+    paddingVertical: 8,
+  },
+
+  table_modal_itemText: {
+    fontSize: 12,
+    lineHeight: 14,
+    fontWeight: 400,
+    color: '#04021D',
   },
 });

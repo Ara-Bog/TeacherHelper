@@ -8,8 +8,6 @@ import {
   TextInput,
 } from 'react-native';
 
-import SymptomsForm from './form/radioBlock';
-import TableSounds from '../components/elements/tableSounds';
 import AddingButton from './elements/buttonAdd';
 
 // блоки редактирования
@@ -24,6 +22,8 @@ import CheckLabels from './form/checkLabels';
 import DropdownLabel from './elements/dropdownLabel';
 import Checkbox from './form/checkbox';
 import RadioBlock from './form/radioBlock';
+import TableDefault from './form/tableSounds';
+import MultiElements from './form/multiElements';
 
 // типы полей {
 // +-- viewLinks
@@ -36,9 +36,9 @@ import RadioBlock from './form/radioBlock';
 // +-- label
 // +-- radio
 // +-- checkbox
-// -- custom
-// -- -- checker_only
-// -- table
+// +-- custom
+// +-- -- checker_only
+// ?-- table
 // +-- check_labels
 // +--- nasting
 // }
@@ -114,7 +114,7 @@ function getComponent({
     }
 
     if (curObj.type == 'table') {
-      // console.log('TABLE CHILDRENS');
+      defData.childrenElements = curObj.childrens;
     } else if (curObj.childrens != undefined) {
       defData.childrenElements = getComponent({
         data: curObj.childrens,
@@ -174,7 +174,7 @@ function getComponent({
             show={showBlocks[key].show}
             setCheck={() => (showBlocks[key].show = !showBlocks[key].show)}>
             <Checkbox
-              callBack={val => {
+              onCallBack={val => {
                 let indexVal = values.indexOf(val);
 
                 if (indexVal >= 0) {
@@ -232,6 +232,22 @@ function getComponent({
             values={values}
             setCheck={() => (showBlocks[key].show = !showBlocks[key].show)}>
             <RadioBlock onCallBack={(val, _) => onChange(val ? [val] : [])} />
+          </DropdownLabel>
+        );
+        break;
+      // DEV ГЛОБАЛЬНАЯ ПЕРЕРАБОТКА БЛОКА (включая бд!!)
+      case 'table':
+        element = <TableDefault {...defData} />;
+        break;
+      case 'custom':
+        element = (
+          <DropdownLabel
+            {...defData}
+            show={showBlocks[key].show}
+            childView={true}
+            values={values}
+            setCheck={() => (showBlocks[key].show = !showBlocks[key].show)}>
+            <MultiElements onChange={onChange} />
           </DropdownLabel>
         );
         break;
@@ -300,6 +316,13 @@ export default class SubTab extends Component {
     }
   }
 
+  shouldComponentUpdate(nextProps, nextState) {
+    if (this.props.editing != nextProps.editing) {
+      return true;
+    }
+    return false;
+  }
+
   // возврат значения по ключу
   checkValues(itemKey) {
     val = isNaN(Number(itemKey))
@@ -309,6 +332,7 @@ export default class SubTab extends Component {
   }
 
   render() {
+    // console.log('test', this.props.currentData);
     // флаг отображения разделителя
     let showSeparate = false;
     // хранилище ключей полей с пустыми значениями
@@ -344,11 +368,11 @@ export default class SubTab extends Component {
                 Object.keys(this.props.data[item.key].childrens).map(
                   itemKey => {
                     // получем текущее значение вложенного блока
-                    val = this.checkValues(itemKey);
+                    let subVal = this.checkValues(itemKey);
                     // проверка на пустоту, при включенном футере
                     if (
                       this.props.footer &&
-                      !(val || []).length &&
+                      !(subVal || []).length &&
                       !this.props.editing
                     ) {
                       // добавляем ключ пустого вложенного блока
@@ -360,7 +384,7 @@ export default class SubTab extends Component {
                       flag_Empty = false;
                     }
                     // возвращаем ключ (id блока) и значение
-                    return [itemKey, val];
+                    return [itemKey, subVal];
                   },
                 ),
               );
