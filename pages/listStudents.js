@@ -170,8 +170,6 @@ export default class ListStudentsWrap extends Component {
     let currentValues = this.props.route.params.listChecked;
     // для хранения новых данных по ученикам
     let newData;
-    // текст для шапки
-    let tempTitle = '';
     // распаковываем подмасивы и смотрим количество значений
     // когда 0 - фильтр сбрасывается
     if (Object.values(currentValues).flat().length > 0) {
