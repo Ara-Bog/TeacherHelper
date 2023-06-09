@@ -28,7 +28,6 @@ export default function DropdownLabel(props) {
       ]
     : props.data.map((item, index) => {
         let newId = [props.id, index].join('.');
-
         return React.cloneElement(props.children, {
           key: newId,
           id: item.id,
@@ -38,16 +37,18 @@ export default function DropdownLabel(props) {
       });
 
   // вложенный контент
-  const subContent = props.childrenElements.map(item => {
-    // проверка пустого значения
-    if ((props.child_values[item.key] || []).length) {
-      return React.cloneElement(item.element, {
-        editing: props.editing,
-      });
-    } else {
-      return null;
-    }
-  });
+  const subContent = props.childrenElements
+    ? props.childrenElements.map(item => {
+        // проверка пустого значения
+        if (props.editing || (props.child_values[item.key] || []).length) {
+          return React.cloneElement(item.element, {
+            editing: props.editing,
+          });
+        } else {
+          return null;
+        }
+      })
+    : [];
 
   // меняем текущее значение и отправляем колбэк, что состояние сменилось
   const changeShow = state => {
@@ -56,7 +57,7 @@ export default function DropdownLabel(props) {
   };
 
   return (
-    <View style={props.editing ? {gap: 25} : {gap: 12}}>
+    <View>
       <TouchableOpacity
         style={
           props.editing
@@ -65,7 +66,7 @@ export default function DropdownLabel(props) {
               : Styles.dropdownListWrap
             : null
         }
-        onPress={() => changeShow(!show)}>
+        onPress={() => (props.editing ? changeShow(!show) : null)}>
         <Text
           style={[
             props.simpleShow
@@ -86,22 +87,20 @@ export default function DropdownLabel(props) {
           color={props.simpleShow ? '#B1B1B1' : '#554AF0'}
         />
       </TouchableOpacity>
-      {show || !props.editing ? (
-        <>
-          {mainContent.length ? (
-            <View
-              style={[
-                show ? {display: 'flex'} : {display: 'none'},
-                !props.editing
-                  ? Styles.dropdownList__showMod
-                  : Styles.dropdownList,
-              ]}>
-              {mainContent}
-            </View>
-          ) : null}
-
-          <View style={{gap: 25}}>{subContent}</View>
-        </>
+      {mainContent.length ? (
+        // DEV мэйби переделать с display на width/height: 0 ??
+        <View
+          style={[
+            show ? {display: 'flex'} : {display: 'none'},
+            !props.editing ? Styles.dropdownList__showMod : Styles.dropdownList,
+          ]}>
+          {mainContent}
+        </View>
+      ) : null}
+      {show || (!props.editing && props.childrenElements) ? (
+        <View style={[{gap: 25, marginTop: props.editing ? 25 : 12}]}>
+          {subContent}
+        </View>
       ) : null}
     </View>
   );

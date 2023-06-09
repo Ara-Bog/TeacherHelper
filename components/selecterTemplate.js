@@ -46,6 +46,7 @@ export default class SelectorTemplates extends Component {
               onCallBack={(key, val) =>
                 this.setState({selectId: key, selectValue: val})
               }
+              required={true}
             />
           </ScrollView>
         </View>

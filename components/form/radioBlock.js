@@ -2,17 +2,19 @@ import React, {Component} from 'react';
 import {Text, TouchableOpacity, View} from 'react-native';
 import FieldText from '../elements/formFieldText';
 
-function RadioItem({label, checked, onSelect, hideCircle}) {
+function RadioItem({label, checked, onSelect, disabled}) {
   // кнопка радио
   // получет:
   // - текст возле радио -- label: string
   // - статус отметки -- checked: bool
-  // - статус отметки -- hideCircle: bool
+  // - флаг указывающий на отсутствие пустого значения -- required: bool
   // обратный вызов:
   // - нажатие на радио -- onSelect
+
   return (
     <TouchableOpacity
       onPress={() => onSelect()}
+      disabled={disabled}
       style={{flexDirection: 'row', gap: 12}}>
       <View
         style={[
@@ -40,7 +42,6 @@ export default class RadioBlock extends Component {
     super(props);
     // распаковываем текущее значение, чтобы вместо [] - было int
     let [tempVall] = this.props.values;
-
     this.state = {
       // текущий сохраненный id
       currentVall: tempVall,
@@ -54,15 +55,26 @@ export default class RadioBlock extends Component {
     this.props.onCallBack(key, val);
   }
 
+  shouldComponentUpdate(nextProps, nextState) {
+    newVal = nextProps.values[0];
+    if (newVal != this.props.values[0] && newVal != this.state.currentVall) {
+      this.state.currentVall = newVal;
+    }
+    return true;
+  }
+
   render() {
     return (
-      <View style={{gap: 15}}>
-        {this.props.editing ? (
+      <View style={{gap: 15, opacity: this.props.disabled ? 0.3 : 1}}>
+        {this.props.editing && !this.props.required ? (
           <RadioItem
             key={0}
-            label={'Не выбрано'}
-            checked={this.state.currentVall == undefined}
+            label={'не выбрано'}
+            checked={
+              this.state.currentVall == undefined && !this.props.disabled
+            }
             onSelect={() => this.setRadioChecked(undefined, undefined)}
+            disabled={this.props.disabled}
           />
         ) : null}
         {this.props.data.map(item => {
@@ -73,6 +85,7 @@ export default class RadioBlock extends Component {
                 label={item.label}
                 checked={this.state.currentVall == item.id}
                 onSelect={() => this.setRadioChecked(item.id, item.label)}
+                disabled={this.props.disabled}
               />
             );
           } else if (this.state.currentVall == item.id) {

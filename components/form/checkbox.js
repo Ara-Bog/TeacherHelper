@@ -2,7 +2,15 @@ import React, {useState, useEffect} from 'react';
 import {Text, View, TouchableOpacity} from 'react-native';
 import FieldText from '../elements/formFieldText';
 
-export default function Checkbox({id, label, isSelected, callBack, editing}) {
+export default function Checkbox({
+  id,
+  label,
+  isSelected,
+  onCallBack,
+  editing,
+  disabled,
+  only,
+}) {
   // Компонент чекбокс
   // props:
   // - возвращает текущее состояние чекбокса -- isSelected: func
@@ -10,7 +18,7 @@ export default function Checkbox({id, label, isSelected, callBack, editing}) {
   // - текст чекбокса -- label: string
   // --
   // обратная связь:
-  // - событие на установку флага -- callBack(id)
+  // - событие на установку флага -- onCallBack(id)
 
   const [select, setSelect] = useState(isSelected(id));
 
@@ -23,10 +31,11 @@ export default function Checkbox({id, label, isSelected, callBack, editing}) {
   const editingView = (
     <TouchableOpacity
       onPress={() => {
-        callBack(id);
+        onCallBack(id);
         setSelect(!select);
       }}
-      style={Styles.checkbox}>
+      disabled={disabled}
+      style={[Styles.checkbox, {opacity: disabled ? 0.3 : 1}]}>
       <View
         style={[
           Styles.checkboxIcon,
@@ -34,7 +43,14 @@ export default function Checkbox({id, label, isSelected, callBack, editing}) {
         ]}>
         {select ? <Icons.Octicons name="check" size={13} color="#fff" /> : null}
       </View>
-      <Text style={Styles.checkboxText}>{label}</Text>
+      <View>
+        <Text style={Styles.checkboxText}>{label}</Text>
+        {only ? (
+          <Text style={Styles.checkboxTextSub}>
+            Блокирует выбор остальных значений
+          </Text>
+        ) : null}
+      </View>
     </TouchableOpacity>
   );
 
