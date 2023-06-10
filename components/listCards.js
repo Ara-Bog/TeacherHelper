@@ -105,7 +105,7 @@ export default class ListCards extends Component {
 
     // подтверждаем удаление от пользователя
     let confirmDelete = new Promise((resolve, reject) => {
-      Alert.alert('Подтвердите удаление', message, [
+      Alert.alert('Подтвердите действие', message, [
         {
           text: 'Да',
           onPress: () => resolve(),
@@ -136,10 +136,10 @@ export default class ListCards extends Component {
       this.props.navigation.navigate(this.state.typeData, {
         type: 'add',
         id: undefined,
-        template: [
-          userSettings.templates[0].id,
-          userSettings.templates[0].name,
-        ],
+        template: {
+          id: userSettings.templates[0].id,
+          name: userSettings.templates[0].name,
+        },
       });
     } else {
       this.setState({selectTemplateShow: true});

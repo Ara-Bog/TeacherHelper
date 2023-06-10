@@ -767,6 +767,7 @@ export default StyleSheet.create({
   },
 
   holdMenuButtonText: {
+    color: '#554AF0',
     fontSize: 14,
     fontWeight: '600',
     lineHeight: 17,

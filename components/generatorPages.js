@@ -38,7 +38,7 @@ import MultiElements from './form/multiElements';
 // +-- checkbox
 // +-- custom
 // +-- -- checker_only
-// ?-- table
+// +-- table
 // +-- check_labels
 // +--- nasting
 // }

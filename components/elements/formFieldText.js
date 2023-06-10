@@ -8,8 +8,23 @@ export default function FieldText({label}) {
 
   return (
     <View style={{display: 'flex', flexDirection: 'row'}}>
-      <Text style={{marginRight: 7}}>{`\u2022`}</Text>
-      <Text>{label}</Text>
+      <Text
+        style={{
+          color: '#848484',
+          fontSize: 12,
+          lineHeight: 14,
+          fontWeight: 400,
+          marginRight: 7,
+        }}>{`\u2022`}</Text>
+      <Text
+        style={{
+          color: '#848484',
+          fontSize: 12,
+          lineHeight: 14,
+          fontWeight: 400,
+        }}>
+        {label}
+      </Text>
     </View>
   );
 }

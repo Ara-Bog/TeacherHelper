@@ -320,7 +320,10 @@ export default class Settings extends Component {
             onPress={() =>
               Linking.openURL('https://www.tinkoff.ru/cf/1uakjigjJrq')
             }>
-            <Image source={require('../assets/baner.png')} />
+            <Image
+              style={{width: '100%'}}
+              source={require('../assets/baner.png')}
+            />
           </TouchableOpacity>
           {/* первый экран */}
           <Dropdown
