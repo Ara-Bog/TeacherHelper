@@ -21,6 +21,7 @@ import {
   saveConfirm,
   removeConfirm,
   undoConfirm,
+  undoCreate,
 } from '../actions/confirmAction';
 
 SQLite.enablePromise(true);
@@ -149,13 +150,13 @@ export default class StudentPage extends Component {
       sectionsData: {},
 
       // текущие данные ученика
-      currentData: {contacts: {}, symptoms: {}},
+      currentData: {contacts: {}, symptoms: {}, groups: []},
 
       // состояние загрузки данных с бд
       loading: true,
 
       // временное хранилище значений
-      valuesStorage: {contacts: {}, symptoms: {}},
+      valuesStorage: {contacts: {}, symptoms: {}, groups: []},
 
       // состояние меню
       menuShow: false,
@@ -364,9 +365,7 @@ export default class StudentPage extends Component {
         mainTitle: 'Редактирование карточки',
         addedTitle: this.state.options.template.name,
         onPressRight: () => {
-          saveConfirm(() => {
-            this.confirmEdit();
-          });
+          saveConfirm(() => this.confirmEdit());
         },
         onPressLeft: () => {
           undoConfirm(() => {
@@ -383,35 +382,31 @@ export default class StudentPage extends Component {
         mode: 'edit',
       });
 
-    // установка заголовка и соответствующей иконки вверху справа
-    // DEV ПЕРЕДЕЛАТЬ НАВИГАЦИЮ ДЛЯ РАЗНЫХ ТИПОВ ОТКРЫТИЯ
+    // установка заголовка и кнопок в header
     switch (currentType) {
       case 'view':
-        // DEV На время теста
         this.setNavView();
-
-        // this.state.editing = true;
-        // this.setNavChange();
         break;
       case 'add':
         this.state.editing = true;
         setHeaderNavigation({
           mainTitle: 'Новая карточка',
           addedTitle: this.state.options.template.name,
-          onPressIcon: () => console.log('remove card'),
+          onPressRight: () => saveConfirm(() => this.confirmEdit()),
+          onPressLeft: () => undoCreate(() => this.props.navigation.goBack()),
           navigation: this.props.navigation,
-          IconStyle: 'remove',
+          mode: 'edit',
         });
         break;
       case 'copy':
         this.state.editing = true;
-
         setHeaderNavigation({
           mainTitle: 'Копия карточки',
           addedTitle: this.state.options.template.name,
-          onPressIcon: () => console.log('remove card'),
+          onPressRight: () => saveConfirm(() => this.confirmEdit()),
+          onPressLeft: () => undoCreate(() => this.props.navigation.goBack()),
           navigation: this.props.navigation,
-          IconStyle: 'remove',
+          mode: 'edit',
         });
         break;
     }
@@ -419,13 +414,17 @@ export default class StudentPage extends Component {
 
   // когда мы в режиме редактирования добавляем алерт при аппаратному "назад"
   backAction = () => {
-    undoConfirm(() => {
-      this.setState({
-        valuesStorage: JSON.parse(JSON.stringify(this.state.currentData)),
-        editing: false,
+    if (this.state.options.type === 'view') {
+      undoConfirm(() => {
+        this.setState({
+          valuesStorage: JSON.parse(JSON.stringify(this.state.currentData)),
+          editing: false,
+        });
+        this.setNavView();
       });
-      this.setNavView();
-    });
+    } else {
+      undoCreate(() => {});
+    }
     return true;
   };
 
@@ -469,7 +468,7 @@ export default class StudentPage extends Component {
       }
     }
 
-    // проверка обязательных полей в контактах (динамический список, надо переделать)
+    // проверка обязательных полей в контактах
     if (!flagError) {
       // хранилище обязательных ключей
       let massRequired = [];
@@ -509,12 +508,7 @@ export default class StudentPage extends Component {
       currentData: JSON.parse(JSON.stringify(this.state.valuesStorage)),
     });
 
-    // обновляем или дополняем базу
-    if (this.state.options.type == 'view') {
-      this.updateBase();
-    } else {
-      console.log('create new user');
-    }
+    this.updateBase();
   }
 
   // обновление данных
@@ -522,60 +516,83 @@ export default class StudentPage extends Component {
     // для удобства
     const data = this.state.currentData;
 
-    await db.transaction(tx => {
-      // данные пользователя
-      tx.executeSql(
-        `
-        UPDATE Students
-        SET surname = ?,
-            name = ?,
-            midname = ?,
-            group_org = ?,
-            date_bd = ?,
-            id_diagnos = ?,
-            id_category = ?,
-            note = ?
-        WHERE id = ?
-        `,
-        [
-          data.surname || null,
-          data.name || null,
-          data.midname || null,
-          data.group_org || null,
-          data.date_bd || null,
-          data.diagnos || null,
-          data.category || null,
-          data.note || null,
-          this.state.options.id,
-        ],
-        () => (
-          Alert.alert('Данные успешно обновленны!'),
-          // возвращаем заголовки
-          this.setNavView(),
-          this.setState({editing: false})
-        ),
-        err => (
-          Alert.alert('Произошла ошибка!'),
-          console.log('error studentPage updateBase', err)
-        ),
-      );
-      // удаляем данные родителей
-      tx.executeSql(
-        `
-        DELETE FROM ParentsStudent
-        WHERE id_student = ?
-        `,
-        [this.state.options.id],
-      );
-      // удаляем симптоматику
-      tx.executeSql(
-        `
-        DELETE FROM CurrentSymptoms
-        WHERE id_student = ?
-        `,
-        [this.state.options.id],
-      );
-    });
+    if (this.state.options.type != 'view') {
+      dataStudent = {
+        surname: data.surname || null,
+        name: data.name || null,
+        midname: data.midname || null,
+        group_org: data.group_org || null,
+        date_bd: data.date_bd || null,
+        id_diagnos: data.diagnos || null,
+        id_category: data.category || null,
+        note: data.note || null,
+        id_template: this.state.options.template.id,
+      };
+      newId = await insertInto([dataStudent], 'Students', true);
+      this.state.options.id = newId;
+      this.state.options.type = 'view';
+    } else {
+      await db.transaction(tx => {
+        // данные пользователя
+        tx.executeSql(
+          `
+          UPDATE Students
+          SET surname = ?,
+              name = ?,
+              midname = ?,
+              group_org = ?,
+              date_bd = ?,
+              id_diagnos = ?,
+              id_category = ?,
+              note = ?
+          WHERE id = ?
+          `,
+          [
+            data.surname || null,
+            data.name || null,
+            data.midname || null,
+            data.group_org || null,
+            data.date_bd || null,
+            data.diagnos || null,
+            data.category || null,
+            data.note || null,
+            this.state.options.id,
+          ],
+          null,
+          err => (
+            Alert.alert('Произошла ошибка!'),
+            console.log('error studentPage updateBase', err)
+          ),
+        );
+
+        // удаляем данные родителей
+        tx.executeSql(
+          `
+          DELETE FROM ParentsStudent
+          WHERE id_student = ?
+          `,
+          [this.state.options.id],
+          null,
+          err => (
+            Alert.alert('Произошла ошибка!'),
+            console.log('error studentPage parents', err)
+          ),
+        );
+        // удаляем симптоматику
+        tx.executeSql(
+          `
+          DELETE FROM CurrentSymptoms
+          WHERE id_student = ?
+          `,
+          [this.state.options.id],
+          null,
+          err => (
+            Alert.alert('Произошла ошибка!'),
+            console.log('error studentPage symptoms', err)
+          ),
+        );
+      });
+    }
 
     this.addNewData(this.state.options.id);
   }
@@ -583,10 +600,13 @@ export default class StudentPage extends Component {
   // добавление новых записей в дб
   async addNewData(id) {
     await insertInto(
-      Object.values(this.state.currentData.contacts),
+      Object.values(this.state.currentData.contacts).map(item =>
+        Object.fromEntries([
+          ['id_student', id],
+          ...Object.entries(item).filter(el => el[0] != 'id'),
+        ]),
+      ),
       'ParentsStudent',
-      id,
-      'id_student',
     );
     let newData = [];
 
@@ -601,16 +621,41 @@ export default class StudentPage extends Component {
               id_symptomsValue: subItem,
               id_symptom: key,
               id_group: index + 1,
+              id_student: id,
             });
           });
-          await insertInto(subData, 'CurrentSymptoms', id, 'id_student');
+          await insertInto(subData, 'CurrentSymptoms');
           continue;
         }
-        newData.push({id_symptomsValue: item, id_symptom: key});
+        newData.push({id_symptomsValue: item, id_symptom: key, id_student: id});
       }
     }
 
-    await insertInto(newData, 'CurrentSymptoms', id, 'id_student');
+    await insertInto(newData, 'CurrentSymptoms');
+
+    Alert.alert('Данные успешно обновленны!');
+    // возвращаем заголовки
+    this.setNavView();
+    this.setState({editing: false});
+  }
+
+  async removeCard() {
+    await db.transaction(tx => {
+      tx.executeSql(
+        `
+        DELETE FROM Students
+        WHERE id = ?
+        `,
+        [this.state.options.id],
+        () => Alert.alert('Карточка успешно удалена!'),
+        err => (
+          Alert.alert('Произошла непредвиденная ошибка!'),
+          console.log('error remove card', err)
+        ),
+      );
+    });
+
+    this.props.navigation.pop();
   }
 
   render() {
@@ -656,14 +701,18 @@ export default class StudentPage extends Component {
             );
           })}
         </PagerView>
-
         {/* меню действий с карточкой */}
-        {/* DEV */}
         <MenuActions
           visible={this.state.menuShow}
           callClose={() => this.setState({menuShow: false})}
-          callCopy={() => console.log('COPY CARD')}
-          callDelete={() => console.log('REMOVE CARD')}
+          callCopy={() => {
+            this.props.navigation.push('Student', {
+              type: 'copy',
+              id: this.state.options.id,
+              template: this.state.options.template,
+            });
+          }}
+          callDelete={() => removeConfirm(() => this.removeCard())}
           callChange={() => {
             this.setState({editing: true});
             this.setNavChange();

@@ -1,8 +1,9 @@
 import SQLite from 'react-native-sqlite-storage';
+import {Alert} from 'react-native';
 
 SQLite.enablePromise(true);
 
-export async function insertInto(data, tableName, idCont, fillCont) {
+export async function insertInto(data, tableName, returnId = false) {
   if (!data.length) {
     return;
   }
@@ -10,32 +11,36 @@ export async function insertInto(data, tableName, idCont, fillCont) {
   let keysMass = Object.keys(data[0] || {});
   let valuesMass = [];
 
-  let places = `(${'?,'.repeat(keysMass.length).slice(0, -1)},?)`;
+  let places = `(${'?,'.repeat(keysMass.length).slice(0, -1)})`;
   let temp = `${places},`.repeat(data.length).slice(0, -1);
 
   data.forEach(item => {
     keysMass.forEach(key => {
       valuesMass.push(item[key]);
     });
-    valuesMass.push(idCont);
   });
 
   let sqlText = `
-  INSERT INTO ${tableName} (${keysMass.join(', ')}, ${fillCont})
+  INSERT INTO ${tableName} (${keysMass.join(', ')})
   VALUES ${temp}
   `;
+
+  let newId;
   await db.transaction(tx => {
     tx.executeSql(
       sqlText,
       valuesMass,
-      () => {},
+      (_, result) => {
+        newId = result.insertId;
+      },
       err => {
+        Alert.alert('Произошла ошибка!');
         console.log('error sqlGenerator INSERT', err);
       },
     );
   });
-}
 
-// async function execute(text, values) {
-//   return
-// }
+  if (returnId) {
+    return newId;
+  }
+}
