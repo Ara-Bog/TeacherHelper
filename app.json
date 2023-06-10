@@ -1,6 +1,6 @@
 {
   "name": "TeacherHelper",
-  "displayName": "Помощник логопеда",
+  "displayName": "Помощник дефектолога",
   "splash": {
     "image": "./assets/splash.png",
     "resizeMode": "contain",
