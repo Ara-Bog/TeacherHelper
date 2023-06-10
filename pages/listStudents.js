@@ -87,8 +87,8 @@ export default class ListStudentsWrap extends Component {
   }
 
   // удаление пользователя с подтверждением
-  deleteUser(currentList) {
-    db.transaction(tx => {
+  async deleteUser(currentList) {
+    await db.transaction(tx => {
       currentList.map(id => {
         // удаление из расписания
         tx.executeSql(
@@ -122,6 +122,7 @@ export default class ListStudentsWrap extends Component {
         );
       });
     });
+
     // запрос новых данных
     this.getData();
   }
@@ -135,9 +136,9 @@ export default class ListStudentsWrap extends Component {
                 st.surname || ' ' || st.name || ' ' || COALESCE(st.midname, '') as LeftTop,
                 tp.name as RightTop, tp.id as RightTop_id, tp.id as id_template 
         FROM Students as st 
-        INNER JOIN Templates as tp ON st.id_template = tp.id
-        INNER JOIN Diagnosis as dg ON st.id_diagnos = dg.id
-        INNER JOIN Categories as ct ON st.id_category = ct.id`,
+        LEFT JOIN Templates as tp ON st.id_template = tp.id
+        LEFT JOIN Diagnosis as dg ON st.id_diagnos = dg.id
+        LEFT JOIN Categories as ct ON st.id_category = ct.id`,
         [],
         (_, {rows}) => {
           let data = rows.raw();

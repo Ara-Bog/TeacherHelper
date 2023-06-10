@@ -3,12 +3,19 @@ import {Text, View, TouchableOpacity, FlatList, Alert} from 'react-native';
 import Modal from 'react-native-modal';
 
 // НУЖНАЯ ОПТИМИЗАЦИЯ ЗВУКОВ
-// КОММЕНТАРИИ КОДА!!
 
 function ModalMainCol({label, values, callback}) {
+  // Модельное представление ввода основных данных строки
+  // props:
+  // - label: String -- заголовок блока
+  // - values: Object -- структура блока
+  // props-functions:
+  // - callback (data: object, continueEdit: bool) -- возврат объекта с новыми данными и флагом продолжения редактирования
+
   // текущее состояние значений
   const [currentVals, setVals] = useState([]);
 
+  // обработка нажатия чекера
   const handleVal = val => {
     let posVal = currentVals.indexOf(val);
     if (posVal == -1) {
@@ -20,6 +27,7 @@ function ModalMainCol({label, values, callback}) {
   };
 
   const prevCallback = flag => {
+    // ошибка отправки
     if (!currentVals.length) {
       Alert.alert(
         'Ошибка',
@@ -27,10 +35,13 @@ function ModalMainCol({label, values, callback}) {
       );
       return;
     }
+    // объект на вывод
     outList = Object.assign(...currentVals.map(e => Object({[e]: []})));
+    //  возврат значений
     callback(outList, flag);
   };
 
+  // элемент списка
   const itemList = ({item}) => {
     return (
       <TouchableOpacity
@@ -55,6 +66,7 @@ function ModalMainCol({label, values, callback}) {
     <View style={Styles.table_modalWrap}>
       <View style={{gap: 10}}>
         <Text style={Styles.table_modalTitle}>{label}</Text>
+        {/* список значений */}
         <FlatList
           columnWrapperStyle={{gap: 5}}
           data={Object.entries(values)}
@@ -81,15 +93,27 @@ function ModalMainCol({label, values, callback}) {
 }
 
 function ModalSubCols({data, callback, values}) {
+  // Модельное представление ввода не основных данных строки
+  // props:
+  // - data: Array <Object> -- структура блоков с элементами
+  // - values: Object -- текущие значения для каждой строки
+  // props-functions:
+  // - callback (data: object) -- возврат объекта с новыми данными
+
+  // оптимизация повторного вызова
   const structVals = useMemo(() => {
     return Object.assign(
       ...data.map(e => Object({[e.id]: Object.keys(e.values)})),
     );
   });
 
+  // состояние текущих значений
+  // в редактирование можно зайти, если все элементы одной структуры или он в принципе 1
   const [currentVals, setVals] = useState(
     Object.assign(
+      // обходим переданную структуру
       ...Object.keys(structVals).map(key =>
+        // возвращаеем объект где ключ - блок (симптоматика); значение - выбранные данные для блока
         Object({
           [key]:
             (Object.values(values)[0] || []).filter(v =>
@@ -100,6 +124,8 @@ function ModalSubCols({data, callback, values}) {
     ),
   );
 
+  // объект блоков с блокирующими значениями (в частности для checker_only)
+  // ключ - блок, значение - список id's тип которых checker_only
   const [disabledOther, setDisabled] = useState(
     Object.assign(
       ...data.map(e =>
@@ -113,6 +139,7 @@ function ModalSubCols({data, callback, values}) {
     ),
   );
 
+  // обработка выбора значения
   const handleVal = (key, val, type) => {
     let posVal;
     switch (type) {
@@ -148,6 +175,7 @@ function ModalSubCols({data, callback, values}) {
     callback(outputData);
   };
 
+  // блок списка
   const itemBlock = ({item}) => {
     return (
       <View style={{gap: 10}}>
@@ -165,6 +193,7 @@ function ModalSubCols({data, callback, values}) {
     );
   };
 
+  // элемент блока
   const itemList = ({item}, key) => {
     return (
       <TouchableOpacity
@@ -220,6 +249,14 @@ function ModalSubCols({data, callback, values}) {
 }
 
 export default class TableDefault extends Component {
+  // ОписаниеОбъекта
+  // props (ТОЛЬКО ИСПОЛЬЗУЕМЫЕ!):
+  // - childrenElements: type -- описание
+  // - value: Array<Array> -- текущие значения блока
+  // - editing: bool -- описание
+  // props-functions:
+  // - onChange (values: Array<Array>) -- возврат массива списков значения
+
   constructor(props) {
     super(props);
     this.state = {
@@ -259,20 +296,51 @@ export default class TableDefault extends Component {
       // отдельная обработка для индексируемой колонки
       if (curElem.type === 'table_col_main') {
         this.state.mainCol = curElem;
+        var rowsKeys = Object.keys(newVals);
         // заполняем значения в виде Object <Array> (изначально это Array <Array>)
-        this.state.values = Object.assign(
-          ...JSON.parse(JSON.stringify(props.value)).map(arr => {
-            // преобразовываем числа к строке
-            arr = arr.map(String);
-            // ищем ключ, который является значением основной колонки
-            findEl = arr.findIndex(el => Object.keys(newVals).includes(el));
-            return {[arr.splice(findEl, 1)]: arr};
-          }),
-        );
+        for (let arr of props.value) {
+          // преобразовываем числа к строке
+          arr = arr.map(String);
+          // ищем ключ, который является значением основной колонки
+          findEl = arr.findIndex(el => rowsKeys.includes(el));
+          this.state.values[arr.splice(findEl, 1)] = arr;
+        }
       } else {
         this.state.subCols.push(curElem);
       }
     });
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    let flagChange = false;
+    if (this.props.value.length != nextProps.length) {
+      flagChange = true;
+    } else {
+      for (let [item, index] of nextProps.value.entries()) {
+        let curItem = this.props.value;
+        if (item.length != curItem[index].length || flagChange) {
+          console.log('gg');
+          flagChange = true;
+          break;
+        }
+        flagChange = item.evey(el => curItem.includes(String(el)));
+      }
+    }
+
+    if (flagChange) {
+      this.state.values = {};
+
+      var rowsKeys = Object.keys(this.state.mainCol.values);
+      // заполняем значения в виде Object <Array> (изначально это Array <Array>)
+      for (let arr of nextProps.value) {
+        // преобразовываем числа к строке
+        arr = arr.map(String);
+        // ищем ключ, который является значением основной колонки
+        findEl = arr.findIndex(el => rowsKeys.includes(el));
+        this.state.values[arr.splice(findEl, 1)] = arr;
+      }
+    }
+    return true;
   }
 
   // проверка эквивалентности строки с первой
@@ -337,13 +405,33 @@ export default class TableDefault extends Component {
   }
 
   // удаление выбранных строк
-  removeRow() {
-    let newValues = Object.fromEntries(
-      Object.entries(this.state.values).filter(
-        ([key, item]) => !this.state.selected.includes(key),
-      ),
-    );
-    this.updateValues(newValues);
+  async removeRow() {
+    let confirmAction = new Promise((resolve, reject) => {
+      Alert.alert(
+        'Подтвердите действие',
+        'Вы действительно хотите удалить выделенные данные из таблиц?',
+        [
+          {
+            text: 'Да',
+            onPress: () => resolve(),
+          },
+          {
+            text: 'Нет',
+            onPress: () => reject(),
+            style: 'cancel',
+          },
+        ],
+      );
+    });
+
+    confirmAction.then(() => {
+      let newValues = Object.fromEntries(
+        Object.entries(this.state.values).filter(
+          ([key, item]) => !this.state.selected.includes(key),
+        ),
+      );
+      this.updateValues(newValues);
+    });
   }
 
   // редактирование строк(-и)
@@ -377,6 +465,7 @@ export default class TableDefault extends Component {
   render() {
     return (
       <>
+        {/* table  */}
         <View style={Styles.tableWrap}>
           {/* header table */}
           <View style={Styles.table_header}>
@@ -448,7 +537,12 @@ export default class TableDefault extends Component {
                             ? {backgroundColor: '#554AF0', color: '#FFF'} // строка выбрана
                             : null,
                           subItem.label.length === 0
-                            ? {opacity: 0.4, backgroundColor: 'transparent'} // в столбце пусто
+                            ? {
+                                color: this.state.selected.includes(key)
+                                  ? '#554AF0'
+                                  : '#9B9AA5',
+                                backgroundColor: 'transparent',
+                              } // в столбце пусто
                             : null,
                         ]}>
                         {/* доп обработка для множественного выбора (берется 1 символ в верхнем регистре) */}
