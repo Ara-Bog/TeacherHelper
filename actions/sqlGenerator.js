@@ -34,7 +34,7 @@ export async function insertInto(data, tableName, returnId = false) {
         newId = result.insertId;
       },
       err => {
-        Alert.alert('Произошла ошибка!');
+        Alert.alert('Произошла непредвиденная ошибка!');
         console.log('error sqlGenerator INSERT', err);
       },
     );

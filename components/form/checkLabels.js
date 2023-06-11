@@ -1,6 +1,6 @@
 import {useState, useEffect} from 'react';
 import {Text, View} from 'react-native';
-import TextChecker from '../elements/textChecker';
+import TextChecker from './textChecker';
 import {DivDefaultRow} from '../elements/divDefault';
 
 export default function CheckLabels({

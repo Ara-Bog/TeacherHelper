@@ -113,7 +113,7 @@ export default class FilterPage extends Component {
                 editing={true}
                 setCheck={() => this.labelAction(index)}>
                 <Checkbox
-                  callBack={val => this.selectVal(label, val)}
+                  onCallBack={val => this.selectVal(label, val)}
                   isSelected={val =>
                     this.state.listChecked[label].includes(val)
                   }

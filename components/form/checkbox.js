@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {Text, View, TouchableOpacity} from 'react-native';
-import FieldText from '../elements/formFieldText';
+import FieldText from './formFieldText';
 
 export default function Checkbox({
   id,

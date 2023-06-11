@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {Text, TouchableOpacity, View} from 'react-native';
-import FieldText from '../elements/formFieldText';
+import FieldText from './formFieldText';
 
 function RadioItem({label, checked, onSelect, disabled}) {
   // кнопка радио
