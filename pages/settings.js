@@ -12,7 +12,7 @@ import DocumentPicker from 'react-native-document-picker';
 import Modal from 'react-native-modal';
 
 // компоненты
-import SelectedList from '../components/selectedInList';
+import SelectedList from '../components/form/selectedInList';
 import RowSwitcher from '../components/elements/switcherInLine';
 import LoadModal from '../components/loadingModal';
 import Dropdown from '../components/form/dropdown';
@@ -217,19 +217,6 @@ export default class Settings extends Component {
     this.forceUpdate();
   }
 
-  // генерация добавочного sql (для формирвания списков шаблонов)
-  getAddedSql() {
-    let val = '';
-    if (this.state.temporaryTemplates.length === 0) {
-      return '';
-    }
-    this.state.temporaryTemplates.forEach(item => {
-      val += item.id + ',';
-    });
-
-    return 'WHERE id NOT IN (' + val.slice(0, -1) + ')';
-  }
-
   // изменение вида карточек
   changeSizeCards(val) {
     // текущий список размеров
@@ -308,6 +295,18 @@ export default class Settings extends Component {
     );
   }
 
+  test() {
+    db.transaction(tx => {
+      tx.executeSql(
+        `
+        SELECT * FROM ListStudentsGroup
+        `,
+        [],
+        (_, {rows}) => console.log('TEST', rows.raw()),
+      );
+    });
+  }
+
   render() {
     return (
       <View style={Styles.container}>
@@ -315,6 +314,10 @@ export default class Settings extends Component {
           overScrollMode={'always'}
           nestedScrollEnabled={true}
           contentContainerStyle={{gap: 25, flexGrow: 1}}>
+          {/* DEV */}
+          <TouchableOpacity onPress={() => this.test()}>
+            <Text>HUI</Text>
+          </TouchableOpacity>
           {/* баннер */}
           <TouchableOpacity
             onPress={() =>
@@ -480,13 +483,16 @@ export default class Settings extends Component {
           <View style={Styles.modalDownWrap}>
             <SelectedList
               currentValues={userSettings.templates}
-              sqlText={'SELECT id, name FROM Templates ' + this.getAddedSql()}
+              sqlText={`SELECT id, name 
+                FROM Templates 
+                WHERE id NOT IN (${this.state.temporaryTemplates.join(',')})`}
               sqlArgs={[]}
               labelCurrent="Выбранные шаблоны"
               labelPossible="Доступные шаблоны"
-              onReturnData={data => {
+              onChange={data => {
                 this.setState({temporaryTemplates: data});
               }}
+              editing={true}
             />
             <TouchableOpacity
               style={Styles.submitBtn}

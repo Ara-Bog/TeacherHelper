@@ -14,9 +14,9 @@ import AddingButton from './elements/buttonAdd';
 import InputView from '../components/form/inputView';
 import Dropdown from './form/dropdown';
 import BirhdayView from './form/birthday';
-import ViewLinks from './viewLinks';
+import ViewLinks from './form/viewLinks';
 import Textarea from './form/textarea';
-import DynamicBlock from './form/dynamicBlock';
+import DynamicBlock from './dynamicBlock';
 import PhoneView from './form/phoneView';
 import CheckLabels from './form/checkLabels';
 import DropdownLabel from './elements/dropdownLabel';
@@ -24,6 +24,7 @@ import Checkbox from './form/checkbox';
 import RadioBlock from './form/radioBlock';
 import TableDefault from './form/tableSounds';
 import MultiElements from './form/multiElements';
+import SelectedInList from './form/selectedInList';
 
 // типы полей {
 // +-- viewLinks
@@ -41,6 +42,7 @@ import MultiElements from './form/multiElements';
 // +-- table
 // +-- check_labels
 // +--- nasting
+// +-- selectedInList
 // }
 
 function getComponent({
@@ -156,7 +158,11 @@ function getComponent({
           <ViewLinks
             {...defData}
             navigate={curId =>
-              navigation.navigate('Group', {type: 'view', id: curId})
+              navigation.navigate('Group', {
+                type: 'view',
+                id: curId,
+                template: curObj.template,
+              })
             }
           />
         );
@@ -235,7 +241,6 @@ function getComponent({
           </DropdownLabel>
         );
         break;
-      // DEV ГЛОБАЛЬНАЯ ПЕРЕРАБОТКА БЛОКА (включая бд!!)
       case 'table':
         element = <TableDefault {...defData} />;
         break;
@@ -249,6 +254,15 @@ function getComponent({
             setCheck={() => (showBlocks[key].show = !showBlocks[key].show)}>
             <MultiElements onChange={onChange} />
           </DropdownLabel>
+        );
+        break;
+      case 'selectedInList':
+        element = (
+          <SelectedInList
+            {...curObj.props}
+            currentValues={values}
+            onChange={onChange}
+          />
         );
         break;
       default:
@@ -332,7 +346,6 @@ export default class SubTab extends Component {
   }
 
   render() {
-    // console.log('test', this.props.currentData);
     // флаг отображения разделителя
     let showSeparate = false;
     // хранилище ключей полей с пустыми значениями

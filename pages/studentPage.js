@@ -1,22 +1,13 @@
 import React, {Component} from 'react';
-import {
-  Text,
-  View,
-  ScrollView,
-  Alert,
-  TouchableOpacity,
-  BackHandler,
-} from 'react-native';
-import ButtonEdit from '../components/elements/buttonEdit';
+import {Alert, BackHandler} from 'react-native';
 import SubTab from '../components/generatorPages';
-import EmptyData from '../components/emptyDataList';
 import PagerView from 'react-native-pager-view';
-import NavPage from '../components/navPage';
-import HeaderTitle from '../components/elements/headerTitle';
+import NavPage from '../components/elements/navPage';
 import setHeaderNavigation from '../actions/changeHeader';
 import {insertInto} from '../actions/sqlGenerator';
 import SQLite from 'react-native-sqlite-storage';
 import MenuActions from '../components/menuActions';
+import {deleteUser} from '../actions/actinonsDB';
 import {
   saveConfirm,
   removeConfirm,
@@ -26,7 +17,7 @@ import {
 
 SQLite.enablePromise(true);
 
-// форматирование данных симптоматики и знеачений с базы
+// форматирование данных симптоматики и значений с базы
 function destructStudentCardData(data) {
   // data - массив объектов
   // новый стэш данных
@@ -122,7 +113,12 @@ export default class StudentPage extends Component {
             label: 'Группа в организации',
             type: 'inputView',
           },
-          groups: {label: 'Группы', type: 'viewLinks', last: true},
+          groups: {
+            label: 'Группы',
+            type: 'viewLinks',
+            last: true,
+            template: this.props.route.params.template,
+          },
           diagnos: {
             label: 'Заключение ЦПМПК',
             requared: true,
@@ -168,7 +164,6 @@ export default class StudentPage extends Component {
     // для уменьшения количества рендеров
     // данные обновляются без setState
     // в последней транзакции 2-х блоков меняется флаг загрузки
-    // ДОРАБОТАТЬ ЛОГИКУ copy и add
     db.transaction(tx => {
       // получение сортированных секций
       tx.executeSql(
@@ -332,7 +327,7 @@ export default class StudentPage extends Component {
         // получение групп ученика
         tx.executeSql(
           `
-          SELECT lsg.id, g.name
+          SELECT g.id, g.name
           FROM ListStudentsGroup as lsg
           LEFT JOIN Groups as g ON lsg.id_group = g.id
           WHERE lsg.id_student = ?
@@ -640,20 +635,8 @@ export default class StudentPage extends Component {
   }
 
   async removeCard() {
-    await db.transaction(tx => {
-      tx.executeSql(
-        `
-        DELETE FROM Students
-        WHERE id = ?
-        `,
-        [this.state.options.id],
-        () => Alert.alert('Карточка успешно удалена!'),
-        err => (
-          Alert.alert('Произошла непредвиденная ошибка!'),
-          console.log('error remove card', err)
-        ),
-      );
-    });
+    await deleteUser(this.state.options.id);
+    Alert.alert('Карточка успешно удалена!');
 
     this.props.navigation.pop();
   }

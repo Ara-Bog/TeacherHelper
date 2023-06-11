@@ -1,10 +1,11 @@
 import React, {Component} from 'react';
-import {View, TouchableOpacity} from 'react-native';
+import {View, TouchableOpacity, Alert} from 'react-native';
 import ListCards from '../components/listCards';
 import SQLite from 'react-native-sqlite-storage';
 import SearchBar from '../components/elements/searchBar';
 import {setUserSetting} from '../actions/userSettings';
 import RowSwitcher from '../components/elements/switcherInLine';
+import {deleteGroup} from '../actions/actinonsDB';
 
 SQLite.enablePromise(true);
 
@@ -82,17 +83,26 @@ export default class ListStudentsWrap extends Component {
     });
   }
 
+  // удаление группы
+  async removeCard(currentList) {
+    // удаляем каждый id
+    await currentList.forEach(id => deleteGroup(id));
+    // запрос новых данных
+    this.getData();
+  }
+
   // запрос списка групп
   getData() {
     db.transaction(tx => {
       tx.executeSql(
-        `SELECT gt.id as ID, ct.name as LeftBot, dg.name as RightBot, 
-            gt.name as LeftTop,
-            tp.name as template 
+        `SELECT gt.id as ID, ct.name as LeftBot, ct.id as LeftBot_id,  
+                dg.name as RightBot, dg.id as RightBot_id,
+                gt.name as LeftTop,
+                tp.name as RightTop, tp.id as RightTop_id
         FROM Groups as gt 
-        INNER JOIN Templates as tp ON gt.id_template = tp.id
-        INNER JOIN Diagnosis as dg ON gt.id_diagnos = dg.id
-        INNER JOIN Categories as ct ON gt.id_category = ct.id`,
+        LEFT JOIN Templates as tp ON gt.id_template = tp.id
+        LEFT JOIN Diagnosis as dg ON gt.id_diagnos = dg.id
+        LEFT JOIN Categories as ct ON gt.id_category = ct.id`,
         [],
         (_, {rows}) => {
           let data = rows.raw();
@@ -124,17 +134,15 @@ export default class ListStudentsWrap extends Component {
     let currentValues = this.props.route.params.listChecked;
     // для хранения новых данных по ученикам
     let newData;
-    // текст для шапки
-    let tempTitle = '';
     // распаковываем подмасивы и смотрим количество значений
     // когда 0 - фильтр сбрасывается
     if (Object.values(currentValues).flat().length > 0) {
       // фильтруем учеников на соответсвие выходных данных фильтра
       newData = this.state.defaultData.filter(
         item =>
-          currentValues['Возрастная группа'].includes(item.LeftBot) ||
-          currentValues['Шаблон'].includes(item.template) ||
-          currentValues['Заключение ЦПМПК'].includes(item.RightBot),
+          currentValues['Возрастная группа'].includes(item.LeftBot_id) ||
+          currentValues['Шаблон'].includes(item.RightTop_id) ||
+          currentValues['Заключение ЦПМПК'].includes(item.RightBot_id),
       );
       // фильтр используется
       this.setState({filterUsed: true});
@@ -215,7 +223,7 @@ export default class ListStudentsWrap extends Component {
           ) : null}
         </View>
         <ListCards
-          onCallDeleteData={currentList => this.deleteUser(currentList)}
+          onCallDeleteData={currentList => this.removeCard(currentList)}
           data={this.state.dataGroups}
           bigSizeCards={this.state.bigSizeCards}
           typeData={'Group'}

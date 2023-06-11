@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import {View, ScrollView, Alert} from 'react-native';
 import ButtonAdd from './elements/buttonAdd';
-import EmptyData from './emptyDataList';
+import EmptyData from './elements/emptyDataList';
 import DefaultCard from './elements/defaultCard';
 import MenuActions from './menuActions';
 import SelectorTemplates from './selecterTemplate';
@@ -30,7 +30,7 @@ export default class ListCards extends Component {
       onHold: false,
       // id карточки, которую зажали
       holdIdCard: 0,
-      // id_template карточки которую зажали
+      // RightTop_id карточки которую зажали
       holdCardTemplate: {},
       // открытие модалки выбора шаблона
       selectTemplateShow: false,
@@ -164,7 +164,7 @@ export default class ListCards extends Component {
                   : this.props.navigation.navigate(this.state.typeData, {
                       type: 'view',
                       id: item.ID,
-                      template: {id: item.id_template, name: item.RightTop},
+                      template: {id: item.RightTop_id, name: item.RightTop},
                     });
               }}
               onCallLong={() => {
@@ -176,7 +176,7 @@ export default class ListCards extends Component {
                       onHold: true,
                       holdIdCard: item.ID,
                       holdCardTemplate: {
-                        id: item.id_template,
+                        id: item.RightTop_id,
                         name: item.RightTop,
                       },
                     });
@@ -208,11 +208,13 @@ export default class ListCards extends Component {
           callResetSelected={() => this.setState({selected: []})}
           isSelected={this.state.selected.length != 0}
         />
-        <ButtonAdd
-          onPress={() => this.createNew()}
-          navigation={this.props.navigation}
-          type={this.state.typeData}
-        />
+        {this.state.selected.length !== 0 ? null : (
+          <ButtonAdd
+            onPress={() => this.createNew()}
+            navigation={this.props.navigation}
+            type={this.state.typeData}
+          />
+        )}
         <Modal
           style={{marginBottom: 0, marginLeft: 0, marginRight: 0}}
           isVisible={this.state.selectTemplateShow}

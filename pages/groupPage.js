@@ -1,426 +1,474 @@
 import React, {Component} from 'react';
+import {Alert, BackHandler} from 'react-native';
+import SubTab from '../components/generatorPages';
+import PagerView from 'react-native-pager-view';
+import NavPage from '../components/elements/navPage';
+import setHeaderNavigation from '../actions/changeHeader';
+import {insertInto} from '../actions/sqlGenerator';
+import SQLite from 'react-native-sqlite-storage';
+import MenuActions from '../components/menuActions';
+import {deleteGroup} from '../actions/actinonsDB';
 import {
-  Text,
-  View,
-  ScrollView,
-  Alert,
-  TextInput,
-  TouchableOpacity,
-} from 'react-native';
-import Styles from '../styleGlobal.js';
-// import ButtonEdit from '../components/buttonEdit';
-// import { Feather } from '@expo/vector-icons';
-import GroupListStudents from '../components/groupListStudents';
+  saveConfirm,
+  removeConfirm,
+  undoConfirm,
+  undoCreate,
+} from '../actions/confirmAction';
+
+// ??
+
+SQLite.enablePromise(true);
 
 export default class GroupPage extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      // переданные параметры
       options: this.props.route.params,
+      // состояние редактирования
       editing: false,
-      requiredData: ['Name', 'Diagnos_id', 'Categori_id'],
-      dataGroup: {},
-      categories: [],
-      diagnosis: [],
-      currentDataGroup: {},
-      dropDownsOpen: {categori: false, diagnos: false},
-      includeStudentsCurrent: false,
-      includeStudents: false,
-    };
-    if (this.state.options.type == 'view') {
-      db.transaction(tx => {
-        tx.executeSql(
-          "SELECT * FROM 'Groups' WHERE ID = ?",
-          [this.state.options.id],
-          (_, {rows: {_array}}) =>
-            this.setState({
-              currentDataGroup: _array[0],
-              dataGroup: _array[0],
-            }),
-          (_, err) => console.log('error - ', err),
-        );
-        tx.executeSql(
-          "SELECT ID, Surname || ' ' || Name || ' ' || COALESCE(Midname, '') as Name FROM Students WHERE Subgroup_id = ?",
-          [this.state.options.id],
-          (_, {rows: {_array}}) => (
-            this.setState({includeStudents: _array.slice()}),
-            this.setState({includeStudentsCurrent: _array.slice()})
-          ),
-          (_, err) => console.log('error - ', err),
-        );
-      });
-      this.props.navigation.setOptions({title: 'Карточка группы'});
-    } else if (this.state.options.type == 'add') {
-      this.props.navigation.setOptions({title: 'Создание группы'});
-      this.state.editing = true;
-      this.state.includeStudents = [];
-      this.state.includeStudentsCurrent = [];
-    }
-    db.transaction(tx => {
-      tx.executeSql(
-        'SELECT name as label, id as value FROM Categories',
-        [],
-        (_, {rows: {_array}}) => this.setState({categories: _array}),
-        (_, err) => console.log('error - ', err),
-      );
-      tx.executeSql(
-        'SELECT name as label, id as value FROM Diagnosis',
-        [],
-        (_, {rows: {_array}}) => this.setState({diagnosis: _array}),
-        (_, err) => console.log('error - ', err),
-      );
-    });
-  }
 
-  checkData() {
-    for (let nameCol of this.state.requiredData) {
-      if (
-        this.state.currentDataGroup[nameCol] == '' ||
-        this.state.currentDataGroup[nameCol] == undefined
-      ) {
-        this.setState({editing: !this.state.editing});
-        Alert.alert(
-          'Ошибка ввода',
-          `Поля со звездочкой должны быть обязательно заполненны`,
-          [{text: 'Да', style: 'destructive'}],
-        );
-        return;
-      }
-    }
+      // хранение экземпляра страниц
+      pageViewer: undefined,
+      // текущий индекс страницы
+      selectedPageIndex: 0,
 
-    {
-      this.state.options.type == 'add'
-        ? (db.transaction(tx => {
-            tx.executeSql(
-              "SELECT max(id) as lastID FROM 'Groups'",
-              [],
-              (_, {rows: {_array}}) =>
-                this.setState({
-                  currentDataGroup: {
-                    ...this.state.currentDataGroup,
-                    ID: _array[0]['lastID'],
-                  },
-                }),
-              (_, err) => (
-                Alert.alert('Произошла какая-то ошибка'),
-                console.log('error getID - ', err)
-              ),
-            );
-          }),
-          this.addBase(),
-          this.setState({options: {...this.state.options, type: 'view'}}),
-          this.props.navigation.setOptions({headerTitle: 'Карточка группы'}))
-        : this.updateBase();
-    }
-  }
-
-  addBase() {
-    const data = this.state.currentDataGroup;
-    db.transaction(tx => {
-      tx.executeSql(
-        "INSERT INTO 'Groups' (Name, Categori_id, Diagnos_id) " +
-          'VALUES (?,?,?)',
-        [data.Name, data.Categori_id, data.Diagnos_id],
-        () => Alert.alert('Данные успешно добавленны'),
-        (_, err) => (
-          Alert.alert('Произошла какая-то ошибка'),
-          console.log('error updateBase - ', err)
-        ),
-      );
-      this.state.includeStudentsCurrent.map(item =>
-        tx.executeSql(
-          'UPDATE Students ' + 'SET Subgroup_id = ?' + 'WHERE ID = ?',
-          [data.ID, item.ID],
-          () => null,
-          (_, err) => (
-            Alert.alert('Произошла какая-то ошибка'),
-            console.log('error updateBase - ', err)
-          ),
-        ),
-      );
-    });
-  }
-
-  updateBase() {
-    const data = this.state.currentDataGroup;
-    db.transaction(tx => {
-      tx.executeSql(
-        'UPDATE Groups ' +
-          'SET name=?, categori_id=?, diagnos_id=?' +
-          'WHERE ID=?',
-        [data.Name, data.Categori_id, data.Diagnos_id, data.ID],
-        () => Alert.alert('Данные успешно обновленны'),
-        (_, err) => (
-          Alert.alert('Произошла какая-то ошибка'),
-          console.log('error updateBase - ', err)
-        ),
-      );
-      tx.executeSql(
-        'UPDATE Students ' + 'SET Subgroup_id = ?' + 'WHERE Subgroup_id = ?',
-        [null, data.ID],
-        () => null,
-        (_, err) => (
-          Alert.alert('Произошла какая-то ошибка'),
-          console.log('error updateBase - ', err)
-        ),
-      );
-      this.state.includeStudentsCurrent.map(item =>
-        tx.executeSql(
-          'UPDATE Students ' + 'SET Subgroup_id = ?' + 'WHERE ID = ?',
-          [data.ID, item.ID],
-          () => null,
-          (_, err) => (
-            Alert.alert('Произошла какая-то ошибка'),
-            console.log('error updateBase - ', err)
-          ),
-        ),
-      );
-    });
-    this.setState({dataGroup: this.state.currentDataGroup});
-  }
-
-  undoActions() {
-    this.state.options.type == 'view'
-      ? this.setState({
-          currentDataGroup: this.state.dataGroup,
-          includeStudentsCurrent: this.state.includeStudents.slice(),
-        })
-      : this.props.navigation.goBack();
-  }
-
-  removeGroupConfirm() {
-    const group = this.state.currentDataGroup;
-    Alert.alert(
-      'Подтвердите удаление',
-      `Вы действительно хотите удалить карточку для ${group.Name}?\nЭто также удалит связанные с ней записи в расписании.`,
-      [
+      // секции страницы
+      sections: [
         {
-          text: 'Да',
-          onPress: () => this.removeGroup(group.ID),
-          style: 'destructive',
+          id: 1,
+          name: 'default_main',
+          show_label: null,
+          tab_name: 'Общие сведения',
+          footer: null,
         },
-        {text: 'Отмена', style: 'cancel'},
+        {
+          id: 2,
+          name: 'default_list',
+          show_label: null,
+          tab_name: 'Состав',
+          footer: null,
+        },
       ],
-      {cancelable: true},
+
+      // поля по умолчанию для основной страницы с данными выбора (если есть)
+      defaultData: {
+        default_main: {
+          name: {
+            label: 'Название',
+            requared: true,
+            type: 'inputView',
+          },
+          category: {
+            label: 'Возрастная группа',
+            requared: true,
+            type: 'droplist',
+          },
+          diagnos: {
+            label: 'Заключение ЦПМПК',
+            requared: true,
+            type: 'droplist',
+          },
+        },
+        default_list: {
+          list: {
+            label: '',
+            type: 'selectedInList',
+            props: {
+              sqlText: `
+              SELECT st.id,
+                  st.surname || ' ' || st.name || ' ' || COALESCE(st.midname, '') as name
+              FROM Students as st
+              WHERE st.id NOT IN (?) AND id_template = ?
+              `,
+              sqlArgs: ['', this.props.route.params.template.id],
+              labelCurrent: 'Выбранные ученики',
+              labelPossible: 'Общий список учеников',
+            },
+          },
+        },
+      },
+
+      // данные для секций по id
+      sectionsData: {},
+
+      // текущие данные группы
+      currentData: {list: []},
+
+      // состояние загрузки данных с бд
+      loading: true,
+
+      // временное хранилище значений
+      valuesStorage: {list: []},
+
+      // состояние меню
+      menuShow: false,
+    };
+
+    // способ открытия страницы
+    currentType = this.state.options.type;
+    // флаг, для запроса данных группы
+    getGroup = currentType == 'add' ? false : true;
+    // для уменьшения количества рендеров
+    // данные обновляются без setState
+    // в последней транзакции 2-х блоков меняется флаг загрузки
+
+    // ВОТ ТУТ ОСТАНОВИЛСЯ
+    db.transaction(tx => {
+      // получение диагнозов
+      tx.executeSql(
+        `
+        SELECT id, name
+        FROM Diagnosis
+        WHERE id_template IS NULL OR id_template = ?
+        `,
+        [this.state.options.template.id],
+        (_, {rows}) =>
+          (this.state.defaultData.default_main.diagnos.values = rows.raw()),
+        err => console.log('error groupPage get Diagnosis', err),
+      );
+
+      // получение категорий
+      tx.executeSql(
+        `
+        SELECT *
+        FROM Categories
+        `,
+        [],
+        (_, {rows}) => {
+          this.state.defaultData.default_main.category.values = rows.raw();
+          if (!getGroup) {
+            this.setState({loading: false});
+          }
+        },
+        err => console.log('error groupPage get Categories', err),
+      );
+
+      // получение данных группы
+      if (getGroup) {
+        // ученики в группе
+        tx.executeSql(
+          `
+          SELECT st.id, 
+            st.surname || ' ' || st.name || ' ' || COALESCE(st.midname, '') as name
+          FROM ListStudentsGroup as lsg
+          LEFT JOIN Students as st ON st.id = lsg.id_student
+          WHERE id_group = ?
+          `,
+          [this.state.options.id],
+          (_, {rows}) => {
+            let dataString = JSON.stringify(rows.raw());
+            this.state.currentData.list = JSON.parse(dataString);
+            this.state.valuesStorage.list = JSON.parse(dataString);
+            this.state.defaultData.default_list.list.props.sqlArgs[0] =
+              JSON.parse(dataString)
+                .map(item => item.id)
+                .join(', ');
+          },
+          err => console.log('error gropPage get cur students', err),
+        );
+
+        // данные группы
+        tx.executeSql(
+          `
+          SELECT name, 
+            id_diagnos as diagnos,
+            id_category as category 
+          FROM Groups
+          WHERE id = ? 
+          `,
+          [this.state.options.id],
+          (_, {rows}) => {
+            let stringJson = JSON.stringify(rows.raw()[0]);
+            this.state.currentData = {
+              ...this.state.currentData,
+              ...JSON.parse(stringJson),
+            };
+            this.state.valuesStorage = {
+              ...this.state.valuesStorage,
+              ...JSON.parse(stringJson),
+            };
+            this.setState({loading: false});
+          },
+          err => console.log('error groupPage get group', err),
+        );
+      }
+    });
+
+    this.setNavView = () =>
+      setHeaderNavigation({
+        mainTitle: 'Карточка группы',
+        addedTitle: this.state.options.template.name,
+        onPressRight: () => {
+          this.setState({menuShow: true});
+        },
+        navigation: this.props.navigation,
+        mode: 'menu',
+      });
+
+    this.setNavChange = () =>
+      setHeaderNavigation({
+        mainTitle: 'Редактирование группы',
+        addedTitle: this.state.options.template.name,
+        onPressRight: () => {
+          saveConfirm(() => this.confirmEdit());
+        },
+        onPressLeft: () => {
+          undoConfirm(() => {
+            this.state.valuesStorage = JSON.parse(
+              JSON.stringify(this.state.currentData),
+            );
+            this.setState({
+              editing: false,
+            });
+            this.setNavView();
+          });
+        },
+        navigation: this.props.navigation,
+        mode: 'edit',
+      });
+
+    // установка заголовка и кнопок в header
+    switch (currentType) {
+      case 'view':
+        this.setNavView();
+        break;
+      case 'add':
+        this.state.editing = true;
+        setHeaderNavigation({
+          mainTitle: 'Новая группа',
+          addedTitle: this.state.options.template.name,
+          onPressRight: () => saveConfirm(() => this.confirmEdit()),
+          onPressLeft: () => undoCreate(() => this.props.navigation.goBack()),
+          navigation: this.props.navigation,
+          mode: 'edit',
+        });
+        break;
+      case 'copy':
+        this.state.editing = true;
+        setHeaderNavigation({
+          mainTitle: 'Копия группы',
+          addedTitle: this.state.options.template.name,
+          onPressRight: () => saveConfirm(() => this.confirmEdit()),
+          onPressLeft: () => undoCreate(() => this.props.navigation.goBack()),
+          navigation: this.props.navigation,
+          mode: 'edit',
+        });
+        break;
+    }
+  }
+
+  // когда мы в режиме редактирования добавляем алерт при аппаратному "назад"
+  backAction = () => {
+    if (this.state.options.type === 'view') {
+      undoConfirm(() => {
+        this.setState({
+          valuesStorage: JSON.parse(JSON.stringify(this.state.currentData)),
+          editing: false,
+        });
+        this.setNavView();
+      });
+    } else {
+      undoCreate(() => {});
+    }
+    return true;
+  };
+
+  // устанавливаем прослушку на кнопку назад (аппаратную)
+  componentDidMount() {
+    this.backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      this.backAction,
     );
   }
 
-  removeGroup(id_client) {
-    db.transaction(tx => {
-      tx.executeSql(
-        "DELETE FROM timetable WHERE Client_id = ? AND Type = 'g'",
-        [id_client],
-        () => null,
-        (_, err) => (
-          Alert.alert('Произошла какая-то ошибка'),
-          console.log('error removeGroup (timetable) - ', err)
-        ),
+  // прослушка должна устанавливатся только когда мы в режиме редактирования
+  shouldComponentUpdate(nextProps, nextState) {
+    if (nextState.editing) {
+      this.backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        this.backAction,
       );
-      this.state.includeStudents.map(() =>
-        tx.executeSql(
-          'UPDATE Students ' + 'SET Subgroup_id = ?' + 'WHERE ID = ?',
-          [null, id_client],
-          () => null,
-          (_, err) => (
-            Alert.alert('Произошла какая-то ошибка'),
-            console.log('error removeGroup (Students) - ', err)
-          ),
-        ),
+    } else {
+      this.backHandler.remove();
+    }
+    return true;
+  }
+
+  // убираем прослушку
+  componentWillUnmount() {
+    this.backHandler.remove();
+  }
+
+  // подтверждение изменений
+  confirmEdit() {
+    // флаг ошибки проверки
+    let flagError = false;
+    // проверка обязательных полей данных по умолчанию
+    for (const key of Object.keys(this.state.defaultData.default_main)) {
+      if (this.state.defaultData.default_main[key].requared) {
+        if (this.state.valuesStorage[key] == undefined) {
+          flagError = true;
+          break;
+        }
+      }
+    }
+
+    // есть не заполненные обязательные поля
+    if (flagError) {
+      Alert.alert(
+        'Ошибка ввода',
+        `Поля со звездочкой должны быть обязательно заполненны`,
+        [{text: 'Ок', style: 'destructive'}],
+        {cancelable: true},
       );
-      tx.executeSql(
-        'DELETE FROM groups WHERE id = ?',
-        [id_client],
-        () => Alert.alert('Карточка успешно удаленна'),
-        (_, err) => (
-          Alert.alert('Произошла какая-то ошибка'),
-          console.log('error removeGroup (groups) - ', err)
-        ),
-      );
+      return;
+    }
+
+    // проверка пройдена - обновляем текущие данные
+    this.setState({
+      currentData: JSON.parse(JSON.stringify(this.state.valuesStorage)),
     });
-    this.props.navigation.goBack();
+
+    this.updateBase();
+  }
+
+  // обновление данных
+  async updateBase() {
+    // для удобства
+    const data = this.state.currentData;
+
+    if (this.state.options.type != 'view') {
+      dataStudent = {
+        name: data.name,
+        id_diagnos: data.diagnos,
+        id_category: data.category,
+        id_template: this.state.options.template.id,
+      };
+      newId = await insertInto([dataStudent], 'Groups', true);
+      this.state.options.id = newId;
+      this.state.options.type = 'view';
+    } else {
+      await db.transaction(tx => {
+        // обновление данных группы
+        tx.executeSql(
+          `
+          UPDATE Groups
+          SET name = ?,
+              id_diagnos = ?,
+              id_category = ?
+          WHERE id = ?
+          `,
+          [data.name, data.diagnos, data.category, this.state.options.id],
+          null,
+          err => (
+            Alert.alert('Произошла ошибка!'),
+            console.log('error groupPage updateBase', err)
+          ),
+        );
+
+        // удаляем связей группы с учениками
+        tx.executeSql(
+          `
+          DELETE FROM ListStudentsGroup
+          WHERE id_group = ?
+          `,
+          [this.state.options.id],
+          null,
+          err => (
+            Alert.alert('Произошла ошибка!'),
+            console.log('error groupPage ListStudentsGroup', err)
+          ),
+        );
+      });
+    }
+
+    this.addNewData(this.state.options.id);
+  }
+
+  // добавление новых записей в дб
+  async addNewData(id) {
+    await insertInto(
+      this.state.currentData.list.map(item =>
+        Object({id_group: id, id_student: item.id}),
+      ),
+      'ListStudentsGroup',
+    );
+
+    Alert.alert('Данные успешно обновленны!');
+    // возвращаем заголовки
+    this.setNavView();
+    this.setState({editing: false});
+  }
+
+  async removeCard() {
+    deleteGroup(this.state.options.id);
+    Alert.alert('Карточка успешно удалена!');
+
+    this.props.navigation.pop();
   }
 
   render() {
+    // КОСТЫЛЬ МБ ПОМЕНЯТЬ (уменьшает нагрузку рендер страниц)
+    if (this.state.loading) {
+      return <></>;
+    }
     return (
-      <View style={{...Styles.container, backgroundColor: '#fff'}}>
-        <ScrollView
-          nestedScrollEnabled={true}
-          contentContainerStyle={{flexGrow: 1}}>
-          {this.state.editing && this.state.options.type == 'view' ? (
-            <TouchableOpacity
-              style={Styles.cardStudentBtn_delete}
-              onPress={() => this.removeGroupConfirm()}>
-              {/* <Feather name="trash" size={16} color="#DC5F5A" style={{marginRight: 8}}/> */}
-              <Text style={Styles.cardDaysRemoveText}>Удалить</Text>
-            </TouchableOpacity>
-          ) : null}
-          <View
-            style={
-              this.state.editing
-                ? Styles.cardDefaultRow_edit
-                : Styles.cardDefaultRow
-            }>
-            <Text style={Styles.cardDefaultLabel}>
-              Название{this.state.editing ? ' *' : null}
-            </Text>
-            {this.state.editing ? (
-              <TextInput
-                style={Styles.inputDefault}
-                value={this.state.currentDataGroup.Name}
-                onChangeText={val =>
-                  this.setState({
-                    currentDataGroup: {
-                      ...this.state.currentDataGroup,
-                      Name: val,
-                    },
-                  })
-                }
-              />
-            ) : (
-              <Text style={Styles.inputDefault_disabled}>
-                {this.state.currentDataGroup.Name}
-              </Text>
-            )}
-          </View>
-          <View
-            style={
-              this.state.editing
-                ? Styles.cardDefaultRow_edit
-                : Styles.cardDefaultRow
-            }>
-            <Text style={Styles.cardDefaultLabel}>
-              Возрастная группа{this.state.editing ? ' *' : null}
-            </Text>
-            {/* {this.state.editing ? (
-              <DropDownPicker
-                zIndex={12}
-                open={this.state.dropDownsOpen.categori}
-                value={this.state.currentDataGroup.Categori_id}
-                items={this.state.categories}
-                setOpen={val =>
-                  this.setState({
-                    dropDownsOpen: {...this.state.dropDownsOpen, categori: val},
-                  })
-                }
-                setValue={callback =>
-                  this.setState(state => ({
-                    currentDataGroup: {
-                      ...this.state.currentDataGroup,
-                      Categori_id: callback(state.value),
-                    },
-                  }))
-                }
-                setItems={callback =>
-                  this.setState(state => ({categories: callback(state.items)}))
-                }
-                listMode="SCROLLVIEW"
-                style={Styles.dropDown}
-                dropDownContainerStyle={Styles.dropDownBox}
-                disabled={!this.state.editing}
-              />
-            ) : (
-              <Text
-                style={
-                  this.state.currentDataGroup.Categori_id != null &&
-                  this.state.categories.length > 0
-                    ? Styles.cardStudentValue
-                    : Styles.cardStudentValue_empty
-                }>
-                {this.state.currentDataGroup.Categori_id != null &&
-                this.state.categories.length > 0
-                  ? this.state.categories.filter(
-                      item =>
-                        item.value == this.state.currentDataGroup.Categori_id,
-                    )[0].label
-                  : 'Не выбранно'}
-              </Text>
-            )} */}
-          </View>
-          <View
-            style={
-              this.state.editing
-                ? Styles.cardDefaultRow_edit
-                : Styles.cardDefaultRow
-            }>
-            <Text style={Styles.cardDefaultLabel}>
-              Заключение ЦПМПК{this.state.editing ? ' *' : null}
-            </Text>
-            {/* {this.state.editing ? (
-              <DropDownPicker
-                zIndex={10}
-                open={this.state.dropDownsOpen.diagnos}
-                value={this.state.currentDataGroup.Diagnos_id}
-                items={this.state.diagnosis}
-                setOpen={val =>
-                  this.setState({
-                    dropDownsOpen: {...this.state.dropDownsOpen, diagnos: val},
-                  })
-                }
-                setValue={callback =>
-                  this.setState(state => ({
-                    currentDataGroup: {
-                      ...this.state.currentDataGroup,
-                      Diagnos_id: callback(state.value),
-                    },
-                  }))
-                }
-                setItems={callback =>
-                  this.setState(state => ({diagnosis: callback(state.items)}))
-                }
-                listMode="SCROLLVIEW"
-                style={Styles.dropDown}
-                dropDownContainerStyle={Styles.dropDownBox}
-              />
-            ) : (
-              <Text
-                style={
-                  this.state.currentDataGroup.Diagnos_id != null &&
-                  this.state.diagnosis.length > 0
-                    ? Styles.cardStudentValue
-                    : Styles.cardStudentValue_empty
-                }>
-                {this.state.currentDataGroup.Diagnos_id != null &&
-                this.state.diagnosis.length > 0
-                  ? this.state.diagnosis.filter(
-                      item =>
-                        item.value == this.state.currentDataGroup.Diagnos_id,
-                    )[0].label
-                  : 'Не выбранно'}
-              </Text>
-            )} */}
-          </View>
-          <View style={{...Styles.cardStudentLine, marginTop: 15}}></View>
-          <View
-            style={
-              this.state.editing
-                ? Styles.cardDefaultRow_edit
-                : Styles.cardDefaultRow
-            }>
-            {this.state.includeStudentsCurrent ? (
-              <GroupListStudents
-                currentStudents={this.state.includeStudentsCurrent}
-                editing={this.state.editing}
-                onCallBack={listStudents =>
-                  this.setState({includeStudentsCurrent: listStudents})
-                }
-              />
-            ) : null}
-          </View>
-          <View style={Styles.crutch}></View>
-        </ScrollView>
-        {/* <ButtonEdit
-          changeState={() =>
-            this.setState({
-              editing: !this.state.editing,
-              dropDownsOpen: {categori: false, diagnos: false},
-            })
-          }
-          editing={this.state.editing}
-          confirm={feedback => {
-            feedback ? this.checkData() : this.undoActions();
+      <>
+        {/* верхняя навигация подстраниц */}
+        <NavPage
+          values={this.state.sections}
+          selected={this.state.selectedPageIndex}
+          onSelect={index => this.state.pageViewer.setPage(index)}
+        />
+        <PagerView
+          style={{flex: 1}}
+          initialPage={0}
+          ref={pager => {
+            this.state.pageViewer = pager;
           }}
-        /> */}
-      </View>
+          onPageSelected={e =>
+            this.setState({selectedPageIndex: e.nativeEvent.position})
+          }>
+          {this.state.sections.map(item => {
+            const assignData = {
+              ...this.state.defaultData[item.name],
+              ...this.state.sectionsData[item.id],
+            };
+            // сгенерированные страницы
+            return (
+              <SubTab
+                key={item.id}
+                footer={Boolean(item.footer)}
+                lable={item.show_label ? item.name : null}
+                data={assignData}
+                currentData={this.state.valuesStorage}
+                editing={this.state.editing}
+                indexParent={item.id}
+                navigation={this.props.navigation}
+              />
+            );
+          })}
+        </PagerView>
+        {/* меню действий с карточкой */}
+        <MenuActions
+          visible={this.state.menuShow}
+          callClose={() => this.setState({menuShow: false})}
+          callCopy={() => {
+            this.props.navigation.push('Group', {
+              type: 'copy',
+              id: this.state.options.id,
+              template: this.state.options.template,
+            });
+          }}
+          callDelete={() => removeConfirm(() => this.removeCard())}
+          callChange={() => {
+            this.setState({editing: true});
+            this.setNavChange();
+          }}
+          onCard={true}
+        />
+      </>
     );
   }
 }

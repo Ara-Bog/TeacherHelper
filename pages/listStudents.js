@@ -5,6 +5,7 @@ import SQLite from 'react-native-sqlite-storage';
 import SearchBar from '../components/elements/searchBar';
 import {setUserSetting} from '../actions/userSettings';
 import RowSwitcher from '../components/elements/switcherInLine';
+import {deleteUser} from '../actions/actinonsDB';
 
 SQLite.enablePromise(true);
 
@@ -86,43 +87,10 @@ export default class ListStudentsWrap extends Component {
     });
   }
 
-  // удаление пользователя с подтверждением
-  async deleteUser(currentList) {
-    await db.transaction(tx => {
-      currentList.map(id => {
-        // удаление из расписания
-        tx.executeSql(
-          "DELETE FROM Timetable WHERE id_client = ? AND type_client = 's'",
-          [id],
-          () => null,
-          (_, err) => (
-            Alert.alert('Произошла непредвиденная ошибка!'),
-            console.log('error removeStudent (timetable) - ', err)
-          ),
-        );
-        // удаление текущих симптомов
-        tx.executeSql(
-          'DELETE FROM CurrentSymptoms WHERE id_student = ?',
-          [id],
-          () => null,
-          (_, err) => (
-            Alert.alert('Произошла непредвиденная ошибка!'),
-            console.log('error removeStudent (CurrentSymptoms) - ', err)
-          ),
-        );
-        // удаление ученика
-        tx.executeSql(
-          'DELETE FROM students WHERE id = ?',
-          [id],
-          () => Alert.alert('Карточка успешно удаленна'),
-          (_, err) => (
-            Alert.alert('Произошла непредвиденная ошибка!'),
-            console.log('error removeStudent (students) - ', err)
-          ),
-        );
-      });
-    });
-
+  // удаление ученика
+  async removeCard(currentList) {
+    // удаляем каждый id
+    await currentList.forEach(id => deleteUser(id));
     // запрос новых данных
     this.getData();
   }
@@ -134,7 +102,7 @@ export default class ListStudentsWrap extends Component {
         `SELECT st.id as ID, ct.name as LeftBot, ct.id as LeftBot_id, 
                 dg.name as RightBot, dg.id as RightBot_id, 
                 st.surname || ' ' || st.name || ' ' || COALESCE(st.midname, '') as LeftTop,
-                tp.name as RightTop, tp.id as RightTop_id, tp.id as id_template 
+                tp.name as RightTop, tp.id as RightTop_id
         FROM Students as st 
         LEFT JOIN Templates as tp ON st.id_template = tp.id
         LEFT JOIN Diagnosis as dg ON st.id_diagnos = dg.id
@@ -262,7 +230,7 @@ export default class ListStudentsWrap extends Component {
           ) : null}
         </View>
         <ListCards
-          onCallDeleteData={currentList => this.deleteUser(currentList)}
+          onCallDeleteData={currentList => this.removeCard(currentList)}
           data={this.state.dataStudents}
           bigSizeCards={this.state.bigSizeCards}
           typeData={'Student'}
