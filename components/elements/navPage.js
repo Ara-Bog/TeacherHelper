@@ -18,6 +18,7 @@ export default function NavPage({values, onSelect, selected}) {
       <Text
         style={[
           Styles.navPageTabText,
+          {textAlign: 'center'},
           selected == index ? {color: '#fff'} : null,
         ]}>
         {val}
@@ -33,9 +34,8 @@ export default function NavPage({values, onSelect, selected}) {
           horizontal={true}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{
-            display: 'flex',
+            flexDirection: 'row',
             minWidth: '100%',
-            width: 'auto',
           }}>
           {values.map((item, index) => {
             return Tab(item.tab_name || item.name, item.id, index);

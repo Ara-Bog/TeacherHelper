@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import {Text, View, TouchableOpacity} from 'react-native';
-import InputView from './form/inputView';
-import PhoneView from './form/phoneView';
+import InputView from '../form/inputView';
+import PhoneView from '../form/phoneView';
 
 export default function ContactCard(props) {
   // Карточка контакта, для страницы ученика

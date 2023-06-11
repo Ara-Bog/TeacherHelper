@@ -22,7 +22,7 @@ export default function ViewLinks({
   const showView = (
     <View style={Styles.divMain}>
       <Text style={Styles.divMainTitle}>{label}</Text>
-      {value == true ? (
+      {value.length ? (
         <View style={Styles.viewLinksWrap}>
           {value.map((item, indexEl) => {
             return (

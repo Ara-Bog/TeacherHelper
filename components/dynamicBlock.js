@@ -1,9 +1,9 @@
 import React, {Component, useState} from 'react';
 import {TouchableOpacity} from 'react-native';
 import {Text, View, TextInput} from 'react-native';
-import EmptyField from '../emptyDataList';
+import EmptyField from './elements/emptyDataList';
 // элементы
-import ContactCard from '../contactCard';
+import ContactCard from './elements/contactCard';
 
 export default class DynamicBlock extends Component {
   // получает:
