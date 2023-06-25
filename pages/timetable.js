@@ -40,12 +40,11 @@ export default class TimetableWrap extends Component {
     this.props.navigation.addListener('focus', () => {
       this.setState({bigSizeCards: userSettings.bigCardTimetable});
       if (resetFilters) {
-        // сбрасываем фараметры, чтобы setFilters не запускался
-        this.state.selectDay = 'all';
         // сбрасываем фильтры и открытые вкладки
         this.setState({
           dataFiltered: [...this.state.defaultData],
           loading: true,
+          selectDay: 'all',
         });
         // возвращаем флаг в исходное положение
         resetFilters = false;
@@ -86,14 +85,13 @@ export default class TimetableWrap extends Component {
         [],
         (_, {rows}) => {
           let data = rows.raw();
-          // заполняем количество записей на каждый день
-          this.updateCounter(data);
           // заполняем данные
           this.setState({
             defaultData: [...data],
-            dataFiltered: [...data],
             loading: false,
           });
+          // заполняем количество записей на каждый день
+          this.updateCounter(data);
           // стартуем фильтрацию
           this.setFilters(this.state.selectDay);
         },

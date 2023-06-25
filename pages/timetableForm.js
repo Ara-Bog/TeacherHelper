@@ -323,7 +323,7 @@ export default class TimetableForm extends Component {
   async allDaysInsert(withoutDay) {
     const data = this.state.valuesStorage;
     for (let item of this.state.itemsDays) {
-      if (item.id in ['all', withoutDay]) {
+      if (['all', withoutDay].includes(item.id)) {
         continue;
       }
       dataTimetable = {
