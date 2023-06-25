@@ -295,17 +295,17 @@ export default class Settings extends Component {
     );
   }
 
-  test() {
-    db.transaction(tx => {
-      tx.executeSql(
-        `
-        SELECT * FROM ListStudentsGroup
-        `,
-        [],
-        (_, {rows}) => console.log('TEST', rows.raw()),
-      );
-    });
-  }
+  // test() {
+  //   db.transaction(tx => {
+  //     tx.executeSql(
+  //       `
+  //       SELECT * FROM Timetable
+  //       `,
+  //       [],
+  //       (_, {rows}) => console.log('TEST', rows.raw()),
+  //     );
+  //   });
+  // }
 
   render() {
     return (
@@ -315,17 +315,23 @@ export default class Settings extends Component {
           nestedScrollEnabled={true}
           contentContainerStyle={{gap: 25, flexGrow: 1}}>
           {/* DEV */}
-          <TouchableOpacity onPress={() => this.test()}>
+          {/* <TouchableOpacity onPress={() => this.test()}>
             <Text>HUI</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           {/* баннер */}
           <TouchableOpacity
             onPress={() =>
               Linking.openURL('https://www.tinkoff.ru/cf/1uakjigjJrq')
             }>
             <Image
-              style={{width: '100%'}}
+              style={{
+                flex: 1,
+                aspectRatio: 1.75,
+                height: undefined,
+                width: undefined,
+              }}
               source={require('../assets/baner.png')}
+              resizeMode="contain"
             />
           </TouchableOpacity>
           {/* первый экран */}
@@ -339,16 +345,13 @@ export default class Settings extends Component {
             }}
           />
           {/* вид расписания */}
-          <Dropdown
+          {/* <Dropdown
             data={this.state.typesSchedule}
             value={userSettings.typeSchedule}
             editing={true}
             label={'Вид расписания'}
-            // onChange={id => {
-            //   this.changeTypeSchedule(id);
-            // }}
             onConfirm={(id, callback) => this.changeTypeSchedule(id, callback)}
-          />
+          /> */}
           {/* шаблоны */}
           <View style={Styles.divDefault__edit}>
             <Text style={Styles.divDefaultLabel__edit}>Шаблоны</Text>

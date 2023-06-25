@@ -85,3 +85,17 @@ export async function deleteGroup(id) {
     );
   });
 }
+
+export async function deleteTimetable(id) {
+  db.transaction(tx => {
+    tx.executeSql(
+      `DELETE FROM Timetable WHERE id = ?`,
+      [id],
+      () => null,
+      (_, err) => (
+        Alert.alert('Произошла непредвиденная ошибка!'),
+        console.log('error removeGroup (timetable) - ', err)
+      ),
+    );
+  });
+}

@@ -73,19 +73,19 @@ export default function App() {
   };
 
   // на каких страницах скрывать меню
-  const hideTabPage = ['Student', 'TimetableForm', 'Group', 'Filter'];
+  const hideTabPage = ['Student', 'Timetable', 'Group', 'Filter'];
 
   // навигации для страницы расписания
   const TimetableNav = () => (
     <Stack.Navigator
-      initialRouteName="Timetable"
+      initialRouteName="TimetableList"
       screenOptions={Styles.screenOptionsNav}>
       <Stack.Screen
-        name="Timetable"
+        name="TimetableList"
         component={Timetable}
         options={{title: 'Расписание'}}
       />
-      <Stack.Screen name="TimetableForm" component={TimetableForm} />
+      <Stack.Screen name="Timetable" component={TimetableForm} />
       <Stack.Screen name="Student" component={StudentPage} />
       <Stack.Screen name="Group" component={GroupPage} />
     </Stack.Navigator>
@@ -180,7 +180,7 @@ export default function App() {
             tabBarActiveTintColor: '#554AF0',
             tabBarInactiveTintColor: '#B1B1B1',
           })}>
-          {/* <Tab.Screen
+          <Tab.Screen
             name="timetable"
             component={TimetableNav}
             options={{
@@ -190,7 +190,7 @@ export default function App() {
                 <Icons.Feather name="calendar" size={24} color={color} />
               ),
             }}
-          /> */}
+          />
           <Tab.Screen
             name="groups"
             component={ListGroupNav}
