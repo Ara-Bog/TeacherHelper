@@ -5,17 +5,23 @@ export default function defaultCard({
   data,
   select,
   bigSize,
+  isTimetable,
   onCallPress,
   onCallLong,
+  noUsed,
 }) {
-  // полученные данные:
-  // - текущие значения свича -- data: object
-  // - статус выделения блока -- select: bool
-  // - большой размер карточек -- bigSize: bool
+  // Карточка для список расписания/групп/учеников
+  // props:
+  // - data: object -- текущие значения свича
+  // - select: bool -- статус выделения блока
+  // - bigSize: bool -- большой размер карточек
+  // - isTimetable : bool -- флаг карточки расписания
+  // - noUsed: bool -- флаг для не используемых карточек
   // ---------------
-  // обратная связь:
-  // - событие на зажатие -- onCallLong
-  // - событие на нажатие -- onCallPress
+  // props-functions:
+  // - onCallLong () -- событие на зажатие
+  // - onCallPress () -- событие на нажатие
+
   const addedContent = (
     <>
       <View style={Styles.cardDelaultRowLine}></View>
@@ -30,11 +36,21 @@ export default function defaultCard({
       style={select ? Styles.cardDelault__active : Styles.cardDelault}
       onPress={() => onCallPress()}
       onLongPress={() => onCallLong()}>
-      <View style={Styles.cardDelaultRow}>
-        <Text style={Styles.cardDelaultRowTitle}>{data.LeftTop}</Text>
-        {bigSize ? (
+      <View style={[Styles.cardDelaultRow, noUsed ? {opacity: 0.4} : null]}>
+        {isTimetable ? (
+          <View style={{flexDirection: 'row', gap: 8, alignItems: 'center'}}>
+            <Icons.Feather name="clock" size={17} color="#554AF0" />
+            <Text style={Styles.cardDelaultRowTitle}>{data.LeftTop}</Text>
+          </View>
+        ) : (
+          <Text style={Styles.cardDelaultRowTitle}>{data.LeftTop}</Text>
+        )}
+
+        {!bigSize && isTimetable ? (
+          <Text style={Styles.cardDelaultRowTitle}>{data.LeftBot}</Text>
+        ) : (
           <Text style={Styles.cardDelaultRowTitle}>{data.RightTop}</Text>
-        ) : null}
+        )}
       </View>
       {bigSize ? addedContent : null}
     </TouchableOpacity>

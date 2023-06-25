@@ -11,6 +11,8 @@ export default function DropdownView({
   onChange,
   requared,
   onConfirm,
+  placeholder = 'Выберите значение',
+  flagUpdate,
 }) {
   // получает:
   // - значение поля ввода -- value: String
@@ -27,9 +29,7 @@ export default function DropdownView({
 
   const findName = () => {
     if (value != undefined) {
-      return data.find(item => {
-        return item.id == value;
-      }).name;
+      return data.find(item => item.id == value)?.name;
     }
     return null;
   };
@@ -44,6 +44,12 @@ export default function DropdownView({
       setName(findName());
     }
   }, [editing]);
+
+  useEffect(() => {
+    setItems(data);
+    setVal(value);
+    setName(findName());
+  }, [flagUpdate]);
 
   // ссылка на список, чтобы закрывать его
   const drop = useRef();
@@ -69,16 +75,18 @@ export default function DropdownView({
 
   const editingView = (
     <View style={Styles.divDefault__edit}>
-      <Text style={Styles.divDefaultLabel__edit}>
-        {label}
-        {requared ? ' *' : null}
-      </Text>
+      {label ? (
+        <Text style={Styles.divDefaultLabel__edit}>
+          {label}
+          {requared ? ' *' : null}
+        </Text>
+      ) : null}
       <Dropdown
         ref={drop}
         style={Styles.dropDown}
         selectedTextStyle={Styles.dropDownText}
         itemContainerStyle={{borderRadius: 10}}
-        placeholder={'Выберите значение'}
+        placeholder={placeholder}
         placeholderStyle={{...Styles.dropDownText, color: '#848484'}}
         maxHeight={250}
         containerStyle={Styles.dropDownBox}
@@ -121,7 +129,6 @@ export default function DropdownView({
       />
     </View>
   );
-
   return (
     <>{editing ? editingView : <DivDefaultRow label={label} value={name} />}</>
   );

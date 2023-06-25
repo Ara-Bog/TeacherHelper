@@ -15,8 +15,6 @@ import {
   undoCreate,
 } from '../actions/confirmAction';
 
-// ??
-
 SQLite.enablePromise(true);
 
 export default class GroupPage extends Component {
@@ -113,7 +111,7 @@ export default class GroupPage extends Component {
     // данные обновляются без setState
     // в последней транзакции 2-х блоков меняется флаг загрузки
 
-    // ВОТ ТУТ ОСТАНОВИЛСЯ
+    // получение данных
     db.transaction(tx => {
       // получение диагнозов
       tx.executeSql(

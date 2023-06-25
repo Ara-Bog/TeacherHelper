@@ -31,6 +31,7 @@ export default class ListStudentsWrap extends Component {
         'Заключение ЦПМПК': [],
       },
       bigSizeCards: userSettings.bigCardGroup,
+      loading: true,
     };
 
     // добавление кнопки фильтра (фильтр идет страницей в стаке в App)
@@ -74,6 +75,7 @@ export default class ListStudentsWrap extends Component {
             Шаблон: [],
             'Заключение ЦПМПК': [],
           },
+          loading: true,
         });
         // возвращаем флаг в исходное положение
         resetFilters = false;
@@ -87,8 +89,14 @@ export default class ListStudentsWrap extends Component {
   async removeCard(currentList) {
     // удаляем каждый id
     await currentList.forEach(id => deleteGroup(id));
-    // запрос новых данных
-    this.getData();
+
+    // удаляем id из основного списка
+    this.state.defaultData = this.state.defaultData.filter(item => {
+      return !currentList.includes(item.ID);
+    });
+
+    // фильтруем повторно, т.к. данные изменились
+    this.setFilters();
   }
 
   // запрос списка групп
@@ -96,9 +104,10 @@ export default class ListStudentsWrap extends Component {
     db.transaction(tx => {
       tx.executeSql(
         `SELECT gt.id as ID, ct.name as LeftBot, ct.id as LeftBot_id,  
-                dg.name as RightBot, dg.id as RightBot_id,
-                gt.name as LeftTop,
-                tp.name as RightTop, tp.id as RightTop_id
+                dg.name as RightBot, dg.id as RightBot_id, 
+                tp.name as template, tp.id as id_template,
+                tp.name as RightTop, tp.id as RightTop_id,
+                gt.name as LeftTop
         FROM Groups as gt 
         LEFT JOIN Templates as tp ON gt.id_template = tp.id
         LEFT JOIN Diagnosis as dg ON gt.id_diagnos = dg.id
@@ -110,6 +119,7 @@ export default class ListStudentsWrap extends Component {
             dataGroups: data,
             defaultData: data,
             filterData: data,
+            loading: false,
           });
           // меняем заголовок, добавляем количество записей
           this.props.navigation.setOptions({
@@ -127,6 +137,10 @@ export default class ListStudentsWrap extends Component {
   setFilters() {
     // фильтры не были переданы
     if (this.props.route.params === undefined) {
+      // параметров нет - фильтрации нет, устанавливает список по умолчанию
+      this.setState({filterData: [...this.state.defaultData]});
+      // вызываем поиск (т.к. фильтр мог установится после ввода)
+      this.search(this.state.currentSearch);
       return;
     }
 
@@ -201,6 +215,9 @@ export default class ListStudentsWrap extends Component {
   }
 
   render() {
+    if (this.state.loading) {
+      return;
+    }
     return (
       <View style={Styles.container}>
         <View style={{gap: 10, marginBottom: 30}}>

@@ -119,7 +119,7 @@ export default StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 25,
-    paddingVertical: 15,
+    paddingVertical: 12,
     backgroundColor: '#fff',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -133,6 +133,7 @@ export default StyleSheet.create({
     fontFamily: 'sf_medium',
     color: COLORS.darkBlue,
     fontWeight: 400,
+    lineHeight: 21,
   },
 
   float_btAdd_wrap: {
@@ -203,10 +204,9 @@ export default StyleSheet.create({
   dropDown: {
     backgroundColor: '#fff',
     borderWidth: 1,
-    paddingVertical: 13,
+    paddingVertical: 7.5,
     paddingHorizontal: 25,
     borderRadius: 10,
-    height: 50,
     borderColor: COLORS.gray,
   },
 
@@ -426,7 +426,6 @@ export default StyleSheet.create({
     justifyContent: 'flex-start',
     gap: 5,
     height: 50,
-    paddingHorizontal: 15,
   },
 
   // fontWeight: 400, - не поддерживается

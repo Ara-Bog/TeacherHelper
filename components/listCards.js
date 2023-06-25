@@ -9,14 +9,11 @@ import Modal from 'react-native-modal';
 
 export default class ListCards extends Component {
   // общий модуль списка для списка групп и учеников
-
-  // полученные данные:
-  // - текущие данные для списка -- data: array(object)
-  // - активная страница -- typeData: String (Student, Group)
-  // - props.navigation для навигации на страницы карточек -- navigation: object
-  // - большой размер карточек -- bigSizeCards: bool
-  // --
-
+  // props:
+  // - data: array(object) -- текущие данные для списка
+  // - typeData: String (Student || Group || Timetable) -- активная страница
+  // - navigation: object -- props.navigation для навигации на страницы карточек
+  // - bigSizeCards: bool -- большой размер карточек
   constructor(props) {
     super(props);
     this.state = {
@@ -30,7 +27,7 @@ export default class ListCards extends Component {
       onHold: false,
       // id карточки, которую зажали
       holdIdCard: 0,
-      // RightTop_id карточки которую зажали
+      // id_template карточки которую зажали
       holdCardTemplate: {},
       // открытие модалки выбора шаблона
       selectTemplateShow: false,
@@ -158,13 +155,14 @@ export default class ListCards extends Component {
               data={item}
               bigSize={this.props.bigSizeCards}
               select={this.state.selected.includes(item.ID)}
+              isTimetable={this.state.typeData === 'Timetable'}
               onCallPress={() => {
                 this.state.selected.length != 0
                   ? this.selectCard(item.ID)
                   : this.props.navigation.navigate(this.state.typeData, {
                       type: 'view',
                       id: item.ID,
-                      template: {id: item.RightTop_id, name: item.RightTop},
+                      template: {id: item.id_template, name: item.template},
                     });
               }}
               onCallLong={() => {
@@ -176,8 +174,8 @@ export default class ListCards extends Component {
                       onHold: true,
                       holdIdCard: item.ID,
                       holdCardTemplate: {
-                        id: item.RightTop_id,
-                        name: item.RightTop,
+                        id: item.id_tempalate,
+                        name: item.tempalate,
                       },
                     });
               }}

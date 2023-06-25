@@ -13,7 +13,7 @@ import AddingButton from './elements/buttonAdd';
 // блоки редактирования
 import InputView from '../components/form/inputView';
 import Dropdown from './form/dropdown';
-import BirhdayView from './form/birthday';
+import {BirhdayView, TimePicker} from './form/datetimePicker';
 import ViewLinks from './form/viewLinks';
 import Textarea from './form/textarea';
 import DynamicBlock from './dynamicBlock';
@@ -108,13 +108,6 @@ function getComponent({
       currMass = massObjects;
     }
 
-    // получение постфикса для реализации доп функционала блока dateTime
-    let postfix;
-    if (curObj.type.startsWith('dateTime')) {
-      postfix = curObj.type.split('-')[1];
-      curObj.type = 'dateTime';
-    }
-
     if (curObj.type == 'table') {
       defData.childrenElements = curObj.childrens;
     } else if (curObj.childrens != undefined) {
@@ -138,13 +131,19 @@ function getComponent({
       case 'droplist':
         element = <Dropdown {...defData} />;
         break;
-      case 'dateTime':
-        // ПЕРЕДЕЛАТЬ
+      case 'dateTime-date':
         element = (
           <BirhdayView
             {...defData}
-            // тип пикера
-            type={postfix}
+            // заголовок при редактировании
+            labelEdit={curObj.labelEdit}
+          />
+        );
+        break;
+      case 'dateTime-time':
+        element = (
+          <TimePicker
+            {...defData}
             // заголовок при редактировании
             labelEdit={curObj.labelEdit}
           />
@@ -269,7 +268,7 @@ function getComponent({
         // ЗАГЛУШКА
         element = (
           <Text key={defData.key} style={{color: '#04021D', fontSize: 16}}>
-            ЗАГЛУШКА
+            ЧТО-ТО ПОШЛО НЕ ТАК, ОБРАТИТЕСЬ К РАЗРАБОТЧИКУ
           </Text>
         );
         break;

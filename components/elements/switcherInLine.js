@@ -1,7 +1,7 @@
 import React from 'react';
 import {Text, View, Switch} from 'react-native';
 
-export default function rowSwitcher({label, currentValue, onCallBack}) {
+export default function RowSwitcher({label, currentValue, onCallBack}) {
   // получает:
   // - текущее значение свича -- currentValue: Bool
   // - заголовок -- label: String

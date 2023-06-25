@@ -3,14 +3,14 @@ import {Text, View, TextInput} from 'react-native';
 import {DivDefaultCol} from '../elements/divDefault';
 
 export default function Textarea({value, editing, label, onChange, requared}) {
-  // получает:
-  // - режим редактирования или просмотра -- editing: Bool
-  // - значение поля ввода -- value: String
-  // - звездочка в поле -- requared: Bool
-  // - заголовок -- label: String
+  // props:
+  // - editing: Bool -- режим редактирования или просмотра
+  // - value: String -- значение поля ввода
+  // - requared: Bool -- звездочка в поле
+  // - label: String -- заголовок
   // --
-  // обратный вызов:
-  // - изменение значения поля -- onChange(val: string)
+  // props-functions:
+  // - onChange(val: string) -- изменение значения поля
 
   const [currentValue, setVal] = useState(value || '');
 
