@@ -1,6 +1,5 @@
 import HeaderTitle from '../components/elements/headerTitle';
-import {TouchableOpacity, BackHandler} from 'react-native';
-import {HeaderBackButton} from '@react-navigation/elements';
+import {TouchableOpacity} from 'react-native';
 
 export default function setHeaderNavigation({
   mainTitle,

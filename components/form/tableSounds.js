@@ -319,7 +319,6 @@ export default class TableDefault extends Component {
       for (let [item, index] of nextProps.value.entries()) {
         let curItem = this.props.value;
         if (item.length != curItem[index].length || flagChange) {
-          console.log('gg');
           flagChange = true;
           break;
         }
@@ -332,7 +331,7 @@ export default class TableDefault extends Component {
 
       var rowsKeys = Object.keys(this.state.mainCol.values);
       // заполняем значения в виде Object <Array> (изначально это Array <Array>)
-      for (let arr of nextProps.value) {
+      for (let arr of nextProps.value || []) {
         // преобразовываем числа к строке
         arr = arr.map(String);
         // ищем ключ, который является значением основной колонки

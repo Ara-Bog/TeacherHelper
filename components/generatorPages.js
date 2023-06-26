@@ -320,6 +320,7 @@ export default class SubTab extends Component {
         // добавление функции в состояние для добавления новых блоков в страницу
         addPlus: func => {
           this.state.addPlus = func;
+          this.forceUpdate();
         },
         // родительская навигация
         navigation: this.props.navigation,
