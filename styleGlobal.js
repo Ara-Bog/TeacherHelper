@@ -182,7 +182,6 @@ export default StyleSheet.create({
 
   formDataTime: {
     display: 'flex',
-    height: '100%',
     justifyContent: 'center',
     padding: 0,
     margin: 0,
@@ -425,7 +424,6 @@ export default StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     gap: 5,
-    height: 50,
   },
 
   // fontWeight: 400, - не поддерживается

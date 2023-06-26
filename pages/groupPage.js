@@ -409,7 +409,7 @@ export default class GroupPage extends Component {
   render() {
     // КОСТЫЛЬ МБ ПОМЕНЯТЬ (уменьшает нагрузку рендер страниц)
     if (this.state.loading) {
-      return <></>;
+      return;
     }
     return (
       <>

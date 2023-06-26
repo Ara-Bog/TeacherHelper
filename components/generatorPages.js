@@ -115,7 +115,6 @@ function getComponent({
         data: curObj.childrens,
         indexParent: index,
         currentVals: currentVals,
-        addPlus: addPlus,
         navigation: navigation,
         showBlocks: showBlocks[key].childrens,
         nasting: true,
@@ -339,10 +338,9 @@ export default class SubTab extends Component {
 
   // возврат значения по ключу
   checkValues(itemKey) {
-    val = isNaN(Number(itemKey))
+    return isNaN(Number(itemKey))
       ? this.props.currentData[itemKey]
       : this.props.currentData.symptoms[itemKey];
-    return val;
   }
 
   render() {
@@ -418,7 +416,6 @@ export default class SubTab extends Component {
 
             // есть заполненные блок, значит нужен разделитель
             showSeparate = true;
-
             // возвращаем элемент с текущими данными
             return React.cloneElement(item.element, {
               editing: this.props.editing,

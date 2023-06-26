@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Text, View, ScrollView, Alert, TouchableOpacity} from 'react-native';
+import {View} from 'react-native';
 import Dropdown from '../components/form/dropdown';
 import {setUserSetting} from '../actions/userSettings';
 import RowSwitcher from '../components/elements/switcherInLine';
@@ -81,6 +81,7 @@ export default class TimetableWrap extends Component {
         LEFT JOIN Diagnosis AS dg ON df.id_diagnos = dg.id
         LEFT JOIN Categories AS ct ON df.id_category = ct.id
         LEFT JOIN Templates AS tp ON tp.id = df.id_template
+        ORDER BY df.LeftTop
         `,
         [],
         (_, {rows}) => {
@@ -89,6 +90,7 @@ export default class TimetableWrap extends Component {
           this.setState({
             defaultData: [...data],
             loading: false,
+            dataFiltered: [...data],
           });
           // заполняем количество записей на каждый день
           this.updateCounter(data);
@@ -155,6 +157,7 @@ export default class TimetableWrap extends Component {
     if (this.state.loading) {
       return;
     }
+    console.log('test', this.state.defaultData);
     return (
       <View style={Styles.container}>
         <View style={{gap: 15, marginBottom: 30}}>

@@ -97,11 +97,22 @@ export default function DropdownLabel(props) {
           {mainContent}
         </View>
       ) : null}
-      {show || (!props.editing && props.childrenElements) ? (
+      {/* {show || (!props.editing && props.childrenElements) ? (
         <View style={[{gap: 25, marginTop: props.editing ? 25 : 12}]}>
           {subContent}
         </View>
-      ) : null}
+      ) : null} */}
+      <View
+        style={{
+          gap: 25,
+          marginTop: props.editing ? 25 : 12,
+          display:
+            show || (!props.editing && props.childrenElements)
+              ? 'flex'
+              : 'none',
+        }}>
+        {subContent}
+      </View>
     </View>
   );
 }

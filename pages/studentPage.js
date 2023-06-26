@@ -513,13 +513,13 @@ export default class StudentPage extends Component {
 
     if (this.state.options.type != 'view') {
       dataStudent = {
-        surname: data.surname || null,
-        name: data.name || null,
+        surname: data.surname,
+        name: data.name,
         midname: data.midname || null,
         group_org: data.group_org || null,
         date_bd: data.date_bd || null,
-        id_diagnos: data.diagnos || null,
-        id_category: data.category || null,
+        id_diagnos: data.diagnos,
+        id_category: data.category,
         note: data.note || null,
         id_template: this.state.options.template.id,
       };
@@ -543,13 +543,13 @@ export default class StudentPage extends Component {
           WHERE id = ?
           `,
           [
-            data.surname || null,
-            data.name || null,
+            data.surname,
+            data.name,
             data.midname || null,
             data.group_org || null,
             data.date_bd || null,
-            data.diagnos || null,
-            data.category || null,
+            data.diagnos,
+            data.category,
             data.note || null,
             this.state.options.id,
           ],
@@ -644,7 +644,7 @@ export default class StudentPage extends Component {
   render() {
     // КОСТЫЛЬ МБ ПОМЕНЯТЬ (уменьшает нагрузку рендер страниц)
     if (this.state.loading) {
-      return <></>;
+      return;
     }
     return (
       <>

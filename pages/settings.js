@@ -298,8 +298,15 @@ export default class Settings extends Component {
   // test() {
   //   db.transaction(tx => {
   //     tx.executeSql(
-  //       `
-  //       SELECT * FROM Timetable
+  //       `SELECT st.id as ID, ct.name as LeftBot, ct.id as LeftBot_id,
+  //               dg.name as RightBot, dg.id as RightBot_id,
+  //               st.surname || ' ' || st.name || ' ' || COALESCE(st.midname, '') as LeftTop,
+  //               tp.name as RightTop, tp.id as RightTop_id,
+  //               tp.name as template, tp.id as id_template
+  //       FROM Students as st
+  //       LEFT JOIN Templates as tp ON st.id_template = tp.id
+  //       LEFT JOIN Diagnosis as dg ON st.id_diagnos = dg.id
+  //       LEFT JOIN Categories as ct ON st.id_category = ct.id
   //       `,
   //       [],
   //       (_, {rows}) => console.log('TEST', rows.raw()),

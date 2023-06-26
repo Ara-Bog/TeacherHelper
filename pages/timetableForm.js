@@ -150,10 +150,10 @@ export default class TimetableForm extends Component {
       // списки учеников и групп
       tx.executeSql(
         `
-        SELECT st.id, st.name, ct.name AS category, dg.name AS diagnos
+        SELECT st.id, st.surname || ' ' || st.name AS name, ct.name AS category, dg.name AS diagnos
         FROM Students AS st
         LEFT JOIN Diagnosis AS dg ON dg.id = st.id_diagnos
-        LEFT JOIN Categories AS ct ON ct.id = st.id_diagnos
+        LEFT JOIN Categories AS ct ON ct.id = st.id_category
         WHERE st.id_template = ?
         `,
         [this.state.options.template.id],
@@ -231,7 +231,7 @@ export default class TimetableForm extends Component {
     let flagError = false;
 
     Object.keys(this.state.valuesStorage).forEach(key => {
-      if (key !== 'note') {
+      if (!['note', 'category', 'diagnos'].includes(key)) {
         if (!this.state.valuesStorage[key]) {
           flagError = true;
         }
