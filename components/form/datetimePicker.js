@@ -122,9 +122,9 @@ export function BirhdayView({
 
   const calcAge = val => {
     if (val) {
-      let days = new Date().getTime() - new Date(val); // считаем разницу в милисекундах
-      let calcData = days / (24 * 3600 * 365.25 * 1000); // делим на милисекунды в год
-      let age = Math.round(calcData);
+      let miliseconds = new Date().getTime() - new Date(val); // считаем разницу в милисекундах
+      let calcData = miliseconds / (24 * 3600 * 365.25 * 1000); // делим на милисекунды в год
+      let age = Math.trunc(calcData);
       let month = Math.round(12 * (calcData - age));
       return `${age} лет${month ? ` и ${month} месяцев` : ''}`;
     }

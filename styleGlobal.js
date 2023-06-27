@@ -79,6 +79,7 @@ export default StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
+    gap: 10,
   },
 
   cardDelaultRowTime: {
@@ -854,6 +855,7 @@ export default StyleSheet.create({
     fontWeight: 400,
     lineHeight: 21,
     color: COLORS.darkBlue,
+    flexShrink: 1,
   },
 
   checkboxTextSub: {
@@ -1123,5 +1125,11 @@ export default StyleSheet.create({
     lineHeight: 14,
     fontWeight: 400,
     color: '#04021D',
+  },
+
+  seacrhCross: {
+    position: 'absolute',
+    right: 20,
+    padding: 5,
   },
 });

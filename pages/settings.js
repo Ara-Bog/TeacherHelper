@@ -495,8 +495,10 @@ export default class Settings extends Component {
               currentValues={userSettings.templates}
               sqlText={`SELECT id, name 
                 FROM Templates 
-                WHERE id NOT IN (${this.state.temporaryTemplates.join(',')})`}
-              sqlArgs={[]}
+                WHERE id NOT IN (${'?,'
+                  .repeat(this.state.temporaryTemplates.length)
+                  .slice(0, -1)})`}
+              sqlArgs={this.state.temporaryTemplates.map(item => item.id)}
               labelCurrent="Выбранные шаблоны"
               labelPossible="Доступные шаблоны"
               onChange={data => {

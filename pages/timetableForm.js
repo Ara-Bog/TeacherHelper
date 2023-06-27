@@ -136,7 +136,7 @@ export default class TimetableForm extends Component {
             WHERE tt.id = ?
           ) AS df
           LEFT JOIN Diagnosis AS dg ON dg.id = df.id_diagnos
-          LEFT JOIN Categories AS ct ON ct.id = df.id_diagnos
+          LEFT JOIN Categories AS ct ON ct.id = df.id_category
           `,
           [this.state.options.id],
           (_, {rows}) => {
@@ -443,6 +443,7 @@ export default class TimetableForm extends Component {
             visible={this.state.menuShow}
             callClose={() => this.setState({menuShow: false})}
             callCopy={() => {
+              this.props.navigation.pop();
               this.props.navigation.push('Timetable', {
                 type: 'copy',
                 id: this.state.options.id,

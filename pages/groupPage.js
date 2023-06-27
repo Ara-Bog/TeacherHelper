@@ -453,6 +453,7 @@ export default class GroupPage extends Component {
           visible={this.state.menuShow}
           callClose={() => this.setState({menuShow: false})}
           callCopy={() => {
+            this.props.navigation.pop();
             this.props.navigation.push('Group', {
               type: 'copy',
               id: this.state.options.id,

@@ -26,7 +26,9 @@ export default function defaultCard({
     <>
       <View style={Styles.cardDelaultRowLine}></View>
       <View style={Styles.cardDelaultRow}>
-        <Text style={Styles.cardDelaultRowText}>{data.LeftBot}</Text>
+        <Text style={[Styles.cardDelaultRowText, {flexShrink: 1}]}>
+          {data.LeftBot}
+        </Text>
         <Text style={Styles.cardDelaultRowText}>{data.RightBot}</Text>
       </View>
     </>
@@ -43,7 +45,9 @@ export default function defaultCard({
             <Text style={Styles.cardDelaultRowTitle}>{data.LeftTop}</Text>
           </View>
         ) : (
-          <Text style={Styles.cardDelaultRowTitle}>{data.LeftTop}</Text>
+          <Text style={[Styles.cardDelaultRowTitle, {flexShrink: 1}]}>
+            {data.LeftTop}
+          </Text>
         )}
 
         {!bigSize && isTimetable ? (

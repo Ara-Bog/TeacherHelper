@@ -42,7 +42,6 @@ export default class TimetableWrap extends Component {
       if (resetFilters) {
         // сбрасываем фильтры и открытые вкладки
         this.setState({
-          dataFiltered: [...this.state.defaultData],
           loading: true,
           selectDay: 'all',
         });
@@ -95,7 +94,7 @@ export default class TimetableWrap extends Component {
           // заполняем количество записей на каждый день
           this.updateCounter(data);
           // стартуем фильтрацию
-          this.setFilters(this.state.selectDay);
+          this.setFilter(this.state.selectDay);
         },
         err => console.log('error timetable get data', err),
       );
@@ -157,7 +156,6 @@ export default class TimetableWrap extends Component {
     if (this.state.loading) {
       return;
     }
-    console.log('test', this.state.defaultData);
     return (
       <View style={Styles.container}>
         <View style={{gap: 15, marginBottom: 30}}>

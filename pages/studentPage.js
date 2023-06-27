@@ -689,6 +689,7 @@ export default class StudentPage extends Component {
           visible={this.state.menuShow}
           callClose={() => this.setState({menuShow: false})}
           callCopy={() => {
+            this.props.navigation.pop();
             this.props.navigation.push('Student', {
               type: 'copy',
               id: this.state.options.id,
