@@ -1,10 +1,15 @@
 import React, {useState, useRef, useEffect} from 'react';
 import {Text, View} from 'react-native';
 import {DivDefaultRow} from '../elements/divDefault';
-import {Dropdown} from 'react-native-element-dropdown';
-import {itemRender, defaultPropsDroplist} from '../elements/dropdownItems';
+import {MultiSelect} from 'react-native-element-dropdown';
+import {
+  itemRender,
+  RenderHeaderList,
+  defaultPropsDroplist,
+  itemRenderIsolated,
+} from '../elements/dropdownItems';
 
-export default function DropdownView({
+export default function MultiDropdownView({
   value,
   data,
   editing,
@@ -30,13 +35,13 @@ export default function DropdownView({
   // для изменения состояний компонента  -- onConfirm(id: int, afterConfirm: Function)
 
   const findName = () => {
-    if (value != undefined) {
-      return data.find(item => item.id == value)?.name;
+    if (value[0] != undefined) {
+      return data.find(item => item.id == value[0])?.name;
     }
     return null;
   };
 
-  const [currentValue, setVal] = useState(value);
+  const [currentValue, setVal] = useState(value || []);
   const [items, setItems] = useState(data);
   const [name, setName] = useState(findName());
 
@@ -56,15 +61,26 @@ export default function DropdownView({
   // ссылка на список, чтобы закрывать его
   const drop = useRef();
 
+  const onSelectAll = isSelectAll => {
+    const selectItem = [];
+    if (isSelectAll) {
+      items.map(item => {
+        selectItem.push(item.id);
+      });
+    }
+    setVal(selectItem);
+    onChange(selectItem);
+  };
+
   const editingView = (
-    <View style={Styles.divDefault__edit}>
+    <View style={[Styles.divDefault__edit, {gap: 0}]}>
       {label ? (
-        <Text style={Styles.divDefaultLabel__edit}>
+        <Text style={[Styles.divDefaultLabel__edit, {marginBottom: 10}]}>
           {label}
           {requared ? ' *' : null}
         </Text>
       ) : null}
-      <Dropdown
+      <MultiSelect
         {...defaultPropsDroplist}
         ref={drop}
         placeholder={isDisabled ? 'Список пуст' : placeholder}
@@ -74,11 +90,9 @@ export default function DropdownView({
         confirmSelectItem={onConfirm instanceof Function}
         onChange={item => {
           // возвращаем колбэк
-          onChange(item.id);
+          onChange(item);
           // устанавливаем новое значение для списка
-          setVal(item.id);
-          // устанавливаем имя для отображения
-          setName(item.name);
+          setVal(item);
         }}
         onConfirmSelectItem={item => {
           // вызываем функцию подтверждения
@@ -87,17 +101,23 @@ export default function DropdownView({
             if (change) {
               // устанавливаем значение
               setVal(item.id);
-              // устанавливаем имя
-              setName(item.name);
               // вызов колбэка не нужен, т.к. он обрабатывается в подтверждении
             }
-            // закрываем список
-            drop.current.close();
           });
         }}
         data={items}
         // кастомный элемент списка
         renderItem={itemRender}
+        flatListProps={{
+          ListHeaderComponent: (
+            <RenderHeaderList
+              onSelectAll={onSelectAll}
+              curLength={currentValue.length}
+              itemsLength={items.length}
+            />
+          ),
+        }}
+        renderSelectedItem={itemRenderIsolated}
       />
     </View>
   );

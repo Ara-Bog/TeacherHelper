@@ -15,13 +15,23 @@ export default class TimetableWrap extends Component {
       selectDay: 'all',
       itemsDays: [
         {name: 'Все дни', id: 'all', defaultName: 'Все дни'},
-        {name: 'Понедельник', id: 'mon', defaultName: 'Понедельник'},
-        {name: 'Вторник', id: 'tue', defaultName: 'Вторник'},
-        {name: 'Среда', id: 'wen', defaultName: 'Среда'},
-        {name: 'Четверг', id: 'thu', defaultName: 'Четверг'},
-        {name: 'Пятница', id: 'fri', defaultName: 'Пятница'},
-        {name: 'Суббота', id: 'sat', defaultName: 'Суббота'},
-        {name: 'Воскресенье', id: 'sun', defaultName: 'Воскресенье'},
+        {
+          name: 'Понедельник',
+          id: 'mon',
+          defaultName: 'Понедельник',
+          orderBy: 1,
+        },
+        {name: 'Вторник', id: 'tue', defaultName: 'Вторник', orderBy: 2},
+        {name: 'Среда', id: 'wen', defaultName: 'Среда', orderBy: 3},
+        {name: 'Четверг', id: 'thu', defaultName: 'Четверг', orderBy: 4},
+        {name: 'Пятница', id: 'fri', defaultName: 'Пятница', orderBy: 5},
+        {name: 'Суббота', id: 'sat', defaultName: 'Суббота', orderBy: 6},
+        {
+          name: 'Воскресенье',
+          id: 'sun',
+          defaultName: 'Воскресенье',
+          orderBy: 7,
+        },
       ],
       // флаг больших карточек
       bigSizeCards: userSettings.bigCardTimetable,
@@ -58,19 +68,19 @@ export default class TimetableWrap extends Component {
       tx.executeSql(
         `
         SELECT df.ID, df.date, df.type_client, df.id_client, 
-            df.LeftBot, df.LeftTop,
+            df.LeftBot, df.time_start || " - " || df.time_end AS LeftTop,
             ct.id as RightTop_id, ct.name AS RightTop, 
             dg.id as RightBot_id, dg.name AS RightBot,
             tp.id as id_template, tp.name as template
         FROM (
-          SELECT tt.id as ID, tt.time AS LeftTop, tt.date, 
+          SELECT tt.id as ID, tt.time_start, tt.time_end, tt.date, 
             tt.type_client, tt.id_client, st.name || ' ' || st.surname AS LeftBot, 
             st.id_category, st.id_diagnos, st.id_template
           FROM Timetable AS tt
           LEFT JOIN Students AS st ON st.id = tt.id_client
           WHERE tt.type_client = "s"
           UNION
-          SELECT tt.id AS id_note, tt.time AS LeftTop, tt.date, 
+          SELECT tt.id AS id_note, tt.time_start, tt.time_end, tt.date, 
             tt.type_client, tt.id_client AS id, gp.name AS LeftBot, 
             gp.id_category, gp.id_diagnos, gp.id_template
           FROM Timetable AS tt
@@ -80,19 +90,19 @@ export default class TimetableWrap extends Component {
         LEFT JOIN Diagnosis AS dg ON df.id_diagnos = dg.id
         LEFT JOIN Categories AS ct ON df.id_category = ct.id
         LEFT JOIN Templates AS tp ON tp.id = df.id_template
-        ORDER BY df.LeftTop
+        ORDER BY LeftTop
         `,
         [],
         (_, {rows}) => {
           let data = rows.raw();
+          // заполняем количество записей на каждый день
+          this.updateCounter(data);
           // заполняем данные
           this.setState({
             defaultData: [...data],
             loading: false,
             dataFiltered: [...data],
           });
-          // заполняем количество записей на каждый день
-          this.updateCounter(data);
           // стартуем фильтрацию
           this.setFilter(this.state.selectDay);
         },
@@ -103,16 +113,15 @@ export default class TimetableWrap extends Component {
 
   setFilter(day) {
     this.state.selectDay = day;
+    let newData;
 
     if (day === 'all') {
-      this.setState({dataFiltered: [...this.state.defaultData]});
+      newData = [...this.state.defaultData];
     } else {
-      this.setState({
-        dataFiltered: [
-          ...this.state.defaultData.filter(item => item.date === day),
-        ],
-      });
+      newData = [...this.state.defaultData.filter(item => item.date === day)];
     }
+    this.setState({dataFiltered: newData});
+    this.updateCounter(newData);
   }
 
   // обновление счетчиков в dropdown
@@ -131,9 +140,12 @@ export default class TimetableWrap extends Component {
       counter.all += 1;
       counter[item.date] += 1;
     });
-    this.state.itemsDays.forEach(item => {
+    let newData = this.state.itemsDays.map(item => {
       item.name = item.defaultName + ` (${counter[item.id]})`;
+      return item;
     });
+
+    this.setState({itemsDays: newData});
   }
 
   // удаление записей
@@ -145,8 +157,6 @@ export default class TimetableWrap extends Component {
     this.state.defaultData = this.state.defaultData.filter(item => {
       return !currentList.includes(item.ID);
     });
-
-    this.updateCounter(this.state.defaultData);
 
     // фильтруем повторно, т.к. данные изменились
     this.setFilter(this.state.selectDay);
@@ -183,6 +193,8 @@ export default class TimetableWrap extends Component {
           bigSizeCards={this.state.bigSizeCards}
           typeData={'Timetable'}
           navigation={this.props.navigation}
+          groupLabels={this.state.itemsDays}
+          isGroup={this.state.selectDay === 'all' ? 'date' : 'without'}
         />
       </View>
     );

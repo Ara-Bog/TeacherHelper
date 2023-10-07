@@ -1,9 +1,10 @@
 import React, {Component} from 'react';
-import {View, Alert, BackHandler, Text} from 'react-native';
+import {View, Alert, BackHandler, Text, TouchableOpacity} from 'react-native';
 import Styles from '../styleGlobal.js';
 
 import {TimePicker} from '../components/form/datetimePicker';
 import Dropdown from '../components/form/dropdown';
+import MultiDropdown from '../components/form/multiDropdown.js';
 import Textarea from '../components/form/textarea.js';
 import setHeaderNavigation from '../actions/changeHeader.js';
 import {ScrollView} from 'react-native';
@@ -24,7 +25,6 @@ export default class TimetableForm extends Component {
     this.state = {
       options: this.props.route.params,
       itemsDays: [
-        {name: 'Каждый день', id: 'all'},
         {name: 'Понедельник', id: 'mon'},
         {name: 'Вторник', id: 'tue'},
         {name: 'Среда', id: 'wen'},
@@ -40,7 +40,13 @@ export default class TimetableForm extends Component {
       listStudents: [],
       listGroups: [],
       clintsList: [],
-      valuesStorage: {},
+      valuesStorage: {
+        date: [],
+        time_start: null,
+        time_end: null,
+        type_client: null,
+        id_client: null,
+      },
       currentData: {},
       editing: false,
       loading: true,
@@ -116,7 +122,7 @@ export default class TimetableForm extends Component {
       if (currentType !== 'add') {
         tx.executeSql(
           `
-          SELECT df.id, df.time, df.date, df.id_client, 
+          SELECT df.id, df.time_start, df.time_end, df.date, df.id_client, 
                 df.type_client, dg.name AS diagnos, ct.name AS category
           FROM (
             SELECT tt.*, 
@@ -141,8 +147,12 @@ export default class TimetableForm extends Component {
           [this.state.options.id],
           (_, {rows}) => {
             let data = JSON.stringify(rows.raw()[0]);
+
             this.state.valuesStorage = JSON.parse(data);
+            this.state.valuesStorage.date = [this.state.valuesStorage.date];
+
             this.state.currentData = JSON.parse(data);
+            this.state.currentData.date = [this.state.currentData.date];
           },
           err => console.log('error запись расписания', err),
         );
@@ -229,10 +239,12 @@ export default class TimetableForm extends Component {
   confirmEdit() {
     // флаг ошибки проверки
     let flagError = false;
-
     Object.keys(this.state.valuesStorage).forEach(key => {
       if (!['note', 'category', 'diagnos'].includes(key)) {
-        if (!this.state.valuesStorage[key]) {
+        if (
+          !this.state.valuesStorage[key] ||
+          this.state.valuesStorage[key].length === 0
+        ) {
           flagError = true;
         }
       }
@@ -249,86 +261,166 @@ export default class TimetableForm extends Component {
       return;
     }
 
+    // проверка коректности времени
+    if (
+      this.state.valuesStorage.time_start >= this.state.valuesStorage.time_end
+    ) {
+      Alert.alert(
+        'Ошибка ввода',
+        `Время окончания должно быть больше времени начала занятия`,
+        [{text: 'Ок', style: 'destructive'}],
+        {cancelable: true},
+      );
+      return;
+    }
+
     this.updateBase();
+  }
+
+  increaseTime(time, addMinutes) {
+    let [hours, minutes] = time.split(':');
+    const curDate = new Date();
+    curDate.setHours(hours);
+    curDate.setMinutes(parseInt(minutes) + addMinutes);
+
+    return curDate.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  }
+
+  // проверка на отсутствие записей с пересекающимся временем
+  async baseTimeCheck() {
+    let badDays = [];
+    let newStart = this.increaseTime(this.state.valuesStorage.time_start, 1);
+    let newEnd = this.increaseTime(this.state.valuesStorage.time_end, -1);
+
+    await db.transaction(tx => {
+      this.state.valuesStorage.date.forEach(day => {
+        tx.executeSql(
+          `SELECT * 
+          FROM Timetable 
+          WHERE 
+            date = ?
+            AND (
+                (? BETWEEN time_start AND time_end) 
+                OR (? BETWEEN time_start AND time_end) 
+                OR (
+                    (time_start BETWEEN ? AND ?)
+                    AND (time_end BETWEEN ? AND ?)
+                    )
+                )
+            `,
+          [day, newStart, newEnd, newStart, newEnd, newStart, newEnd],
+          (_, {rows}) => (rows.length ? badDays.push(day) : null),
+        );
+      });
+    });
+
+    return badDays;
   }
 
   // обновление данных записи
   async updateBase() {
     let data = this.state.valuesStorage;
 
-    if (this.state.valuesStorage.date === 'all') {
-      Alert.alert(
-        'Уведомление',
-        `Вы указали запись на каждый день.\n
-      Будет созданы 7 записей и вы автоматически будете перемещены на запись понедельника!`,
+    let badDays = await this.baseTimeCheck();
+
+    if (badDays.length) {
+      let listDays = this.state.itemsDays.filter(item =>
+        badDays.includes(item.id),
       );
-    }
-    if (data.date === 'all') {
-      data.date = 'mon';
-      this.allDaysInsert(data.date);
+
+      Alert.alert(
+        'Ошибка ввода!',
+        `В следующих днях имеются пересечения по времени занятия:\n${listDays
+          .map(item => item.name)
+          .join(', ')}`,
+      );
+      return;
     }
 
-    if (this.state.options.type != 'view') {
-      dataTimetable = {
-        time: data.time || null,
-        date: data.date || null,
-        id_client: data.id_client || null,
-        type_client: data.type_client || null,
-        note: data.note || null,
-      };
-      newId = await insertInto([dataTimetable], 'Timetable', true);
-      this.state.options.id = newId;
-      this.state.options.type = 'view';
-    } else {
-      await db.transaction(tx => {
-        tx.executeSql(
-          `
-          UPDATE Timetable
-          SET time = ?,
-              date = ?,
-              id_client = ?,
-              type_client = ?,
-              note = ?
-          WHERE id = ?
-          `,
+    if (data.date.length > 1) {
+      await new Promise((resolve, reject) => {
+        Alert.alert(
+          'Уведомление',
+          `Вы указали запись на несколько дней.\n
+Будет создано ${this.state.valuesStorage.date.length} записей и вы автоматически будете перемещены на струницу расписания!`,
           [
-            data.time || null,
-            data.date || null,
-            data.id_client || null,
-            data.type_client || null,
-            data.note || null,
-            this.state.options.id,
+            {
+              text: 'Ок',
+              onPress: () => resolve(),
+            },
           ],
-          null,
-          err => (
-            Alert.alert('Произошла ошибка!'),
-            console.log('error studentPage updateBase', err)
-          ),
         );
       });
+      await this.allDaysInsert();
+      Alert.alert('Данные успешно обновлены!');
+      this.props.navigation.goBack();
+    } else {
+      if (this.state.options.type != 'view') {
+        dataTimetable = {
+          time_start: data.time_start || null,
+          time_end: data.time_end || null,
+          date: data.date[0] || null,
+          id_client: data.id_client || null,
+          type_client: data.type_client || null,
+          note: data.note || null,
+        };
+        newId = await insertInto([dataTimetable], 'Timetable', true);
+        this.state.options.id = newId;
+        this.state.options.type = 'view';
+      } else {
+        await db.transaction(tx => {
+          tx.executeSql(
+            `
+            UPDATE Timetable
+            SET time_start = ?,
+                time_end = ?,
+                date = ?,
+                id_client = ?,
+                type_client = ?,
+                note = ?
+            WHERE id = ?
+            `,
+            [
+              data.time_start || null,
+              data.time_end || null,
+              data.date[0] || null,
+              data.id_client || null,
+              data.type_client || null,
+              data.note || null,
+              this.state.options.id,
+            ],
+            null,
+            err => (
+              Alert.alert('Произошла ошибка!'),
+              console.log('error studentPage updateBase', err)
+            ),
+          );
+        });
+      }
+      Alert.alert('Данные успешно обновлены!');
+
+      // проверка пройдена - обновляем текущие данные
+      this.setState({
+        currentData: JSON.parse(JSON.stringify(this.state.valuesStorage)),
+      });
+
+      // возвращаем заголовки
+      this.setNavView();
+      this.setState({editing: false});
     }
-
-    Alert.alert('Данные успешно обновленны!');
-
-    // проверка пройдена - обновляем текущие данные
-    this.setState({
-      currentData: JSON.parse(JSON.stringify(this.state.valuesStorage)),
-    });
-
-    // возвращаем заголовки
-    this.setNavView();
-    this.setState({editing: false});
   }
 
-  async allDaysInsert(withoutDay) {
+  async allDaysInsert() {
     const data = this.state.valuesStorage;
-    for (let item of this.state.itemsDays) {
-      if (['all', withoutDay].includes(item.id)) {
-        continue;
-      }
+    for (let item of data.date) {
       dataTimetable = {
-        time: data.time || null,
-        date: item.id || null,
+        time_start: data.time_start || null,
+        time_end: data.time_end || null,
+        date: item || null,
         id_client: data.id_client || null,
         type_client: data.type_client || null,
         note: data.note || null,
@@ -350,6 +442,8 @@ export default class TimetableForm extends Component {
       this.state.valuesStorage.type_client === 'g'
         ? this.state.listGroups
         : this.state.listStudents;
+
+    let isDisabled = currListCliens.length === 0;
     return (
       <>
         <View style={Styles.seqLineHeader}></View>
@@ -360,22 +454,43 @@ export default class TimetableForm extends Component {
           }}>
           <ScrollView contentContainerStyle={{gap: 25}}>
             {/* День недели */}
-            <Dropdown
-              data={this.state.itemsDays}
-              value={this.state.valuesStorage.date}
-              editing={this.state.editing}
-              label={'День недели'}
-              requared={true}
-              onChange={val => this.changeValue('date', val)}
-            />
-            {/* Время */}
+            {this.state.options.type === 'view' ? (
+              <Dropdown
+                data={this.state.itemsDays}
+                value={this.state.valuesStorage.date[0]}
+                editing={this.state.editing}
+                label={'День недели'}
+                requared={true}
+                onChange={val => this.changeValue('date', [val])}
+              />
+            ) : (
+              <MultiDropdown
+                data={this.state.itemsDays}
+                value={this.state.valuesStorage.date}
+                editing={this.state.editing}
+                label={'День недели'}
+                requared={true}
+                onChange={val => this.changeValue('date', val)}
+              />
+            )}
+
+            {/* Время начала */}
             <TimePicker
-              value={this.state.valuesStorage.time}
+              value={this.state.valuesStorage.time_start}
               editing={this.state.editing}
-              label={'Время'}
-              labelEdit={'Время'}
+              label={'Время начала'}
+              labelEdit={'Время начала'}
               requared={true}
-              onChange={val => this.changeValue('time', val)}
+              onChange={val => this.changeValue('time_start', val)}
+            />
+            {/* Время окончания */}
+            <TimePicker
+              value={this.state.valuesStorage.time_end}
+              editing={this.state.editing}
+              label={'Время окончания'}
+              labelEdit={'Время окончания'}
+              requared={true}
+              onChange={val => this.changeValue('time_end', val)}
             />
             {/* Тип занятия */}
             <Dropdown
@@ -404,6 +519,7 @@ export default class TimetableForm extends Component {
                 label={'С кем будет занятие'}
                 requared={true}
                 flagUpdate={this.state.flagTypeChange}
+                isDisabled={isDisabled}
                 onChange={val => {
                   let item = currListCliens.find(el => el.id == val);
                   this.setState({
