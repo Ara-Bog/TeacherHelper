@@ -231,6 +231,7 @@ export default StyleSheet.create({
     alignItems: 'center',
     marginVertical: 1.5,
     borderRadius: 10,
+    backgroundColor: '#fff',
   },
 
   dropDownBoxRowText: {
@@ -1131,5 +1132,30 @@ export default StyleSheet.create({
     position: 'absolute',
     right: 20,
     padding: 5,
+  },
+
+  flatListHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    marginBottom: 5,
+    paddingHorizontal: 25,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EBEBEB',
+  },
+
+  droplistIsolatedItem: {
+    gap: 5,
+    padding: 10,
+    backgroundColor: '#554AF01A',
+    flexDirection: 'row',
+    borderRadius: 15,
+    alignItems: 'center',
+  },
+
+  droplistIsolatedItemText: {
+    fontSize: 14,
+    fontWeight: 400,
+    color: '#554AF0',
   },
 });
