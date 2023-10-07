@@ -31,7 +31,7 @@ export default function Textarea({value, editing, label, onChange, requared}) {
           multiline={true}
           numberOfLines={5}
           value={currentValue}
-          placeholder={'Введиие текст'}
+          placeholder={'Введите текст'}
           onChangeText={val => {
             setVal(val);
             onChange(val);

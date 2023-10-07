@@ -126,7 +126,7 @@ export function BirhdayView({
       let calcData = miliseconds / (24 * 3600 * 365.25 * 1000); // делим на милисекунды в год
       let age = Math.trunc(calcData);
       let month = Math.round(12 * (calcData - age));
-      return `${age} лет${month ? ` и ${month} месяцев` : ''}`;
+      return `${age} л.${month ? ` ${month} мес.` : ''}`;
     }
     return null;
   };

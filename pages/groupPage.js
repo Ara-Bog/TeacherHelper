@@ -393,7 +393,7 @@ export default class GroupPage extends Component {
       'ListStudentsGroup',
     );
 
-    Alert.alert('Данные успешно обновленны!');
+    Alert.alert('Данные успешно обновлены!');
     // возвращаем заголовки
     this.setNavView();
     this.setState({editing: false});

@@ -234,7 +234,7 @@ export default class ListStudentsWrap extends Component {
               this.search(val);
             }}
           />
-          {userSettings.sizeCardAll.length == 2 ? (
+          {userSettings.sizeCardAll.length === 2 ? (
             <RowSwitcher
               label="Расширенные карточки"
               currentValue={this.state.bigSizeCards}

@@ -20,7 +20,6 @@ export default function CheckLabels({
   // --
   // обратный вызов:
   // - изменение значения поля -- onChange(val: string)
-  // console.log('test val', value);
 
   const [currentValues, setVal] = useState(value || []);
 
