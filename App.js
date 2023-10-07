@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {PermissionsAndroid, TouchableOpacity} from 'react-native';
+import {Alert, PermissionsAndroid} from 'react-native';
 import {
   NavigationContainer,
   getFocusedRouteNameFromRoute,
@@ -19,6 +19,8 @@ import ListGroups from './pages/listGroups';
 import LoadingAnimation from './pages/LoadingAnimation';
 import SettingsPage from './pages/settings';
 import FilterPage from './pages/filter';
+
+import {checkVersion} from './actions/controlVersion';
 
 // глобальные ссылки
 import './global.js';
@@ -42,20 +44,15 @@ import './global.js';
 // bigCardGroup - большие карточки групп
 // bigCardTimetable - большие карточки расписания
 // sizeCardAll - размер карточек по умолчанию
+// databaseV - текущая версия БД
 
 // нижние вкладки
 const Tab = createBottomTabNavigator();
 // навигация
 const Stack = createNativeStackNavigator();
 
-// для тестирования
-// onLayout={event => test_size(event, 'asd')}
-global.test_size = function find_dimesions(event, el = 'def') {
-  const {x, y, width, height} = event.nativeEvent.layout;
-  console.warn(el);
-  console.warn(width);
-  console.warn(height);
-};
+// на каких страницах скрывать меню
+const hideTabPage = ['Student', 'Timetable', 'Group', 'Filter'];
 
 export default function App() {
   // статус загрузки
@@ -71,9 +68,6 @@ export default function App() {
       console.warn(err);
     }
   };
-
-  // на каких страницах скрывать меню
-  const hideTabPage = ['Student', 'Timetable', 'Group', 'Filter'];
 
   // навигации для страницы расписания
   const TimetableNav = () => (
@@ -157,8 +151,12 @@ export default function App() {
       values => {
         db = values[0];
         userSettings = values[1];
-        SQLite.enablePromise(false);
-        setLoading(false);
+        checkVersion()
+          .then(() => {
+            SQLite.enablePromise(false);
+            setLoading(false);
+          })
+          .catch(err => console.log('ERR checkVersion', err));
       },
       err => console.log('main promise err - ', err),
     );

@@ -26,7 +26,13 @@ export async function importFromJson(uriMasterBase, saveData) {
   // по окончанию считывания - переопределяем newData
   await readingFile
     .then(res => (newData = JSON.parse(res)))
-    .catch(err => console.log('importFromJson readfile - ', err));
+    .catch(err => new Error('Ошибка в чтении файла.'));
+
+  if (newData.typeSchedule === undefined) {
+    throw new Error('Файл не является выгрузкой этой программы!');
+  }
+
+  checkFileVersion(newData);
 
   if (newData.typeSchedule != userSettings.typeSchedule) {
     userSettings.typeSchedule = newData.typeSchedule;
@@ -45,6 +51,8 @@ export async function importFromJson(uriMasterBase, saveData) {
     // текущие seq
     currentIds = await getIds();
   }
+
+  delete newData.databaseV;
 
   // обход всех таблиц с новых данных
   Object.keys(newData).forEach(tableName => {
@@ -89,13 +97,7 @@ export async function importFromJson(uriMasterBase, saveData) {
     ); // добавляем промис загрузки в бд, чтобы дождаться, пока все не загрузятся
   });
 
-  Promise.all(tablesOnLoad)
-    .then(() => {
-      return true;
-    })
-    .catch(() => {
-      return false;
-    });
+  return Promise.all(tablesOnLoad);
 }
 
 // получение последних id по всем таблицам в виде объекта
@@ -130,4 +132,36 @@ export async function clearData(tables = requiredColumns) {
     // очищаем инкременты для id, при добавлении новой строки в таблице снова создается запись по таблице
     tx.executeSql('DELETE FROM `sqlite_sequence`');
   });
+}
+
+function checkFileVersion(data) {
+  let flagCheck = true;
+  while (flagCheck) {
+    switch (data.databaseV) {
+      case undefined:
+      case null:
+        if (data.Timetable !== undefined) {
+          data.Timetable.forEach(item => {
+            item.time_start = item.time;
+            delete item.time;
+
+            let [hours, minutes] = item.time_start.split(':');
+            const curDate = new Date();
+            curDate.setHours(hours);
+            curDate.setMinutes(parseInt(minutes) - 1);
+
+            item.time_end = curDate.toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false,
+            });
+          });
+        }
+        data.databaseV = 1;
+        break;
+      default:
+        flagCheck = false;
+        break;
+    }
+  }
 }

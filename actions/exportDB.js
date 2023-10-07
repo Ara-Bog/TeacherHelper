@@ -17,7 +17,7 @@ const requiredColumns = [
 
 export async function exportToJson() {
   let currentTime = new Date().toISOString().slice(0, -5).replaceAll(':', '-');
-  let fileName = 'TH' + currentTime + '.json';
+  let fileName = ['TH', currentTime].join('_') + '.json';
   let pathDownload = RNFS.DownloadDirectoryPath + '/' + fileName;
   let sqlRequest;
   let contentDb = {typeSchedule: userSettings.typeSchedule};
@@ -29,9 +29,11 @@ export async function exportToJson() {
         sqlRequest,
         [],
         (_, {rows}) => (rows.length ? (contentDb[item] = rows.raw()) : null),
-        err => console.log('test error ', err),
+        err => console.log('ERROR exportToJson ', err),
       );
     });
   });
+  contentDb.databaseV = userSettings.databaseV;
+
   return [RNFS.writeFile(pathDownload, JSON.stringify(contentDb)), fileName];
 }

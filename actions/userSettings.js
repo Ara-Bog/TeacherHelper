@@ -12,6 +12,10 @@ async function defaultSettingUser() {
     ['bigCardGroup', 'true'],
     ['bigCardTimetable', 'true'],
     ['sizeCardAll', '["big"]'],
+    ['databaseV', '1'],
+    ['groupBy_Student', 'without'],
+    ['groupBy_Group', 'without'],
+    ['groupBy_Timetable', 'date'],
   ];
   try {
     await AsyncStorage.multiSet(data);
