@@ -8,6 +8,7 @@ export default function MenuActions({
   callCopy,
   callMove,
   callDelete,
+  callDeleteAll,
   callResetSelected,
   callChange,
   visible,
@@ -79,10 +80,23 @@ export default function MenuActions({
     </TouchableOpacity>
   );
 
+  // удаление всех
+  const deleteAllCards = (
+    <TouchableOpacity
+      key={5}
+      style={Styles.holdMenuButton}
+      onPress={() => actionClose(callDeleteAll)}>
+      <Icons.AntDesign name="delete" size={20} color="#DC5F5A" />
+      <Text style={{...Styles.holdMenuButtonText, color: '#DC5F5A'}}>
+        Удалить все карточки текущего списка
+      </Text>
+    </TouchableOpacity>
+  );
+
   // убрать выделения
   const removeSelection = (
     <TouchableOpacity
-      key={5}
+      key={6}
       style={Styles.holdMenuButton}
       onPress={() => actionClose(callResetSelected)}>
       <Icons.MaterialCommunityIcons name="cancel" size={20} color="#DC5F5A" />
@@ -95,7 +109,7 @@ export default function MenuActions({
   // переход в режим редактирования
   const changeMode = (
     <TouchableOpacity
-      key={6}
+      key={7}
       style={Styles.holdMenuButton}
       onPress={() => actionClose(callChange)}>
       <Icons.Feather name="edit" size={20} color="#554AF0" />
@@ -117,6 +131,7 @@ export default function MenuActions({
               callMove == undefined ? null : moveToCard,
             ]}
         {deleteCards}
+        {deleteAllCards}
       </View>
     </Modal>
   );

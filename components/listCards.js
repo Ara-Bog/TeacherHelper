@@ -1,11 +1,31 @@
 import React, {Component} from 'react';
-import {View, ScrollView, Alert} from 'react-native';
+import {View, ScrollView, Alert, Text} from 'react-native';
 import ButtonAdd from './elements/buttonAdd';
 import EmptyData from './elements/emptyDataList';
 import DefaultCard from './elements/defaultCard';
 import MenuActions from './menuActions';
 import SelectorTemplates from './selecterTemplate';
 import Modal from 'react-native-modal';
+
+function groupData(data, groupField, addedLabels) {
+  let groupDataList = Object.entries(
+    data.reduce((result, item) => {
+      (result[item[groupField]] = result[item[groupField]] || []).push(item);
+
+      return result;
+    }, {}),
+  );
+
+  if (addedLabels && groupDataList.length > 1) {
+    groupDataList = groupDataList.map(item => {
+      let el = addedLabels.find(labels => labels.id === item[0]);
+      return [el.defaultName, item[1], el.orderBy];
+    });
+    groupDataList.sort((a, b) => a[2] - b[2]);
+  }
+
+  return groupDataList;
+}
 
 export default class ListCards extends Component {
   // общий модуль списка для списка групп и учеников
@@ -32,6 +52,16 @@ export default class ListCards extends Component {
       // открытие модалки выбора шаблона
       selectTemplateShow: false,
     };
+
+    let groupField = this.props.isGroup
+      ? this.props.isGroup
+      : userSettings['groupBy_' + this.state.typeData];
+
+    this.state.dataList = groupData(
+      this.state.dataList,
+      groupField,
+      this.props.groupLabels,
+    );
   }
 
   componentDidMount() {
@@ -41,12 +71,21 @@ export default class ListCards extends Component {
     });
   }
 
-  // костыль. данные с базы приходят после рендера элемента
+  // костыль. данные с базы не приходят после рендера элемента
   // нужно обновить state на новые props
   shouldComponentUpdate(nextProps, nextState) {
     let curPropsData = this.props.data;
-    if (curPropsData != nextProps.data) {
+    if (JSON.stringify(curPropsData) !== JSON.stringify(nextProps.data)) {
       nextState.dataList = nextProps.data;
+
+      let groupField = nextProps.isGroup
+        ? nextProps.isGroup
+        : userSettings['groupBy_' + this.state.typeData];
+      nextState.dataList = groupData(
+        nextProps.data,
+        groupField,
+        nextProps.groupLabels,
+      );
     }
     return true;
   }
@@ -71,14 +110,12 @@ export default class ListCards extends Component {
     this.setState({holdIdCard: 0});
   }
 
-  // запрос на удаление с подтверждением, с последующим вызовом callback
-  deleteCard() {
+  // удаление выделенных карточек
+  deleteSelectCard() {
     // копируем текущий список
     const currentList = [...this.state.selected];
     // последний выбранный элемент
     const holdId = this.state.holdIdCard;
-    // контент Alert
-    let message;
 
     // при удалении сразу, без выделения, карточка не падает в селект
     // нужно добавить
@@ -86,13 +123,19 @@ export default class ListCards extends Component {
       currentList.push(holdId);
     }
 
+    this.deleteCard(currentList);
+  }
+
+  // запрос на удаление с подтверждением, с последующим вызовом callback
+  deleteCard(currentList) {
+    // контент Alert
+    let message;
+
     // определение контента для Alert
     if (currentList.length == 1) {
       // для единственного элемента
       // ищем по id его в списке данных
-      let currentItem = this.state.dataList.find(
-        obj => obj.ID === currentList[0],
-      );
+      let currentItem = this.props.data.find(obj => obj.ID === currentList[0]);
 
       message = `Вы действительно хотите удалить карточку ${currentItem.LeftTop} ?\nЭто также удалит связанные с ней записи в расписании.`;
     } else {
@@ -145,42 +188,60 @@ export default class ListCards extends Component {
 
   render() {
     let content;
+    let labelsFlag = this.state.dataList.length > 1 ? true : false;
+    const Card = item => (
+      <DefaultCard
+        key={item.ID}
+        data={item}
+        bigSize={this.props.bigSizeCards}
+        select={this.state.selected.includes(item.ID)}
+        isTimetable={this.state.typeData === 'Timetable'}
+        onCallPress={() => {
+          this.state.selected.length != 0
+            ? this.selectCard(item.ID)
+            : this.props.navigation.navigate(this.state.typeData, {
+                type: 'view',
+                id: item.ID,
+                template: {id: item.id_template, name: item.template},
+              });
+        }}
+        onCallLong={() => {
+          this.state.selected.length != 0
+            ? this.state.selected.includes(item.ID)
+              ? this.setState({onHold: true})
+              : this.selectCard(item.ID)
+            : this.setState({
+                onHold: true,
+                holdIdCard: item.ID,
+                holdCardTemplate: {
+                  id: item.id_tempalate,
+                  name: item.tempalate,
+                },
+              });
+        }}
+      />
+    );
     // когда нет контента - выводим пустоту
     if (this.state.dataList.length != 0) {
       content = (
-        <ScrollView contentContainerStyle={{gap: 15}}>
-          {this.state.dataList.map(item => (
-            <DefaultCard
-              key={item.ID}
-              data={item}
-              bigSize={this.props.bigSizeCards}
-              select={this.state.selected.includes(item.ID)}
-              isTimetable={this.state.typeData === 'Timetable'}
-              onCallPress={() => {
-                this.state.selected.length != 0
-                  ? this.selectCard(item.ID)
-                  : this.props.navigation.navigate(this.state.typeData, {
-                      type: 'view',
-                      id: item.ID,
-                      template: {id: item.id_template, name: item.template},
-                    });
-              }}
-              onCallLong={() => {
-                this.state.selected.length != 0
-                  ? this.state.selected.includes(item.ID)
-                    ? this.setState({onHold: true})
-                    : this.selectCard(item.ID)
-                  : this.setState({
-                      onHold: true,
-                      holdIdCard: item.ID,
-                      holdCardTemplate: {
-                        id: item.id_tempalate,
-                        name: item.tempalate,
-                      },
-                    });
-              }}
-            />
-          ))}
+        <ScrollView contentContainerStyle={{gap: this.state.isGroup ? 40 : 15}}>
+          {this.state.dataList.map((item, itemInd) => {
+            if (labelsFlag) {
+              return (
+                <View style={{gap: 20}} key={itemInd}>
+                  <Text
+                    style={{fontSize: 16, fontWeight: 500, color: '#04021D'}}>
+                    {`${item[0]} (${item[1].length})`}
+                  </Text>
+                  {item[1].map(subItem => Card(subItem))}
+                </View>
+              );
+            } else {
+              {
+                return item[1].map(subItem => Card(subItem));
+              }
+            }
+          })}
           {/* Пустое пространство */}
           <View style={Styles.crutch}></View>
         </ScrollView>
@@ -202,7 +263,10 @@ export default class ListCards extends Component {
               template: this.state.holdCardTemplate,
             })
           }
-          callDelete={() => this.deleteCard()}
+          callDelete={() => this.deleteSelectCard()}
+          callDeleteAll={() =>
+            this.deleteCard(this.props.data.map(item => item.ID))
+          } // удаление всех видимых карточек
           callResetSelected={() => this.setState({selected: []})}
           isSelected={this.state.selected.length != 0}
         />

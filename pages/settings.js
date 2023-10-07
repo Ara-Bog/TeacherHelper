@@ -37,6 +37,12 @@ export default class Settings extends Component {
         {name: 'Группы', id: 'groups'},
         {name: 'Настройки', id: 'settings'},
       ],
+      groupBy: [
+        {name: 'Без группировки', id: 'without'},
+        {name: 'Возрастная группа', id: 'LeftBot'},
+        {name: 'Шаблон', id: 'RightTop'},
+        {name: 'Заключение ЦПМПК', id: 'RightBot'},
+      ],
       temporaryTemplates: [...userSettings.templates],
       typesSchedule: [
         {name: 'Календарное', id: 'calendar'},
@@ -122,8 +128,10 @@ export default class Settings extends Component {
             Alert.alert('Данные успешно загружены!');
           })
           .catch(err => {
-            this.setState({loading: false});
-            Alert.alert('Произошла непредвиденная ошибка :(', err);
+            clearData().then(() => {
+              this.setState({loading: false});
+              Alert.alert('Произошла ошибка загрузки файла :(', err.message);
+            });
           });
       },
       () => {},
@@ -298,15 +306,7 @@ export default class Settings extends Component {
   // test() {
   //   db.transaction(tx => {
   //     tx.executeSql(
-  //       `SELECT st.id as ID, ct.name as LeftBot, ct.id as LeftBot_id,
-  //               dg.name as RightBot, dg.id as RightBot_id,
-  //               st.surname || ' ' || st.name || ' ' || COALESCE(st.midname, '') as LeftTop,
-  //               tp.name as RightTop, tp.id as RightTop_id,
-  //               tp.name as template, tp.id as id_template
-  //       FROM Students as st
-  //       LEFT JOIN Templates as tp ON st.id_template = tp.id
-  //       LEFT JOIN Diagnosis as dg ON st.id_diagnos = dg.id
-  //       LEFT JOIN Categories as ct ON st.id_category = ct.id
+  //       `SELECT * FROM Timetable GROUP BY date
   //       `,
   //       [],
   //       (_, {rows}) => console.log('TEST', rows.raw()),
@@ -322,7 +322,7 @@ export default class Settings extends Component {
           nestedScrollEnabled={true}
           contentContainerStyle={{gap: 25, flexGrow: 1}}>
           {/* DEV */}
-          {/* <TouchableOpacity onPress={() => this.test()}>
+          {/* <TouchableOpacity onPress={this.test}>
             <Text>HUI</Text>
           </TouchableOpacity> */}
           {/* баннер */}
@@ -349,6 +349,26 @@ export default class Settings extends Component {
             label={'Первый экран'}
             onChange={id => {
               this.saveSettings('firstScreen', id);
+            }}
+          />
+          {/* Группировка учеников */}
+          <Dropdown
+            data={this.state.groupBy}
+            value={userSettings.groupBy_Student}
+            editing={true}
+            label={'Группировка списка учеников'}
+            onChange={id => {
+              this.saveSettings('groupBy_Student', id);
+            }}
+          />
+          {/* Группировка групп */}
+          <Dropdown
+            data={this.state.groupBy}
+            value={userSettings.groupBy_Group}
+            editing={true}
+            label={'Группировка списка групп'}
+            onChange={id => {
+              this.saveSettings('groupBy_Group', id);
             }}
           />
           {/* вид расписания */}
