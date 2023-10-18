@@ -32,6 +32,7 @@ export default function Slider({onClose}) {
         paddingTop: 70,
         paddingBottom: 42,
         height: '100%',
+        backgroundColor: '#fff',
       }}>
       <View style={{alignItems: 'flex-end', marginRight: 20, marginBottom: 20}}>
         <TouchableOpacity onPress={onClose}>
