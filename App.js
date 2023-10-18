@@ -19,8 +19,10 @@ import ListGroups from './pages/listGroups';
 import LoadingAnimation from './pages/LoadingAnimation';
 import SettingsPage from './pages/settings';
 import FilterPage from './pages/filter';
+import Slider from './tutorial/Slider';
 
 import {checkVersion} from './actions/controlVersion';
+import {setUserSetting} from './actions/userSettings';
 
 // глобальные ссылки
 import './global.js';
@@ -52,11 +54,17 @@ const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 // на каких страницах скрывать меню
-const hideTabPage = ['Student', 'Timetable', 'Group', 'Filter'];
+const hideTabPage = ['Student', 'Timetable', 'Group', 'Filter', 'Tutorial'];
 
 export default function App() {
   // статус загрузки
   const [loading, setLoading] = useState(true);
+  const [opened, setOpen] = useState(null);
+
+  const closeSlider = () => {
+    setUserSetting('opened', true);
+    setOpen(true);
+  };
 
   // запрос разрешения на взаимодействие с файлами
   const requestStoragePermission = async () => {
@@ -155,12 +163,15 @@ export default function App() {
           .then(() => {
             SQLite.enablePromise(false);
             setLoading(false);
+            setOpen(userSettings.opened);
           })
           .catch(err => console.log('ERR checkVersion', err));
       },
       err => console.log('main promise err - ', err),
     );
     return <LoadingAnimation />;
+  } else if (!opened) {
+    return <Slider onClose={closeSlider} />;
   } else {
     return (
       <NavigationContainer>

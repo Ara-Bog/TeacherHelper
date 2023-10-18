@@ -16,6 +16,7 @@ import SelectedList from '../components/form/selectedInList';
 import RowSwitcher from '../components/elements/switcherInLine';
 import LoadModal from '../components/loadingModal';
 import Dropdown from '../components/form/dropdown';
+import Slider from '../tutorial/Slider';
 
 // внешние действия
 import {importFromJson, clearData} from '../actions/importDB';
@@ -50,6 +51,7 @@ export default class Settings extends Component {
       ],
       modalTemplates: false,
       loading: false,
+      modalTutorial: false,
     };
   }
 
@@ -312,6 +314,7 @@ export default class Settings extends Component {
   //       (_, {rows}) => console.log('TEST', rows.raw()),
   //     );
   //   });
+
   // }
 
   render() {
@@ -322,7 +325,8 @@ export default class Settings extends Component {
           nestedScrollEnabled={true}
           contentContainerStyle={{gap: 25, flexGrow: 1}}>
           {/* DEV */}
-          {/* <TouchableOpacity onPress={this.test}>
+          {/* <TouchableOpacity
+            onPress={test}>
             <Text>HUI</Text>
           </TouchableOpacity> */}
           {/* баннер */}
@@ -341,6 +345,14 @@ export default class Settings extends Component {
               resizeMode="contain"
             />
           </TouchableOpacity>
+          {/* Обучалка */}
+          <View style={Styles.divDefault__edit}>
+            <TouchableOpacity
+              style={Styles.buttonDefault}
+              onPress={() => this.setState({modalTutorial: true})}>
+              <Text style={Styles.buttonDefaultText}>Посмотреть обучение</Text>
+            </TouchableOpacity>
+          </View>
           {/* первый экран */}
           <Dropdown
             data={this.state.screens}
@@ -466,36 +478,21 @@ export default class Settings extends Component {
             <TouchableOpacity
               style={Styles.buttonDefault}
               onPress={() => this.exportDataBase()}>
-              <Icons.AntDesign
-                name="upload"
-                size={20}
-                color="#554AF0"
-                style={{marginRight: 15}}
-              />
+              <Icons.AntDesign name="upload" size={20} color="#554AF0" />
               <Text style={Styles.buttonDefaultText}>Выгрузить данные</Text>
             </TouchableOpacity>
             {/* импорт */}
             <TouchableOpacity
               style={Styles.buttonDefault}
               onPress={() => this.importDataBase()}>
-              <Icons.AntDesign
-                name="download"
-                size={20}
-                color="#554AF0"
-                style={{marginRight: 15}}
-              />
+              <Icons.AntDesign name="download" size={20} color="#554AF0" />
               <Text style={Styles.buttonDefaultText}>Загрузить данные</Text>
             </TouchableOpacity>
             {/* очистка */}
             <TouchableOpacity
               style={Styles.buttonDefault}
               onPress={() => this.clearDataBase()}>
-              <Icons.AntDesign
-                name="delete"
-                size={20}
-                color="#DC5F5A"
-                style={{marginRight: 15}}
-              />
+              <Icons.AntDesign name="delete" size={20} color="#DC5F5A" />
               <Text style={{...Styles.buttonDefaultText, color: '#DC5F5A'}}>
                 Очистить данные
               </Text>
@@ -534,6 +531,12 @@ export default class Settings extends Component {
               }}>
               <Text style={Styles.submitBtnText}>Сохранить</Text>
             </TouchableOpacity>
+          </View>
+        </Modal>
+        <Modal style={{margin: 0}} isVisible={this.state.modalTutorial}>
+          <View
+            style={{width: '100%', height: '100%', backgroundColor: '#fff'}}>
+            <Slider onClose={() => this.setState({modalTutorial: false})} />
           </View>
         </Modal>
         {/* заглушка фоновой загрузки */}

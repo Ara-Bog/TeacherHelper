@@ -78,6 +78,7 @@ export default StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     width: '100%',
     gap: 10,
   },
@@ -98,13 +99,16 @@ export default StyleSheet.create({
   cardDelaultRowTitle: {
     fontSize: 14,
     lineHeight: 16,
+    fontWeight: 500,
     fontFamily: 'sf_regular',
+    fontStyle: 'normal',
     color: COLORS.darkBlue,
   },
 
   cardDelaultRowText: {
-    fontSize: 14,
-    lineHeight: 16,
+    fontSize: 12,
+    lineHeight: 12,
+    fontWeight: 400,
     fontFamily: 'sf_regular',
     fontStyle: 'normal',
     color: COLORS.darkBlue,
@@ -519,22 +523,13 @@ export default StyleSheet.create({
     marginBottom: 30,
   },
 
-  // cardStudentTitle: {
-  //   fontFamily: 'sf_medium',
-  //   fontWeight: '500',
-  //   fontSize: 16,
-  //   lineHeight: 19,
-  //   color: COLORS.darkBlue,
-  //   marginBottom: 15,
-  // },
-
   cardBlock: {
     gap: 15,
   },
 
   cardBlockTitle: {
     fontFamily: 'sf_medium',
-    fontWeight: '500',
+    fontWeight: 500,
     fontSize: 16,
     lineHeight: 19,
     color: COLORS.darkBlue,
@@ -588,11 +583,8 @@ export default StyleSheet.create({
     color: COLORS.darkBlue,
   },
 
-  divNoteWrap: {},
-
   selectedList: {
     flexGrow: 1,
-    height: 100,
   },
 
   selectedListRow: {
@@ -658,7 +650,7 @@ export default StyleSheet.create({
   buttonDefaultText: {
     fontFamily: 'sf_regular',
     fontStyle: 'normal',
-    fontWeight: '400',
+    fontWeight: 400,
     fontSize: 14,
     lineHeight: 24,
     color: COLORS.blue,
@@ -908,6 +900,7 @@ export default StyleSheet.create({
     lineHeight: 17,
     fontWeight: 500,
     fontFamily: 'sf_regular',
+    textAlign: 'center',
   },
 
   headerAddedTitleStyle: {
