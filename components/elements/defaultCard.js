@@ -42,13 +42,10 @@ export default function DefaultCard({
         {isTimetable ? (
           <View style={{flexDirection: 'row', gap: 8, alignItems: 'center'}}>
             <Icons.Feather name="clock" size={17} color="#554AF0" />
-            <Text style={[Styles.cardDelaultRowTitle, {fontSize: 14}]}>
-              {data.LeftTop}
-            </Text>
+            <Text style={Styles.cardDelaultRowTitle}>{data.LeftTop}</Text>
           </View>
         ) : (
-          <Text
-            style={[Styles.cardDelaultRowTitle, {flexShrink: 1, fontSize: 14}]}>
+          <Text style={[Styles.cardDelaultRowTitle, {flexShrink: 1}]}>
             {data.LeftTop}
           </Text>
         )}
