@@ -18,7 +18,6 @@ export default class SelectedInList extends Component {
       currentValues: [...this.props.currentValues],
       possibleValues: [],
     };
-
     // получение данных с базы по переданному sql
     db.transaction(tx => {
       tx.executeSql(
@@ -62,7 +61,7 @@ export default class SelectedInList extends Component {
       <View style={{gap: 30}}>
         {this.props.editing ? (
           <>
-            <View style={{gap: 15}}>
+            <View style={Styles.cardBlock}>
               <Text style={Styles.cardBlockTitle}>
                 {this.props.labelCurrent}
               </Text>

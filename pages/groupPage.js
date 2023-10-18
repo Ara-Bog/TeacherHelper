@@ -158,10 +158,19 @@ export default class GroupPage extends Component {
             let dataString = JSON.stringify(rows.raw());
             this.state.currentData.list = JSON.parse(dataString);
             this.state.valuesStorage.list = JSON.parse(dataString);
-            this.state.defaultData.default_list.list.props.sqlArgs[0] =
-              JSON.parse(dataString)
-                .map(item => item.id)
-                .join(', ');
+
+            let propsList = this.state.defaultData.default_list.list.props;
+            let list_Ids = JSON.parse(dataString).map(item => item.id);
+
+            // заменяем зашлушку
+            propsList.sqlText = propsList.sqlText.replace(
+              '?',
+              `?,`.repeat(list_Ids.length).slice(0, -1),
+            );
+
+            // меняем аргументы
+            propsList.sqlArgs.shift();
+            propsList.sqlArgs.unshift(...list_Ids);
           },
           err => console.log('error gropPage get cur students', err),
         );
