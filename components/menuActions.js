@@ -129,9 +129,9 @@ export default function MenuActions({
           : [
               isSelected ? removeSelection : [selectCard, copyCard],
               callMove == undefined ? null : moveToCard,
+              deleteAllCards,
             ]}
         {deleteCards}
-        {deleteAllCards}
       </View>
     </Modal>
   );
