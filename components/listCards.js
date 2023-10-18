@@ -186,10 +186,8 @@ export default class ListCards extends Component {
     }
   }
 
-  render() {
-    let content;
-    let labelsFlag = this.state.dataList.length > 1 ? true : false;
-    const Card = item => (
+  Card(item) {
+    return (
       <DefaultCard
         key={item.ID}
         data={item}
@@ -221,6 +219,11 @@ export default class ListCards extends Component {
         }}
       />
     );
+  }
+
+  render() {
+    let content;
+    let labelsFlag = this.state.dataList.length > 1 ? true : false;
     // когда нет контента - выводим пустоту
     if (this.state.dataList.length != 0) {
       content = (
@@ -233,12 +236,12 @@ export default class ListCards extends Component {
                     style={{fontSize: 16, fontWeight: 500, color: '#04021D'}}>
                     {`${item[0]} (${item[1].length})`}
                   </Text>
-                  {item[1].map(subItem => Card(subItem))}
+                  {item[1].map(subItem => this.Card(subItem))}
                 </View>
               );
             } else {
               {
-                return item[1].map(subItem => Card(subItem));
+                return item[1].map(subItem => this.Card(subItem));
               }
             }
           })}

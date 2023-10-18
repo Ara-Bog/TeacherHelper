@@ -19,6 +19,7 @@ export default function LargeCard({value, onChange}) {
       <TextInput
         style={Styles.inputDefault}
         value={value}
+        inputMode={'search'}
         placeholder="Найти ученика..."
         placeholderTextColor="#B1B1B1"
         onChangeText={val => {

@@ -18,7 +18,6 @@ export default function NavPage({values, onSelect, selected}) {
       <Text
         style={[
           Styles.navPageTabText,
-          {textAlign: 'center'},
           selected == index ? {color: '#fff'} : null,
         ]}>
         {val}

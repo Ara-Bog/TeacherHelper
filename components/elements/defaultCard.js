@@ -1,7 +1,7 @@
 import React from 'react';
 import {Text, View, TouchableOpacity} from 'react-native';
 
-export default function defaultCard({
+export default function DefaultCard({
   data,
   select,
   bigSize,
@@ -42,18 +42,21 @@ export default function defaultCard({
         {isTimetable ? (
           <View style={{flexDirection: 'row', gap: 8, alignItems: 'center'}}>
             <Icons.Feather name="clock" size={17} color="#554AF0" />
-            <Text style={Styles.cardDelaultRowTitle}>{data.LeftTop}</Text>
+            <Text style={[Styles.cardDelaultRowTitle, {fontSize: 14}]}>
+              {data.LeftTop}
+            </Text>
           </View>
         ) : (
-          <Text style={[Styles.cardDelaultRowTitle, {flexShrink: 1}]}>
+          <Text
+            style={[Styles.cardDelaultRowTitle, {flexShrink: 1, fontSize: 14}]}>
             {data.LeftTop}
           </Text>
         )}
 
         {!bigSize && isTimetable ? (
-          <Text style={Styles.cardDelaultRowTitle}>{data.LeftBot}</Text>
+          <Text style={Styles.cardDelaultRowText}>{data.LeftBot}</Text>
         ) : (
-          <Text style={Styles.cardDelaultRowTitle}>{data.RightTop}</Text>
+          <Text style={Styles.cardDelaultRowText}>{data.RightTop}</Text>
         )}
       </View>
       {bigSize ? addedContent : null}
