@@ -82,7 +82,7 @@ databaseV - текущая версия БД
 
 # База данных (SQLite)
 
-c:\Users\mixic\OneDrive\Рабочий стол\Практика ПТУ\Диплом\DB.png
+![db diagramma] (./DB.png)
 
 ## Categories (default)
 
