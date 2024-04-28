@@ -82,7 +82,7 @@ databaseV - текущая версия БД
 
 # База данных (SQLite)
 
-![db diagramma](DB.png)
+![db diagramma](./DB.png)
 
 ## Categories (default)
 
