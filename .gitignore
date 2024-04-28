@@ -67,3 +67,4 @@ buck-out/
 
 # временно
 /temp.txt
+android/gradle.properties

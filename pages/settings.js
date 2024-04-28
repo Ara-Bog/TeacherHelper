@@ -330,7 +330,7 @@ export default class Settings extends Component {
             <Text>HUI</Text>
           </TouchableOpacity> */}
           {/* баннер */}
-          <TouchableOpacity
+          {/* <TouchableOpacity
             onPress={() =>
               Linking.openURL('https://www.tinkoff.ru/cf/1uakjigjJrq')
             }>
@@ -344,7 +344,7 @@ export default class Settings extends Component {
               source={require('../assets/baner.png')}
               resizeMode="contain"
             />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           {/* Обучалка */}
           <View style={Styles.divDefault__edit}>
             <TouchableOpacity
