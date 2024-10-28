@@ -327,7 +327,7 @@ export default class Settings extends Component {
           {/* DEV */}
           {/* <TouchableOpacity
             onPress={test}>
-            <Text>HUI</Text>
+            <Text>TEST</Text>
           </TouchableOpacity> */}
           {/* баннер */}
           {/* <TouchableOpacity

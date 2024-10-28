@@ -10,9 +10,9 @@ export default class SelectorTemplates extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      selectValue: null,
-      selectId: null,
-      dataset: [],
+      selectValue: null, // значение выбранного шаблона
+      selectId: null, // id выбранного шаблона
+      dataset: [], // используемые шаблоны
     };
 
     // определяем датасет

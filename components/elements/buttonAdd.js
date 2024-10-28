@@ -1,8 +1,8 @@
-import React, {Component} from 'react';
 import {View, TouchableOpacity} from 'react-native';
 
 export default function AddingButton({onPress}) {
-  // Элемент, плавающая кнопка в нижней части экрана для добавления новых объектов
+  // Элемент, плавающая кнопка в нижней части экрана для
+  // добавления новых объектов
   // onPress - функция колбэка
   return (
     <View style={Styles.float_btAdd_wrap}>
