@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {Text, View, TouchableOpacity} from 'react-native';
 
 export default function DropdownLabel(props) {
@@ -6,7 +6,8 @@ export default function DropdownLabel(props) {
   // props:
   // - id текущего списка -- id: int || str
   // - данные для заполнения дочернего элемент -- data: array
-  // - дочерний элемент -- children: Component || func
+  // - компонент дочернего элемента -- childComponent: Component
+  // - пропсы дочернего элемента -- childProps: Object
   // - заголовок выпадающего списка -- label: string
   // - текущее состояния открытия списка -- show: bool
   // - отображение заголовков в редактировании/просмотре -- edititng: bool
@@ -17,33 +18,41 @@ export default function DropdownLabel(props) {
   // отслеживания открытия/закрытия списка
   const [show, setShow] = useState(props.show);
   // обход переданных данных, для создания детей с передачей им необходимых props
-  const mainContent = props.childView
+  const ChildComponent = props.childComponent;
+  const childProps = props.childProps || {};
+
+  const mainContent = !ChildComponent
+    ? []
+    : props.childView
     ? [
-        React.cloneElement(props.children, {
-          key: [props.id, 0].join('.'),
-          data: props.data,
-          editing: props.editing,
-          values: props.values,
-        }),
+        <ChildComponent
+          key={[props.id, 0].join('.')}
+          {...childProps}
+          data={props.data}
+          editing={props.editing}
+          values={props.values}
+        />,
       ]
     : props.data.map((item, index) => {
         let newId = [props.id, index].join('.');
-        return React.cloneElement(props.children, {
-          key: newId,
-          id: item.id,
-          label: item.label,
-          editing: props.editing,
-        });
+        return (
+          <ChildComponent
+            key={newId}
+            {...childProps}
+            id={item.id}
+            label={item.label}
+            editing={props.editing}
+          />
+        );
       });
 
-  // вложенный контент
+  // вложенный контент — рендер дескрипторов из генератора страниц
   const subContent = props.childrenElements
     ? props.childrenElements.map(item => {
         // проверка пустого значения
         if (props.editing || (props.child_values[item.key] || []).length) {
-          return React.cloneElement(item.element, {
-            editing: props.editing,
-          });
+          const Comp = item.Component;
+          return <Comp {...item.props} editing={props.editing} />;
         } else {
           return null;
         }

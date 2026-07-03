@@ -1,75 +1,60 @@
-import React, {Component, useState} from 'react';
-import {TouchableOpacity} from 'react-native';
-import {Text, View, TextInput} from 'react-native';
+import React, {useRef, useReducer} from 'react';
+import {Text} from 'react-native';
 import EmptyField from './elements/emptyDataList';
-// элементы
 import ContactCard from './elements/contactCard';
 
-export default class DynamicBlock extends Component {
-  // получает:
-  // - режим редактирования или просмотра -- editing: Bool
-  // - значения блоков -- value: Object<Object>
-  // - тип элемента для вывода -- element: string
-  // --
-  // обратный вызов:
-  // - изменение значений в блоках -- onChange(vals: Object<Object>)
-  // - вызов функции, для генерации новых блоков -- funcAdd(increment: int)
+const ELEMENT_MAP = {
+  contactCard: ContactCard,
+};
 
-  constructor(props) {
-    super(props);
-    this.state = {
-      // счетчик количества блоков (не уменьшается)
-      increment:
-        Math.max(
-          ...Object.keys(this.props.value).map(item => {
-            return parseInt(item);
-          }),
-          0,
-        ) + 1,
-    };
-    switch (this.props.element) {
-      case 'contactCard':
-        this.state.element = <ContactCard />;
-        break;
-      default:
-        this.state.element = <Text>undefined</Text>;
-        break;
-    }
-    // говорим, что хотим сюда добавлять новые блоки
-    this.props.funcAdd(this.state.increment);
+export default function DynamicBlock({
+  element,
+  value,
+  editing,
+  onChange,
+  funcAdd,
+}) {
+  const [, forceRender] = useReducer(x => x + 1, 0);
+
+  const incrementRef = useRef(
+    Math.max(
+      ...Object.keys(value).map(item => parseInt(item)),
+      0,
+    ) + 1,
+  );
+
+  const ElementComponent = ELEMENT_MAP[element] || (() => <Text>undefined</Text>);
+
+  // Register the add function on first render
+  const registeredRef = useRef(false);
+  if (!registeredRef.current) {
+    funcAdd(incrementRef.current);
+    registeredRef.current = true;
   }
 
-  // удаление блока
-  removeBlock(indexBlock) {
-    delete this.props.value[indexBlock];
-    this.forceUpdate();
+  const removeBlock = indexBlock => {
+    delete value[indexBlock];
+    forceRender();
+  };
+
+  if (!Object.keys(value).length) {
+    return <EmptyField typeField={'Dynamic'} showMode={!editing} />;
   }
 
-  content() {
-    // обход блоков с элементами
-    return Object.keys(this.props.value).map(indexBlock => {
-      let item = this.props.value[indexBlock];
-      return React.cloneElement(this.state.element, {
-        key: indexBlock,
-        values: item,
-        onChanges: (field, val) => {
+  return Object.keys(value).map(indexBlock => {
+    let item = value[indexBlock];
+    return (
+      <ElementComponent
+        key={indexBlock}
+        values={item}
+        onChanges={(field, val) => {
           item[field] ??= undefined;
           item[field] = val;
-          this.props.onChange(this.props.value);
-        },
-        editing: this.props.editing,
-        removeBlock: () => this.removeBlock(indexBlock),
-      });
-    });
-  }
-
-  emptyContent() {
-    return <EmptyField typeField={'Dynamic'} showMode={!this.props.editing} />;
-  }
-
-  render() {
-    return Object.keys(this.props.value).length
-      ? this.content()
-      : this.emptyContent();
-  }
+          onChange(value);
+        }}
+        editing={editing}
+        removeBlock={() => removeBlock(indexBlock)}
+      />
+    );
+  });
 }

@@ -1,74 +1,45 @@
-import React, {Component} from 'react';
+import React, {useState, useRef, useReducer, useEffect} from 'react';
 import {View, TouchableOpacity, ScrollView, Text} from 'react-native';
 import DropdownLabel from '../components/elements/dropdownLabel';
 import Checkbox from '../components/form/checkbox';
+import {
+  getFilterCategories,
+  getFilterTemplates,
+  getFilterDiagnoses,
+} from '../database/repositories/filterRepo';
+import {getDB} from '../database/connection';
 
-export default class FilterPage extends Component {
-  // Компонент, фильтр списка учеников/групп
-  // props.route.params:
-  // - предыдущие значения фильтра -- currentFilter: object
-  // - список id's выпадающих списков, которые остались открытыми -- showLabels: array
-  // - предыдущая страница -- pageBack: string
-  // ----------------------------
-  // выходные props.route.params:
-  // - выбранные значения -- listChecked: object
-  // - список id's открытых выпадающих списков -- showLabels: array
+export default function FilterPage({route, navigation}) {
+  const params = {...route.params};
 
-  constructor(props) {
-    super(props);
-    const params = {...this.props.route.params};
+  const [listChecked, setListChecked] = useState(params.currentFilter);
+  const [data, setData] = useState({});
+  const showLabelsRef = useRef([...params.showLabels]);
+  const listCheckedRef = useRef(params.currentFilter);
+  const pageBack = params.pageBack;
 
-    this.state = {
-      listChecked: params.currentFilter,
-      data: {},
-      showLabels: [...params.showLabels],
-      pageBack: params.pageBack,
-    };
+  // Keep ref in sync
+  listCheckedRef.current = listChecked;
 
-    // запрос данных для фильтрации
-    // для групп, categories убрать where
+  useEffect(() => {
+    const db = getDB();
+    let newData = {};
     db.transaction(tx => {
-      tx.executeSql(
-        `SELECT id, name as label FROM Categories WHERE id > 0`,
-        [],
-        (_, {rows}) => {
-          this.state.data = {
-            ...this.state.data,
-            ['Возрастная группа']: rows.raw(),
-          };
-        },
-        (_, err) => console.log('error getData (Categories) - ', err),
-      );
-      tx.executeSql(
-        `SELECT id, name as label FROM Templates`,
-        [],
-        (_, {rows}) => {
-          this.state.data = {...this.state.data, ['Шаблон']: rows.raw()};
-        },
-        (_, err) => console.log('error getData (Templates) - ', err),
-      );
-      tx.executeSql(
-        `
-        SELECT MIN(id) as id, name as label
-        FROM Diagnosis
-        GROUP BY label
-        ORDER BY id
-        `,
-        [],
-        (_, {rows}) => {
-          this.state.data = {
-            ...this.state.data,
-            ['Заключение ЦПМПК']: rows.raw(),
-          };
-          this.forceUpdate();
-        },
-        (_, err) => console.log('error getData (Diagnosis) - ', err),
-      );
+      getFilterCategories(tx, result => {
+        newData = {...newData, ['Возрастная группа']: result};
+      });
+      getFilterTemplates(tx, result => {
+        newData = {...newData, ['Шаблон']: result};
+      });
+      getFilterDiagnoses(tx, result => {
+        newData = {...newData, ['Заключение ЦПМПК']: result};
+        setData(newData);
+      });
     });
-  }
+  }, []);
 
-  selectVal(label, val) {
-    let currentList = this.state.listChecked[label];
+  const selectVal = (label, val) => {
+    let currentList = listCheckedRef.current[label];
     let indexVal = currentList.indexOf(val);
 
     if (indexVal >= 0) {
@@ -77,13 +48,11 @@ export default class FilterPage extends Component {
       currentList.push(val);
     }
 
-    // не через setState - т.к. происходит ререндер
-    // изменение состояние объекта происходит на прямую
-    this.state.listChecked[label] = currentList;
-  }
+    listCheckedRef.current[label] = currentList;
+  };
 
-  labelAction(val) {
-    let currentList = [...this.state.showLabels];
+  const labelAction = val => {
+    let currentList = [...showLabelsRef.current];
     let indexVal = currentList.indexOf(val);
 
     if (indexVal >= 0) {
@@ -92,63 +61,59 @@ export default class FilterPage extends Component {
       currentList.push(val);
     }
 
-    // не через setState - т.к. происходит ререндер
-    // изменение состояние объекта происходит на прямую
-    this.state.showLabels = currentList;
-  }
+    showLabelsRef.current = currentList;
+  };
 
-  render() {
-    return (
-      <>
-        <View style={Styles.seqLineHeader}></View>
-        <View style={{...Styles.container, backgroundColor: '#fff'}}>
-          <ScrollView contentContainerStyle={{gap: 15}}>
-            {Object.keys(this.state.data).map((label, index) => (
-              <DropdownLabel
-                key={index}
-                id={index}
-                label={label}
-                data={this.state.data[label]}
-                show={this.state.showLabels.includes(index)}
-                editing={true}
-                setCheck={() => this.labelAction(index)}>
-                <Checkbox
-                  onCallBack={val => this.selectVal(label, val)}
-                  isSelected={val =>
-                    this.state.listChecked[label].includes(val)
-                  }
-                />
-              </DropdownLabel>
-            ))}
-            <View style={Styles.crutch}></View>
-          </ScrollView>
-          <View style={Styles.filterButtons}>
-            <TouchableOpacity
-              style={Styles.buttonRed}
-              onPress={() => {
-                this.setState({
-                  listChecked: {
-                    'Возрастная группа': [],
-                    Шаблон: [],
-                    'Заключение ЦПМПК': [],
-                  },
-                });
-              }}>
-              <Text style={Styles.buttonRedText}>Сбросить</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={Styles.submitBtn}
-              onPress={() => {
-                this.props.navigation.navigate(this.state.pageBack, {
-                  listChecked: this.state.listChecked,
-                  showLabels: this.state.showLabels,
-                });
-              }}>
-              <Text style={Styles.submitBtnText}>Применить</Text>
-            </TouchableOpacity>
-          </View>
+  return (
+    <>
+      <View style={Styles.seqLineHeader}></View>
+      <View style={{...Styles.container, backgroundColor: '#fff'}}>
+        <ScrollView contentContainerStyle={{gap: 15}}>
+          {Object.keys(data).map((label, index) => (
+            <DropdownLabel
+              key={index}
+              id={index}
+              label={label}
+              data={data[label]}
+              show={showLabelsRef.current.includes(index)}
+              editing={true}
+              setCheck={() => labelAction(index)}>
+              <Checkbox
+                onCallBack={val => selectVal(label, val)}
+                isSelected={val =>
+                  listCheckedRef.current[label].includes(val)
+                }
+              />
+            </DropdownLabel>
+          ))}
+          <View style={Styles.crutch}></View>
+        </ScrollView>
+        <View style={Styles.filterButtons}>
+          <TouchableOpacity
+            style={Styles.buttonRed}
+            onPress={() => {
+              const reset = {
+                'Возрастная группа': [],
+                Шаблон: [],
+                'Заключение ЦПМПК': [],
+              };
+              listCheckedRef.current = reset;
+              setListChecked(reset);
+            }}>
+            <Text style={Styles.buttonRedText}>Сбросить</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={Styles.submitBtn}
+            onPress={() => {
+              navigation.navigate(pageBack, {
+                listChecked: listCheckedRef.current,
+                showLabels: showLabelsRef.current,
+              });
+            }}>
+            <Text style={Styles.submitBtnText}>Применить</Text>
+          </TouchableOpacity>
         </View>
-      </>
-    );
-  }
+      </View>
+    </>
+  );
 }

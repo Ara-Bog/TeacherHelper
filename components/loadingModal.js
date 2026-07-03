@@ -1,6 +1,6 @@
 import React from 'react';
 import {Text, View, ActivityIndicator} from 'react-native';
-import Modal from 'react-native-modal';
+import Modal from './elements/AppModal';
 
 export default function LoadModal({status}) {
   // Компонент заглушка во время загрузки данных

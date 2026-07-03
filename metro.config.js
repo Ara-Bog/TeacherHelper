@@ -1,29 +1,7 @@
-/**
- * Metro configuration for React Native
- * https://github.com/facebook/react-native
- *
- * @format
- */
+const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
 
-module.exports = {
-  transformer: {
-    getTransformOptions: async () => ({
-      transform: {
-        experimentalImportSupport: false,
-        inlineRequires: true,
-      },
-    }),
-  },
-  dependencies: {
-    "react-native-sqlite-storage": {
-      platforms: {
-        android: {
-          sourceDir:
-            "../node_modules/react-native-sqlite-storage/platforms/android-native",
-          packageImportPath: "import io.liteglue.SQLitePluginPackage;",
-          packageInstance: "new SQLitePluginPackage()"
-        }
-      }
-    }
-  }
-};
+const defaultConfig = getDefaultConfig(__dirname);
+
+const config = {};
+
+module.exports = mergeConfig(defaultConfig, config);

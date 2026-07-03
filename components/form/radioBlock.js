@@ -1,16 +1,8 @@
-import React, {Component} from 'react';
+import React, {useState, useEffect} from 'react';
 import {Text, TouchableOpacity, View} from 'react-native';
 import FieldText from './formFieldText';
 
 function RadioItem({label, checked, onSelect, disabled}) {
-  // кнопка радио
-  // получет:
-  // - текст возле радио -- label: string
-  // - статус отметки -- checked: bool
-  // - флаг указывающий на отсутствие пустого значения -- required: bool
-  // обратный вызов:
-  // - нажатие на радио -- onSelect
-
   return (
     <TouchableOpacity
       onPress={() => onSelect()}
@@ -33,67 +25,56 @@ function RadioItem({label, checked, onSelect, disabled}) {
   );
 }
 
-export default class RadioBlock extends Component {
-  // получает:
-  // - id текущего выбранного элемента -- values: Array(int)
-  // обратная связь:
-  // - возвращает данные радио, на которую нажали -- onCallBack(key: int, val: string)
-  constructor(props) {
-    super(props);
-    // распаковываем текущее значение, чтобы вместо [] - было int
-    let [tempVall] = this.props.values;
-    this.state = {
-      // текущий сохраненный id
-      currentVall: tempVall,
-    };
-  }
+export default function RadioBlock({
+  values,
+  onCallBack,
+  editing,
+  required,
+  disabled,
+  data,
+}) {
+  const [currentVall, setCurrentVall] = useState(values ? values[0] : undefined);
 
-  setRadioChecked(key, val) {
-    // перезаписываем выбранный id
-    this.setState({currentVall: key});
-    // возвращаем выбранное значение
-    this.props.onCallBack(key, val);
-  }
-
-  shouldComponentUpdate(nextProps, nextState) {
-    newVal = nextProps.values[0];
-    if (newVal != this.props.values[0] && newVal != this.state.currentVall) {
-      this.state.currentVall = newVal;
+  // Sync from parent when values change externally
+  useEffect(() => {
+    let newVal = values ? values[0] : undefined;
+    if (newVal != currentVall) {
+      setCurrentVall(newVal);
     }
-    return true;
-  }
+  }, [values]);
 
-  render() {
-    return (
-      <View style={{gap: 15, opacity: this.props.disabled ? 0.3 : 1}}>
-        {this.props.editing && !this.props.required ? (
-          <RadioItem
-            key={0}
-            label={'не выбрано'}
-            checked={
-              this.state.currentVall == undefined && !this.props.disabled
-            }
-            onSelect={() => this.setRadioChecked(undefined, undefined)}
-            disabled={this.props.disabled}
-          />
-        ) : null}
-        {this.props.data.map(item => {
-          if (this.props.editing) {
-            return (
-              <RadioItem
-                key={item.id}
-                label={item.label}
-                checked={this.state.currentVall == item.id}
-                onSelect={() => this.setRadioChecked(item.id, item.label)}
-                disabled={this.props.disabled}
-              />
-            );
-          } else if (this.state.currentVall == item.id) {
-            return <FieldText key={item.id} label={item.label} />;
-          }
-          return null;
-        })}
-      </View>
-    );
-  }
+  const setRadioChecked = (key, val) => {
+    setCurrentVall(key);
+    onCallBack(key, val);
+  };
+
+  return (
+    <View style={{gap: 15, opacity: disabled ? 0.3 : 1}}>
+      {editing && !required ? (
+        <RadioItem
+          key={0}
+          label={'не выбрано'}
+          checked={currentVall == undefined && !disabled}
+          onSelect={() => setRadioChecked(undefined, undefined)}
+          disabled={disabled}
+        />
+      ) : null}
+      {data.map(item => {
+        if (editing) {
+          return (
+            <RadioItem
+              key={item.id}
+              label={item.label}
+              checked={currentVall == item.id}
+              onSelect={() => setRadioChecked(item.id, item.label)}
+              disabled={disabled}
+            />
+          );
+        } else if (currentVall == item.id) {
+          return <FieldText key={item.id} label={item.label} />;
+        }
+        return null;
+      })}
+    </View>
+  );
 }

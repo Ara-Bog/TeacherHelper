@@ -1,13 +1,12 @@
 import React, {useState} from 'react';
-import {Alert, PermissionsAndroid} from 'react-native';
+import {Alert, PermissionsAndroid, Platform} from 'react-native';
 import {
   NavigationContainer,
   getFocusedRouteNameFromRoute,
 } from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import SplashScreen from 'react-native-splash-screen';
-import SQLite from 'react-native-sqlite-storage';
+import RNBootSplash from 'react-native-bootsplash';
 
 // страницы для навигации
 import Timetable from './pages/timetable';
@@ -21,7 +20,8 @@ import SettingsPage from './pages/settings';
 import FilterPage from './pages/filter';
 import Slider from './tutorial/Slider';
 
-import {checkVersion} from './actions/controlVersion';
+import {checkVersion} from './database/migrations';
+import {setDB} from './database/connection';
 import {setUserSetting} from './actions/userSettings';
 
 // глобальные ссылки
@@ -69,6 +69,10 @@ export default function App() {
   // запрос разрешения на взаимодействие с файлами
   const requestStoragePermission = async () => {
     try {
+      if (Platform.Version >= 33) {
+        // Android 13+ использует granular permissions, DocumentPicker работает через SAF
+        return;
+      }
       const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
       );
@@ -152,16 +156,16 @@ export default function App() {
 
   // вывод анимированной загрузки, пока не загрузится база и настроек пользователя
   if (loading) {
-    SplashScreen.hide();
+    RNBootSplash.hide({fade: true});
     //
     // ДОБАВИТЬ ВЫВОД ОБУЧАЮЩЕГО БЛОКА, ЕСЛИ userSettings.opened == false
     Promise.all([db, userSettings]).then(
       values => {
         db = values[0];
+        setDB(values[0]);
         userSettings = values[1];
         checkVersion()
           .then(() => {
-            SQLite.enablePromise(false);
             setLoading(false);
             setOpen(userSettings.opened);
           })
@@ -174,7 +178,7 @@ export default function App() {
     return <Slider onClose={closeSlider} />;
   } else {
     return (
-      <NavigationContainer>
+      <NavigationContainer navigationInChildEnabled>
         <Tab.Navigator
           id="mainTab"
           initialRouteName={userSettings.firstScreen || 'settings'}

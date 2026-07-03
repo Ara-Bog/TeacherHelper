@@ -1,9 +1,5 @@
-import SQLite from 'react-native-sqlite-storage';
-
-// require the module
-var RNFS = require('react-native-fs');
-
-SQLite.enablePromise(true);
+// maintained fork of the abandoned react-native-fs (same API)
+import RNFS from '@dr.pogodin/react-native-fs';
 
 // список таблиц для редактирования (переделать на общий модуль)
 const requiredColumns = [
@@ -21,7 +17,7 @@ export async function importFromJson(uriMasterBase, saveData) {
   let tablesOnLoad = []; // хранилище промисов с загрузкой данных в базу
 
   // считываем файл с временного хранилища
-  readingFile = RNFS.readFile(uriMasterBase);
+  let readingFile = RNFS.readFile(uriMasterBase);
 
   // по окончанию считывания - переопределяем newData
   await readingFile
@@ -126,7 +122,7 @@ export async function clearData(tables = requiredColumns) {
   return db.transaction(tx => {
     // по каждой обязательной таблице удаляем записи
     tables.forEach(item => {
-      sqlRequest = 'DELETE FROM ' + item;
+      let sqlRequest = 'DELETE FROM ' + item;
       tx.executeSql(sqlRequest);
     });
     // очищаем инкременты для id, при добавлении новой строки в таблице снова создается запись по таблице

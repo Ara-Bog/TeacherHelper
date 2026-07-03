@@ -1,9 +1,5 @@
-import SQLite from 'react-native-sqlite-storage';
-
-// require the module
-var RNFS = require('react-native-fs');
-
-SQLite.enablePromise(true);
+// maintained fork of the abandoned react-native-fs (same API)
+import RNFS from '@dr.pogodin/react-native-fs';
 
 // список таблиц для редактирования (переделать на общий модуль)
 const requiredColumns = [

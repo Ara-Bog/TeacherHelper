@@ -1,21 +1,12 @@
-import React, {Component, useState, useMemo} from 'react';
+import React, {useState, useRef, useReducer, useMemo} from 'react';
 import {Text, View, TouchableOpacity, FlatList, Alert} from 'react-native';
-import Modal from 'react-native-modal';
+import Modal from '../elements/AppModal';
 
 // НУЖНАЯ ОПТИМИЗАЦИЯ ЗВУКОВ
 
 function ModalMainCol({label, values, callback}) {
-  // Модельное представление ввода основных данных строки
-  // props:
-  // - label: String -- заголовок блока
-  // - values: Object -- структура блока
-  // props-functions:
-  // - callback (data: object, continueEdit: bool) -- возврат объекта с новыми данными и флагом продолжения редактирования
-
-  // текущее состояние значений
   const [currentVals, setVals] = useState([]);
 
-  // обработка нажатия чекера
   const handleVal = val => {
     let posVal = currentVals.indexOf(val);
     if (posVal == -1) {
@@ -27,7 +18,6 @@ function ModalMainCol({label, values, callback}) {
   };
 
   const prevCallback = flag => {
-    // ошибка отправки
     if (!currentVals.length) {
       Alert.alert(
         'Ошибка',
@@ -35,13 +25,10 @@ function ModalMainCol({label, values, callback}) {
       );
       return;
     }
-    // объект на вывод
-    outList = Object.assign(...currentVals.map(e => Object({[e]: []})));
-    //  возврат значений
+    let outList = Object.assign(...currentVals.map(e => Object({[e]: []})));
     callback(outList, flag);
   };
 
-  // элемент списка
   const itemList = ({item}) => {
     return (
       <TouchableOpacity
@@ -66,7 +53,6 @@ function ModalMainCol({label, values, callback}) {
     <View style={Styles.table_modalWrap}>
       <View style={{gap: 10}}>
         <Text style={Styles.table_modalTitle}>{label}</Text>
-        {/* список значений */}
         <FlatList
           columnWrapperStyle={{gap: 5}}
           data={Object.entries(values)}
@@ -93,27 +79,15 @@ function ModalMainCol({label, values, callback}) {
 }
 
 function ModalSubCols({data, callback, values}) {
-  // Модельное представление ввода не основных данных строки
-  // props:
-  // - data: Array <Object> -- структура блоков с элементами
-  // - values: Object -- текущие значения для каждой строки
-  // props-functions:
-  // - callback (data: object) -- возврат объекта с новыми данными
-
-  // оптимизация повторного вызова
   const structVals = useMemo(() => {
     return Object.assign(
       ...data.map(e => Object({[e.id]: Object.keys(e.values)})),
     );
   });
 
-  // состояние текущих значений
-  // в редактирование можно зайти, если все элементы одной структуры или он в принципе 1
   const [currentVals, setVals] = useState(
     Object.assign(
-      // обходим переданную структуру
       ...Object.keys(structVals).map(key =>
-        // возвращаеем объект где ключ - блок (симптоматика); значение - выбранные данные для блока
         Object({
           [key]:
             (Object.values(values)[0] || []).filter(v =>
@@ -124,8 +98,6 @@ function ModalSubCols({data, callback, values}) {
     ),
   );
 
-  // объект блоков с блокирующими значениями (в частности для checker_only)
-  // ключ - блок, значение - список id's тип которых checker_only
   const [disabledOther, setDisabled] = useState(
     Object.assign(
       ...data.map(e =>
@@ -139,7 +111,6 @@ function ModalSubCols({data, callback, values}) {
     ),
   );
 
-  // обработка выбора значения
   const handleVal = (key, val, type) => {
     let posVal;
     switch (type) {
@@ -175,7 +146,6 @@ function ModalSubCols({data, callback, values}) {
     callback(outputData);
   };
 
-  // блок списка
   const itemBlock = ({item}) => {
     return (
       <View style={{gap: 10}}>
@@ -193,7 +163,6 @@ function ModalSubCols({data, callback, values}) {
     );
   };
 
-  // элемент блока
   const itemList = ({item}, key) => {
     return (
       <TouchableOpacity
@@ -248,384 +217,311 @@ function ModalSubCols({data, callback, values}) {
   );
 }
 
-export default class TableDefault extends Component {
-  // ОписаниеОбъекта
-  // props (ТОЛЬКО ИСПОЛЬЗУЕМЫЕ!):
-  // - childrenElements: type -- описание
-  // - value: Array<Array> -- текущие значения блока
-  // - editing: bool -- описание
-  // props-functions:
-  // - onChange (values: Array<Array>) -- возврат массива списков значения
+function parseInitialValues(childrenElements, value) {
+  let mainCol = {};
+  let subCols = [];
+  let values = {};
 
-  constructor(props) {
-    super(props);
-    this.state = {
-      // данные индексируемой колонки
-      mainCol: {},
-      // данные остальных колонок
-      subCols: [],
-      // текущие значения
-      values: [],
-      // состояние выбора
-      onSelect: false,
-      // выбранные строки
-      selected: [],
-      // статус эквивалентности строк (для множественного редактирования)
-      equalsSelected: false,
-      // флаг открытия выбора значения индексируемой колонки
-      showMainModal: false,
-      // флаг открытия выбора значений для остальных колонок
-      showSubModal: false,
-      // редактируемая строка (временныое хранилище)
-      editingRow: {},
-    };
-
-    // заполнение state
-    // обход всех колонок таблицы
-    Object.keys(props.childrenElements).forEach(keyItem => {
-      // копируем текущий элемент
-      var curElem = Object.assign({}, props.childrenElements[keyItem]);
-      // преобразовываем values колонки из Array в Object
-      var newVals = {};
-      curElem.values.forEach(item => {
-        newVals[item.id] = {label: item.label, type: item.type};
-      });
-      curElem.values = newVals;
-      // сохраняем ключ элемента
-      curElem.id = keyItem;
-      // отдельная обработка для индексируемой колонки
-      if (curElem.type === 'table_col_main') {
-        this.state.mainCol = curElem;
-        var rowsKeys = Object.keys(newVals);
-        // заполняем значения в виде Object <Array> (изначально это Array <Array>)
-        for (let arr of props.value) {
-          // преобразовываем числа к строке
-          arr = arr.map(String);
-          // ищем ключ, который является значением основной колонки
-          findEl = arr.findIndex(el => rowsKeys.includes(el));
-          this.state.values[arr.splice(findEl, 1)] = arr;
-        }
-      } else {
-        this.state.subCols.push(curElem);
-      }
+  Object.keys(childrenElements).forEach(keyItem => {
+    let curElem = Object.assign({}, childrenElements[keyItem]);
+    let newVals = {};
+    curElem.values.forEach(item => {
+      newVals[item.id] = {label: item.label, type: item.type};
     });
-  }
+    curElem.values = newVals;
+    curElem.id = keyItem;
 
-  shouldComponentUpdate(nextProps, nextState) {
-    let flagChange = false;
-    if (this.props.value.length != nextProps.length) {
-      flagChange = true;
-    } else {
-      for (let [item, index] of nextProps.value.entries()) {
-        let curItem = this.props.value;
-        if (item.length != curItem[index].length || flagChange) {
-          flagChange = true;
-          break;
-        }
-        flagChange = item.evey(el => curItem.includes(String(el)));
-      }
-    }
-
-    if (flagChange) {
-      this.state.values = {};
-
-      var rowsKeys = Object.keys(this.state.mainCol.values);
-      // заполняем значения в виде Object <Array> (изначально это Array <Array>)
-      for (let arr of nextProps.value || []) {
-        // преобразовываем числа к строке
+    if (curElem.type === 'table_col_main') {
+      mainCol = curElem;
+      let rowsKeys = Object.keys(newVals);
+      for (let arr of value) {
         arr = arr.map(String);
-        // ищем ключ, который является значением основной колонки
-        findEl = arr.findIndex(el => rowsKeys.includes(el));
-        this.state.values[arr.splice(findEl, 1)] = arr;
+        let findEl = arr.findIndex(el => rowsKeys.includes(el));
+        values[arr.splice(findEl, 1)] = arr;
       }
+    } else {
+      subCols.push(curElem);
     }
-    return true;
+  });
+
+  return {mainCol, subCols, values};
+}
+
+export default function TableDefault({
+  childrenElements,
+  value,
+  editing,
+  onChange,
+}) {
+  const [, forceRender] = useReducer(x => x + 1, 0);
+
+  const parsedRef = useRef(null);
+  if (parsedRef.current === null) {
+    parsedRef.current = parseInitialValues(childrenElements, value || []);
   }
 
-  // проверка эквивалентности строки с первой
-  checkEquals(key) {
-    // сначала проверяем на размерность (если отличается, то строки очевидно отличаются)
-    if (
-      this.state.values[this.state.selected[0]].length !==
-      this.state.values[key].length
-    ) {
+  const mainCol = parsedRef.current.mainCol;
+  const subCols = parsedRef.current.subCols;
+
+  const [tableValues, setTableValues] = useState(parsedRef.current.values);
+  const [onSelect, setOnSelect] = useState(false);
+  const [selected, setSelected] = useState([]);
+  const [equalsSelected, setEqualsSelected] = useState(false);
+  const [showMainModal, setShowMainModal] = useState(false);
+  const [showSubModal, setShowSubModal] = useState(false);
+  const [editingRow, setEditingRow] = useState({});
+
+  const checkEquals = (key, sel, vals) => {
+    const selKeys = sel || selected;
+    const curVals = vals || tableValues;
+    if (curVals[selKeys[0]].length !== curVals[key].length) {
       return false;
     }
-    // возвращаем истинку, если все значения рассматриваемой строки содержаться в первой строке
-    return this.state.values[this.state.selected[0]].every(el =>
-      this.state.values[key].includes(el),
-    );
-  }
+    return curVals[selKeys[0]].every(el => curVals[key].includes(el));
+  };
 
-  // алгоритм выбора строк
-  selectRow(key) {
-    // при первом выборе строки
-    if (!this.state.onSelect) {
-      this.setState({onSelect: true, equalsSelected: true, selected: [key]});
+  const selectRow = key => {
+    if (!onSelect) {
+      setOnSelect(true);
+      setEqualsSelected(true);
+      setSelected([key]);
       return;
     }
 
-    // проверяем, строка уже выбрана или нет
-    let curPos = this.state.selected.indexOf(key);
+    let newSelected = [...selected];
+    let curPos = newSelected.indexOf(key);
+    let newEquals = equalsSelected;
+
     if (curPos === -1) {
-      // проверяем на эквивалентность, если мы ее отслеживаем
-      if (this.state.equalsSelected) {
-        this.state.equalsSelected = this.checkEquals(key);
+      if (newEquals) {
+        newEquals = checkEquals(key, newSelected, tableValues);
       }
-      this.state.selected.push(key);
-      this.state.onSelect = true;
+      newSelected.push(key);
     } else {
-      // снимаем выделение строки
-      this.state.selected.splice(curPos, 1);
-      // если выбрана только 1 строка, то эквивалентность = истина
-      if (this.state.selected.length == 1) {
-        this.state.equalsSelected = true;
-      } else if (this.state.selected.length == 0) {
-        // выделение снято со всех строк
-        this.state.onSelect = false;
-        this.state.equalsSelected = false;
+      newSelected.splice(curPos, 1);
+      if (newSelected.length == 1) {
+        newEquals = true;
+      } else if (newSelected.length == 0) {
+        setOnSelect(false);
+        setEqualsSelected(false);
+        setSelected([]);
+        return;
       } else {
-        // нужно проверить каждый элемент (кроме первого) на эквивалентность
         let equals = true;
-        for (let item of this.state.selected.slice(
-          1,
-          this.state.selected.length,
-        )) {
-          equals = this.checkEquals(item);
-          if (!equals) {
-            break;
-          }
+        for (let item of newSelected.slice(1)) {
+          equals = checkEquals(item, newSelected, tableValues);
+          if (!equals) break;
         }
-        this.state.equalsSelected = equals;
+        newEquals = equals;
       }
     }
 
-    this.forceUpdate();
-  }
+    setSelected(newSelected);
+    setEqualsSelected(newEquals);
+  };
 
-  // удаление выбранных строк
-  async removeRow() {
+  const removeRow = () => {
     let confirmAction = new Promise((resolve, reject) => {
       Alert.alert(
         'Подтвердите действие',
         'Вы действительно хотите удалить выделенные данные из таблиц?',
         [
-          {
-            text: 'Да',
-            onPress: () => resolve(),
-          },
-          {
-            text: 'Нет',
-            onPress: () => reject(),
-            style: 'cancel',
-          },
+          {text: 'Да', onPress: () => resolve()},
+          {text: 'Нет', onPress: () => reject(), style: 'cancel'},
         ],
       );
     });
 
     confirmAction.then(() => {
       let newValues = Object.fromEntries(
-        Object.entries(this.state.values).filter(
-          ([key, item]) => !this.state.selected.includes(key),
+        Object.entries(tableValues).filter(
+          ([key]) => !selected.includes(key),
         ),
       );
-      this.updateValues(newValues);
+      updateValues(newValues);
     });
-  }
+  };
 
-  // редактирование строк(-и)
-  changeValues(listKeys) {
-    this.setState({
-      editingRow: Object.assign(
-        ...listKeys.map(key => Object({[key]: this.state.values[key]})),
+  const changeValues = listKeys => {
+    setEditingRow(
+      Object.assign(
+        ...listKeys.map(key => Object({[key]: tableValues[key]})),
       ),
-      showSubModal: true,
-    });
-  }
+    );
+    setShowSubModal(true);
+  };
 
-  // обновление текущих значений
-  updateValues(newValues) {
-    // отправляем callback в виде Array<Array>
-    this.props.onChange(
+  const updateValues = newValues => {
+    onChange(
       Object.keys(newValues).map(key => [key, ...newValues[key]]),
     );
-    // обновляем состояния
-    this.setState({
-      showMainModal: false,
-      showSubModal: false,
-      editingRow: {},
-      values: newValues,
-      onSelect: false,
-      selected: [],
-      equalsSelected: false,
-    });
-  }
+    setTableValues(newValues);
+    setShowMainModal(false);
+    setShowSubModal(false);
+    setEditingRow({});
+    setOnSelect(false);
+    setSelected([]);
+    setEqualsSelected(false);
+  };
 
-  render() {
-    return (
-      <>
-        {/* table  */}
-        <View style={Styles.tableWrap}>
-          {/* header table */}
-          <View style={Styles.table_header}>
-            <Text key={0} style={Styles.table_headerText}>
-              {this.state.mainCol.label}
-            </Text>
-            {this.state.subCols.map((item, index) => {
-              return (
-                <Text key={index + 1} style={Styles.table_headerText}>
-                  {item.label}
-                </Text>
-              );
-            })}
-          </View>
-          {/* content */}
-          {Object.keys(this.state.values).map(key => {
-            // значение основной колонки строки
-            var mainVal = this.state.mainCol.values[key];
-            // значения остальных колонок по строке
-            var subVals = this.state.subCols.map(subItem => {
-              mainKey = this.state.values[key]
-                .sort()
-                .filter(e => subItem.values[e]);
-              return {
-                id: subItem.id,
-                key: mainKey,
-                label: mainKey
-                  ? mainKey.map(el => subItem.values[el].label)
-                  : [],
-              };
-            });
-
+  return (
+    <>
+      {/* table  */}
+      <View style={Styles.tableWrap}>
+        {/* header table */}
+        <View style={Styles.table_header}>
+          <Text key={0} style={Styles.table_headerText}>
+            {mainCol.label}
+          </Text>
+          {subCols.map((item, index) => {
             return (
-              <TouchableOpacity
-                disabled={!this.props.editing}
-                onLongPress={() => this.selectRow(key)}
-                onPress={() =>
-                  this.state.onSelect
-                    ? this.selectRow(key)
-                    : this.changeValues([key])
-                }
-                key={key}
-                style={[
-                  Styles.table_row,
-                  this.state.selected.includes(key)
-                    ? {backgroundColor: '#EEEDFE'}
-                    : null,
-                ]}>
-                {/* основной столбец */}
-                <View style={{flex: 1}}>
-                  <Text
-                    style={[
-                      Styles.table_rowText,
-                      this.state.selected.includes(key)
-                        ? {backgroundColor: '#554AF0', color: '#FFF'} // строка выбрана
-                        : null,
-                    ]}>
-                    {mainVal.label}
-                  </Text>
-                </View>
-                {/* остальные столбцы */}
-                {subVals.map(subItem => {
-                  return (
-                    <View key={subItem.id} style={{flex: 1}}>
-                      <Text
-                        style={[
-                          Styles.table_rowText,
-                          this.state.selected.includes(key)
-                            ? {backgroundColor: '#554AF0', color: '#FFF'} // строка выбрана
-                            : null,
-                          subItem.label.length === 0
-                            ? {
-                                color: this.state.selected.includes(key)
-                                  ? '#554AF0'
-                                  : '#9B9AA5',
-                                backgroundColor: 'transparent',
-                              } // в столбце пусто
-                            : null,
-                        ]}>
-                        {/* доп обработка для множественного выбора (берется 1 символ в верхнем регистре) */}
-                        {subItem.label.length > 1
-                          ? subItem.label
-                              .map(el => el.charAt(0).toUpperCase())
-                              .join(' + ')
-                          : subItem.label.length == 1
-                          ? subItem.label
-                          : 'Не указано'}
-                      </Text>
-                    </View>
-                  );
-                })}
-              </TouchableOpacity>
+              <Text key={index + 1} style={Styles.table_headerText}>
+                {item.label}
+              </Text>
             );
           })}
-          {/* empty content */}
-          {Object.keys(this.state.values).length === 0 ? (
-            <View style={Styles.table_row}>
-              <Text style={Styles.table_empty}>Таблица не заполненна</Text>
-            </View>
-          ) : null}
         </View>
-        {/* actions */}
-        {this.props.editing ? (
-          <View style={{gap: 15, flexDirection: 'row'}}>
-            {this.state.onSelect ? (
-              <>
-                {this.state.equalsSelected ? (
-                  <TouchableOpacity
-                    style={[Styles.opacityButton, {flex: 1}]}
-                    onPress={() => this.changeValues(this.state.selected)}>
-                    <Text style={Styles.opacityButtonText}>Редактировать</Text>
-                  </TouchableOpacity>
-                ) : null}
-                <TouchableOpacity
-                  style={[Styles.buttonRed, {flex: 1}]}
-                  onPress={() => this.removeRow()}>
-                  <Text style={Styles.buttonRedText}>Удалить</Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <TouchableOpacity
-                style={[Styles.opacityButton, {flex: 1}]}
-                onPress={() => this.setState({showMainModal: true})}>
-                <Text style={Styles.opacityButtonText}>Добавить</Text>
-              </TouchableOpacity>
-            )}
+        {/* content */}
+        {Object.keys(tableValues).map(key => {
+          let mainVal = mainCol.values[key];
+          let subVals = subCols.map(subItem => {
+            let mainKey = tableValues[key]
+              .sort()
+              .filter(e => subItem.values[e]);
+            return {
+              id: subItem.id,
+              key: mainKey,
+              label: mainKey
+                ? mainKey.map(el => subItem.values[el].label)
+                : [],
+            };
+          });
+
+          return (
+            <TouchableOpacity
+              disabled={!editing}
+              onLongPress={() => selectRow(key)}
+              onPress={() =>
+                onSelect ? selectRow(key) : changeValues([key])
+              }
+              key={key}
+              style={[
+                Styles.table_row,
+                selected.includes(key)
+                  ? {backgroundColor: '#EEEDFE'}
+                  : null,
+              ]}>
+              {/* основной столбец */}
+              <View style={{flex: 1}}>
+                <Text
+                  style={[
+                    Styles.table_rowText,
+                    selected.includes(key)
+                      ? {backgroundColor: '#554AF0', color: '#FFF'}
+                      : null,
+                  ]}>
+                  {mainVal.label}
+                </Text>
+              </View>
+              {/* остальные столбцы */}
+              {subVals.map(subItem => {
+                return (
+                  <View key={subItem.id} style={{flex: 1}}>
+                    <Text
+                      style={[
+                        Styles.table_rowText,
+                        selected.includes(key)
+                          ? {backgroundColor: '#554AF0', color: '#FFF'}
+                          : null,
+                        subItem.label.length === 0
+                          ? {
+                              color: selected.includes(key)
+                                ? '#554AF0'
+                                : '#9B9AA5',
+                              backgroundColor: 'transparent',
+                            }
+                          : null,
+                      ]}>
+                      {subItem.label.length > 1
+                        ? subItem.label
+                            .map(el => el.charAt(0).toUpperCase())
+                            .join(' + ')
+                        : subItem.label.length == 1
+                        ? subItem.label
+                        : 'Не указано'}
+                    </Text>
+                  </View>
+                );
+              })}
+            </TouchableOpacity>
+          );
+        })}
+        {/* empty content */}
+        {Object.keys(tableValues).length === 0 ? (
+          <View style={Styles.table_row}>
+            <Text style={Styles.table_empty}>Таблица не заполненна</Text>
           </View>
         ) : null}
-        {/* модалка выбора значения основной колонки */}
-        <Modal
-          isVisible={this.state.showMainModal}
-          onBackButtonPress={() => this.setState({showMainModal: false})}
-          onBackdropPress={() => this.setState({showMainModal: false})}>
-          <ModalMainCol
-            label={this.state.mainCol.label}
-            values={this.state.mainCol.values}
-            callback={(val, flagContinue) => {
-              flagContinue
-                ? this.setState({
-                    showMainModal: false,
-                    showSubModal: true,
-                    editingRow: val,
-                  })
-                : this.updateValues({...this.state.values, ...val});
-            }}
-          />
-        </Modal>
-        {/* модалка выбора значений остальных колонок */}
-        <Modal
-          isVisible={this.state.showSubModal}
-          onBackButtonPress={() => this.setState({showSubModal: false})}
-          onBackdropPress={() => this.setState({showSubModal: false})}>
-          <ModalSubCols
-            data={this.state.subCols}
-            values={this.state.editingRow}
-            callback={val => {
-              this.updateValues({...this.state.values, ...val});
-            }}
-          />
-        </Modal>
-      </>
-    );
-  }
+      </View>
+      {/* actions */}
+      {editing ? (
+        <View style={{gap: 15, flexDirection: 'row'}}>
+          {onSelect ? (
+            <>
+              {equalsSelected ? (
+                <TouchableOpacity
+                  style={[Styles.opacityButton, {flex: 1}]}
+                  onPress={() => changeValues(selected)}>
+                  <Text style={Styles.opacityButtonText}>Редактировать</Text>
+                </TouchableOpacity>
+              ) : null}
+              <TouchableOpacity
+                style={[Styles.buttonRed, {flex: 1}]}
+                onPress={() => removeRow()}>
+                <Text style={Styles.buttonRedText}>Удалить</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity
+              style={[Styles.opacityButton, {flex: 1}]}
+              onPress={() => setShowMainModal(true)}>
+              <Text style={Styles.opacityButtonText}>Добавить</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      ) : null}
+      {/* модалка выбора значения основной колонки */}
+      <Modal
+        isVisible={showMainModal}
+        onBackButtonPress={() => setShowMainModal(false)}
+        onBackdropPress={() => setShowMainModal(false)}>
+        <ModalMainCol
+          label={mainCol.label}
+          values={mainCol.values}
+          callback={(val, flagContinue) => {
+            flagContinue
+              ? (() => {
+                  setShowMainModal(false);
+                  setShowSubModal(true);
+                  setEditingRow(val);
+                })()
+              : updateValues({...tableValues, ...val});
+          }}
+        />
+      </Modal>
+      {/* модалка выбора значений остальных колонок */}
+      <Modal
+        isVisible={showSubModal}
+        onBackButtonPress={() => setShowSubModal(false)}
+        onBackdropPress={() => setShowSubModal(false)}>
+        <ModalSubCols
+          data={subCols}
+          values={editingRow}
+          callback={val => {
+            updateValues({...tableValues, ...val});
+          }}
+        />
+      </Modal>
+    </>
+  );
 }

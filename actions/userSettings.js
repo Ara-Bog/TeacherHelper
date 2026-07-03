@@ -18,7 +18,8 @@ async function defaultSettingUser() {
     ['groupBy_Timetable', 'date'],
   ];
   try {
-    await AsyncStorage.multiSet(data);
+    // async-storage v3 removed multiSet — write each key individually
+    await Promise.all(data.map(([key, val]) => AsyncStorage.setItem(key, val)));
   } catch (e) {
     console.warn('error async\n', e);
   }
@@ -57,8 +58,10 @@ export async function getUserSetting() {
       values = await defaultSettingUser();
       return values;
     } else {
-      // получаем данные с хранилища
-      values = await AsyncStorage.multiGet(keys);
+      // получаем данные с хранилища (async-storage v3 removed multiGet)
+      values = await Promise.all(
+        keys.map(async key => [key, await AsyncStorage.getItem(key)]),
+      );
       // конвертируем данные
       return convertArrayToObj(values);
     }

@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, {useState, useReducer, useCallback} from 'react';
 import {
   Text,
   View,
@@ -8,8 +8,14 @@ import {
   Linking,
   Alert,
 } from 'react-native';
-import DocumentPicker from 'react-native-document-picker';
-import Modal from 'react-native-modal';
+import {
+  pick,
+  keepLocalCopy,
+  types,
+  errorCodes,
+  isErrorWithCode,
+} from '@react-native-documents/picker';
+import Modal from '../components/elements/AppModal';
 
 // компоненты
 import SelectedList from '../components/form/selectedInList';
@@ -23,75 +29,88 @@ import {importFromJson, clearData} from '../actions/importDB';
 import {exportToJson} from '../actions/exportDB';
 import {setUserSetting} from '../actions/userSettings';
 
-export default class Settings extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      dropDownsOpen: {
-        firstScreen: false,
-        typeSchedule: false,
-        typeCards: false,
-      },
-      screens: [
-        {name: 'Расписание', id: 'timetable'},
-        {name: 'Ученики', id: 'students'},
-        {name: 'Группы', id: 'groups'},
-        {name: 'Настройки', id: 'settings'},
-      ],
-      groupBy: [
-        {name: 'Без группировки', id: 'without'},
-        {name: 'Возрастная группа', id: 'LeftBot'},
-        {name: 'Шаблон', id: 'RightTop'},
-        {name: 'Заключение ЦПМПК', id: 'RightBot'},
-      ],
-      temporaryTemplates: [...userSettings.templates],
-      typesSchedule: [
-        {name: 'Календарное', id: 'calendar'},
-        {name: 'Еженедельное', id: 'week'},
-      ],
-      modalTemplates: false,
-      loading: false,
-      modalTutorial: false,
-    };
-  }
+const SCREENS = [
+  {name: 'Расписание', id: 'timetable'},
+  {name: 'Ученики', id: 'students'},
+  {name: 'Группы', id: 'groups'},
+  {name: 'Настройки', id: 'settings'},
+];
 
-  // закрытие остальных выпадающих списков
-  // - выбранный список -- selectDD:String
-  // - текущее значение выбранного списка -- val:Bool
-  closeOtherDropDown(selectDD, val) {
-    let newOpen = Object.fromEntries(
-      Object.entries(this.state.dropDownsOpen).map(([key]) => [
-        key,
-        key === selectDD ? val : false,
-      ]),
-    );
+const GROUP_BY = [
+  {name: 'Без группировки', id: 'without'},
+  {name: 'Возрастная группа', id: 'LeftBot'},
+  {name: 'Шаблон', id: 'RightTop'},
+  {name: 'Заключение ЦПМПК', id: 'RightBot'},
+];
 
-    this.setState({dropDownsOpen: newOpen});
-  }
+export default function Settings() {
+  const [, forceRender] = useReducer(x => x + 1, 0);
+  const [temporaryTemplates, setTemporaryTemplates] = useState([...userSettings.templates]);
+  const [modalTemplates, setModalTemplates] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [modalTutorial, setModalTutorial] = useState(false);
 
-  // поведение при загрузке другой базы
-  async importDataBase() {
-    // пикаем файл
-    let pickerResult;
-    // try  т.к. при закрытии пикера - он бросает исключение
+  const saveSettings = useCallback((key, val) => {
+    setUserSetting(key, val);
+    if (key == 'sizeCardAll') {
+      if (val.length == 1) {
+        if (val[0] == 'big') {
+          setUserSetting('bigCardStudent', true);
+          setUserSetting('bigCardGroup', true);
+          setUserSetting('bigCardTimetable', true);
+        } else {
+          setUserSetting('bigCardStudent', false);
+          setUserSetting('bigCardGroup', false);
+          setUserSetting('bigCardTimetable', false);
+        }
+      }
+    }
+    forceRender();
+  }, []);
+
+  const changeSizeCards = useCallback((val) => {
+    let currentVals = [...userSettings.sizeCardAll];
+    let findVal = currentVals.indexOf(val);
+    if (findVal >= 0) {
+      currentVals.splice(findVal, 1);
+    } else {
+      currentVals.push(val);
+    }
+    if (currentVals.length != 0) {
+      saveSettings('sizeCardAll', currentVals);
+    }
+  }, [saveSettings]);
+
+  const importDataBase = useCallback(async () => {
+    let localUri;
     try {
-      pickerResult = await DocumentPicker.pickSingle({
-        presentationStyle: 'fullScreen',
-        copyTo: 'cachesDirectory',
+      const [picked] = await pick({type: [types.json, types.allFiles]});
+
+      if (!(picked.name || '').toLowerCase().endsWith('.json')) {
+        Alert.alert('Ошибка загрузки', 'Файл должен иметь расширение .json!');
+        return;
+      }
+
+      // Materialise a local copy so RNFS can read it (op-sqlite-agnostic).
+      const [copy] = await keepLocalCopy({
+        files: [{uri: picked.uri, fileName: picked.name ?? 'import.json'}],
+        destination: 'cachesDirectory',
       });
+      if (copy.status !== 'success') {
+        Alert.alert('Ошибка загрузки', 'Не удалось прочитать файл.');
+        return;
+      }
+      localUri = copy.localUri;
     } catch (e) {
-      // пикер был закрыт, прерываем функцию
+      // User dismissing the picker is not an error.
+      if (isErrorWithCode(e) && e.code === errorCodes.OPERATION_CANCELED) {
+        return;
+      }
+      Alert.alert('Ошибка загрузки', 'Не удалось выбрать файл.');
       return;
     }
 
-    // проверка на то, что это json
-    if (pickerResult.name.split('.')[1] != 'json') {
-      Alert.alert('Ошибка загрузки', 'Файл должен иметь расширение .json!');
-      return;
-    }
-
-    // запрос пользователю на необходимость удалить текущие данные
-    saveCurrentData = new Promise((resolve, reject) => {
+    let saveCurrentData = new Promise((resolve, reject) => {
       Alert.alert(
         'Подтвердите действие',
         'При загрузке новых данных - старые будут удалены. Вы действительно хотите загрузить ?',
@@ -100,13 +119,6 @@ export default class Settings extends Component {
             text: 'Да',
             onPress: () => resolve(false),
           },
-          // Отключена возможность оставить текущие данные
-          // Не получится объеденить данные в расписании, т.к. записи могут падать на одно время
-          // + разные виды расписания
-          // {
-          //   text: 'Нет',
-          //   onPress: () => resolve(true),
-          // },
           {
             text: 'Отмена',
             onPress: () => reject(),
@@ -116,54 +128,44 @@ export default class Settings extends Component {
       );
     });
 
-    // при выборе не cancel
     saveCurrentData.then(
       res => {
-        // запуск окна загрузки
-        this.setState({loading: true});
-        // импорт через внешний файл
-        let loadingData = importFromJson(pickerResult.fileCopyUri, res);
-        // окончание завершения импорта смена статуса загрузки и увемодление
+        setLoading(true);
+        let loadingData = importFromJson(localUri, res);
         loadingData
           .then(() => {
-            this.setState({loading: false});
+            setLoading(false);
             Alert.alert('Данные успешно загружены!');
           })
           .catch(err => {
             clearData().then(() => {
-              this.setState({loading: false});
+              setLoading(false);
               Alert.alert('Произошла ошибка загрузки файла :(', err.message);
             });
           });
       },
       () => {},
     );
-  }
+  }, []);
 
-  // поведение при выгрузке базы
-  async exportDataBase() {
-    // загрузка...
-    this.setState({loading: true});
-
-    // выполняем экспорт, на выходе получаем промис и имя файла
+  const exportDataBase = useCallback(async () => {
+    setLoading(true);
     let [exportBase, fileName] = await exportToJson();
     exportBase
       .then(res => {
-        // сброс загрузки
-        this.setState({loading: false});
+        setLoading(false);
         Alert.alert(
           'Данные успешно выгруженны!',
           'Данные сохраненны в файл ' + fileName,
         );
       })
       .catch(() => {
-        this.setState({loading: false});
+        setLoading(false);
         Alert.alert('Произошла непредвиденная ошибки.');
       });
-  }
+  }, []);
 
-  // поведение при очистке базы
-  async clearDataBase() {
+  const clearDataBase = useCallback(async () => {
     let confirmAction = new Promise((resolve, reject) => {
       Alert.alert(
         'Подтвердите действие',
@@ -183,365 +185,211 @@ export default class Settings extends Component {
     });
 
     confirmAction.then(() => {
-      // Загрузка...
-      this.setState({loading: true});
-
-      // Получаем промис с очистки
+      setLoading(true);
       let actionCleaning = clearData();
       actionCleaning
         .then(() => {
-          // сброс загрузки
-          this.setState({loading: false});
+          setLoading(false);
           Alert.alert('Данные успешно очищены!');
         })
         .catch(() => {
-          this.setState({loading: false});
+          setLoading(false);
           Alert.alert('Произошла непредвиденная ошибки.');
         });
     });
-  }
+  }, []);
 
-  // закрытие модалки шаблонов и сброс параметров
-  templatesModalExit() {
-    this.setState({modalTemplates: false});
-    this.setState({temporaryTemplates: [...userSettings.templates]});
-  }
+  const templatesModalExit = useCallback(() => {
+    setModalTemplates(false);
+    setTemporaryTemplates([...userSettings.templates]);
+  }, []);
 
-  // сохранение настроек
-  saveSettings(key, val) {
-    setUserSetting(key, val);
-    if (key == 'sizeCardAll') {
-      if (val.length == 1) {
-        if (val[0] == 'big') {
-          setUserSetting('bigCardStudent', true);
-          setUserSetting('bigCardGroup', true);
-          setUserSetting('bigCardTimetable', true);
-        } else {
-          setUserSetting('bigCardStudent', false);
-          setUserSetting('bigCardGroup', false);
-          setUserSetting('bigCardTimetable', false);
-        }
-      }
-    }
-
-    this.forceUpdate();
-  }
-
-  // изменение вида карточек
-  changeSizeCards(val) {
-    // текущий список размеров
-    let currentVals = [...userSettings.sizeCardAll];
-    // поиск выбранного шаблона в списке
-    findVal = currentVals.indexOf(val);
-    if (findVal >= 0) {
-      // убераем элемент из списка
-      currentVals.splice(findVal, 1);
-    } else {
-      // добавляем элемент в список
-      currentVals.push(val);
-    }
-
-    // если список не будет пуст, то данные сохранятся
-    // один шаблон должен быть всегда активен
-    if (currentVals.length != 0) {
-      this.saveSettings('sizeCardAll', currentVals);
-    }
-  }
-
-  // изменение вида расписание
-  changeTypeSchedule(val, callback) {
-    // много кода потому, что имеется визуальный баг
-    // значение скидывается на нулевое во время Alert
-
-    // Сохраняем первонаальное значение настроек
-    let oldVal = userSettings['typeSchedule'];
-
-    // если значение не поменялось, то и действий никаких не надо
-    if (val == oldVal) {
-      callback(false);
-      return true;
-    }
-
-    // меняем значение сразу (чтобы визуально отображалось новое)
-    this.saveSettings('typeSchedule', val);
-
-    // получаем промис от пользователя, что он согласен, что расписание зачистится
-    Alert.alert(
-      'Подтвердите действие',
-      'Изменение вида приведет к очистке расписания!',
-      [
-        {
-          text: 'Продолжить',
-          onPress: () => {
-            // Загрузка...
-            this.setState({loading: true});
-
-            // Получаем промис с очистки
-            let actionCleaning = clearData(['Timetable']);
-            actionCleaning
-              .then(() => {
-                // сброс загрузки
-                this.setState({loading: false});
-                callback(true);
-                Alert.alert('Данные успешно очищены!');
-              })
-              .catch(er => {
-                this.setState({loading: false});
-                Alert.alert('Произошла непредвиденная ошибки.');
-                console.log('test err', er);
-                this.saveSettings('typeSchedule', oldVal);
-              });
-          },
-        },
-        {
-          text: 'Отмена',
-          onPress: () => {
-            // пользователь не согласился - возвращаем отказ
-            this.saveSettings('typeSchedule', oldVal);
-          },
-          style: 'cancel',
-        },
-      ],
-    );
-  }
-
-  // test() {
-  //   db.transaction(tx => {
-  //     tx.executeSql(
-  //       `SELECT * FROM Timetable GROUP BY date
-  //       `,
-  //       [],
-  //       (_, {rows}) => console.log('TEST', rows.raw()),
-  //     );
-  //   });
-
-  // }
-
-  render() {
-    return (
-      <View style={Styles.container}>
-        <ScrollView
-          overScrollMode={'always'}
-          nestedScrollEnabled={true}
-          contentContainerStyle={{gap: 25, flexGrow: 1}}>
-          {/* DEV */}
-          {/* <TouchableOpacity
-            onPress={test}>
-            <Text>TEST</Text>
-          </TouchableOpacity> */}
-          {/* баннер */}
-          {/* <TouchableOpacity
-            onPress={() =>
-              Linking.openURL('https://www.tinkoff.ru/cf/1uakjigjJrq')
+  return (
+    <View style={Styles.container}>
+      <ScrollView
+        overScrollMode={'always'}
+        nestedScrollEnabled={true}
+        contentContainerStyle={{gap: 25, flexGrow: 1}}>
+        {/* Обучалка */}
+        <View style={Styles.divDefault__edit}>
+          <TouchableOpacity
+            style={Styles.buttonDefault}
+            onPress={() => setModalTutorial(true)}>
+            <Text style={Styles.buttonDefaultText}>Посмотреть обучение</Text>
+          </TouchableOpacity>
+        </View>
+        {/* первый экран */}
+        <Dropdown
+          data={SCREENS}
+          value={userSettings.firstScreen}
+          editing={true}
+          label={'Первый экран'}
+          onChange={id => saveSettings('firstScreen', id)}
+        />
+        {/* Группировка учеников */}
+        <Dropdown
+          data={GROUP_BY}
+          value={userSettings.groupBy_Student}
+          editing={true}
+          label={'Группировка списка учеников'}
+          onChange={id => saveSettings('groupBy_Student', id)}
+        />
+        {/* Группировка групп */}
+        <Dropdown
+          data={GROUP_BY}
+          value={userSettings.groupBy_Group}
+          editing={true}
+          label={'Группировка списка групп'}
+          onChange={id => saveSettings('groupBy_Group', id)}
+        />
+        {/* шаблоны */}
+        <View style={Styles.divDefault__edit}>
+          <Text style={Styles.divDefaultLabel__edit}>Шаблоны</Text>
+          <TouchableOpacity
+            style={Styles.buttonDefault}
+            onPress={() => setModalTemplates(true)}>
+            <Icons.Entypo name="documents" size={20} color={'#554AF0'} />
+            <Text style={Styles.buttonDefaultText}>
+              Изменить список шаблонов
+            </Text>
+          </TouchableOpacity>
+        </View>
+        {/* размер карточек */}
+        <View style={Styles.divDefault__edit}>
+          <Text style={Styles.divDefaultLabel__edit}>Размер карточек</Text>
+          <TouchableOpacity
+            onPress={() => changeSizeCards('small')}
+            style={
+              userSettings.sizeCardAll.includes('small')
+                ? Styles.skeletonCard__active
+                : Styles.skeletonCard
             }>
-            <Image
-              style={{
-                flex: 1,
-                aspectRatio: 1.75,
-                height: undefined,
-                width: undefined,
-              }}
-              source={require('../assets/baner.png')}
-              resizeMode="contain"
-            />
-          </TouchableOpacity> */}
-          {/* Обучалка */}
-          <View style={Styles.divDefault__edit}>
-            <TouchableOpacity
-              style={Styles.buttonDefault}
-              onPress={() => this.setState({modalTutorial: true})}>
-              <Text style={Styles.buttonDefaultText}>Посмотреть обучение</Text>
-            </TouchableOpacity>
-          </View>
-          {/* первый экран */}
-          <Dropdown
-            data={this.state.screens}
-            value={userSettings.firstScreen}
-            editing={true}
-            label={'Первый экран'}
-            onChange={id => {
-              this.saveSettings('firstScreen', id);
-            }}
-          />
-          {/* Группировка учеников */}
-          <Dropdown
-            data={this.state.groupBy}
-            value={userSettings.groupBy_Student}
-            editing={true}
-            label={'Группировка списка учеников'}
-            onChange={id => {
-              this.saveSettings('groupBy_Student', id);
-            }}
-          />
-          {/* Группировка групп */}
-          <Dropdown
-            data={this.state.groupBy}
-            value={userSettings.groupBy_Group}
-            editing={true}
-            label={'Группировка списка групп'}
-            onChange={id => {
-              this.saveSettings('groupBy_Group', id);
-            }}
-          />
-          {/* вид расписания */}
-          {/* <Dropdown
-            data={this.state.typesSchedule}
-            value={userSettings.typeSchedule}
-            editing={true}
-            label={'Вид расписания'}
-            onConfirm={(id, callback) => this.changeTypeSchedule(id, callback)}
-          /> */}
-          {/* шаблоны */}
-          <View style={Styles.divDefault__edit}>
-            <Text style={Styles.divDefaultLabel__edit}>Шаблоны</Text>
-            <TouchableOpacity
-              style={Styles.buttonDefault}
-              onPress={() => this.setState({modalTemplates: true})}>
-              <Icons.Entypo name="documents" size={20} color={'#554AF0'} />
-              <Text style={Styles.buttonDefaultText}>
-                Изменить список шаблонов
-              </Text>
-            </TouchableOpacity>
-          </View>
-          {/* размер карточек */}
-          <View style={Styles.divDefault__edit}>
-            <Text style={Styles.divDefaultLabel__edit}>Размер карточек</Text>
-            <TouchableOpacity
-              onPress={() => this.changeSizeCards('small')}
+            <View
               style={
                 userSettings.sizeCardAll.includes('small')
-                  ? Styles.skeletonCard__active
-                  : Styles.skeletonCard
+                  ? Styles.skeletonCardContentActive
+                  : Styles.skeletonCardContent
               }>
-              <View
-                style={
-                  userSettings.sizeCardAll.includes('small')
-                    ? Styles.skeletonCardContentActive
-                    : Styles.skeletonCardContent
-                }>
-                <View style={Styles.skeletonCardRow}>
-                  <View
-                    style={{...Styles.skeletonCardEl, flex: 1, marginRight: 15}}
-                  />
-                  <View style={{...Styles.skeletonCardEl, flex: 3}} />
-                </View>
+              <View style={Styles.skeletonCardRow}>
+                <View
+                  style={{...Styles.skeletonCardEl, flex: 1, marginRight: 15}}
+                />
+                <View style={{...Styles.skeletonCardEl, flex: 3}} />
               </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => this.changeSizeCards('big')}
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => changeSizeCards('big')}
+            style={
+              userSettings.sizeCardAll.includes('big')
+                ? Styles.skeletonCard__active
+                : Styles.skeletonCard
+            }>
+            <View
               style={
                 userSettings.sizeCardAll.includes('big')
-                  ? Styles.skeletonCard__active
-                  : Styles.skeletonCard
+                  ? Styles.skeletonCardContentActive
+                  : Styles.skeletonCardContent
               }>
-              <View
-                style={
-                  userSettings.sizeCardAll.includes('big')
-                    ? Styles.skeletonCardContentActive
-                    : Styles.skeletonCardContent
-                }>
-                <View style={Styles.skeletonCardRow}>
-                  <View
-                    style={{...Styles.skeletonCardEl, flex: 1, marginRight: 15}}
-                  />
-                  <View style={{...Styles.skeletonCardEl, flex: 3}} />
-                </View>
-                <View style={{...Styles.skeletonCardRow, marginTop: 20}}>
-                  <View
-                    style={{...Styles.skeletonCardEl, flex: 1, marginRight: 15}}
-                  />
-                  <View style={{...Styles.skeletonCardEl, flex: 1}} />
-                </View>
+              <View style={Styles.skeletonCardRow}>
+                <View
+                  style={{...Styles.skeletonCardEl, flex: 1, marginRight: 15}}
+                />
+                <View style={{...Styles.skeletonCardEl, flex: 3}} />
               </View>
-            </TouchableOpacity>
-          </View>
-          {/* Расскрытие категорий и подкатегорий */}
-          <View style={Styles.divDefault__edit}>
-            <Text style={Styles.divDefaultLabel__edit}>Карточка ученика</Text>
-            <RowSwitcher
-              label="Раскрывать категории"
-              currentValue={userSettings.showCategories}
-              onCallBack={val => this.saveSettings('showCategories', val)}
-            />
-            <RowSwitcher
-              label="Раскрывать подкатегории"
-              currentValue={userSettings.showSubCategories}
-              onCallBack={val => this.saveSettings('showSubCategories', val)}
-            />
-          </View>
-          {/* импорт/экспорт/очистка базы */}
-          <View style={Styles.divDefault__edit}>
-            <Text style={Styles.divDefaultLabel__edit}>
-              Действия с данными приложения
+              <View style={{...Styles.skeletonCardRow, marginTop: 20}}>
+                <View
+                  style={{...Styles.skeletonCardEl, flex: 1, marginRight: 15}}
+                />
+                <View style={{...Styles.skeletonCardEl, flex: 1}} />
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
+        {/* Расскрытие категорий и подкатегорий */}
+        <View style={Styles.divDefault__edit}>
+          <Text style={Styles.divDefaultLabel__edit}>Карточка ученика</Text>
+          <RowSwitcher
+            label="Раскрывать категории"
+            currentValue={userSettings.showCategories}
+            onCallBack={val => saveSettings('showCategories', val)}
+          />
+          <RowSwitcher
+            label="Раскрывать подкатегории"
+            currentValue={userSettings.showSubCategories}
+            onCallBack={val => saveSettings('showSubCategories', val)}
+          />
+        </View>
+        {/* импорт/экспорт/очистка базы */}
+        <View style={Styles.divDefault__edit}>
+          <Text style={Styles.divDefaultLabel__edit}>
+            Действия с данными приложения
+          </Text>
+          {/* экспорт */}
+          <TouchableOpacity
+            style={Styles.buttonDefault}
+            onPress={() => exportDataBase()}>
+            <Icons.AntDesign name="upload" size={20} color="#554AF0" />
+            <Text style={Styles.buttonDefaultText}>Выгрузить данные</Text>
+          </TouchableOpacity>
+          {/* импорт */}
+          <TouchableOpacity
+            style={Styles.buttonDefault}
+            onPress={() => importDataBase()}>
+            <Icons.AntDesign name="download" size={20} color="#554AF0" />
+            <Text style={Styles.buttonDefaultText}>Загрузить данные</Text>
+          </TouchableOpacity>
+          {/* очистка */}
+          <TouchableOpacity
+            style={Styles.buttonDefault}
+            onPress={() => clearDataBase()}>
+            <Icons.AntDesign name="delete" size={20} color="#DC5F5A" />
+            <Text style={{...Styles.buttonDefaultText, color: '#DC5F5A'}}>
+              Очистить данные
             </Text>
-            {/* экспорт */}
-            <TouchableOpacity
-              style={Styles.buttonDefault}
-              onPress={() => this.exportDataBase()}>
-              <Icons.AntDesign name="upload" size={20} color="#554AF0" />
-              <Text style={Styles.buttonDefaultText}>Выгрузить данные</Text>
-            </TouchableOpacity>
-            {/* импорт */}
-            <TouchableOpacity
-              style={Styles.buttonDefault}
-              onPress={() => this.importDataBase()}>
-              <Icons.AntDesign name="download" size={20} color="#554AF0" />
-              <Text style={Styles.buttonDefaultText}>Загрузить данные</Text>
-            </TouchableOpacity>
-            {/* очистка */}
-            <TouchableOpacity
-              style={Styles.buttonDefault}
-              onPress={() => this.clearDataBase()}>
-              <Icons.AntDesign name="delete" size={20} color="#DC5F5A" />
-              <Text style={{...Styles.buttonDefaultText, color: '#DC5F5A'}}>
-                Очистить данные
-              </Text>
-            </TouchableOpacity>
-          </View>
-          {/* пустое пространство */}
-          <View style={Styles.crutch}></View>
-        </ScrollView>
-        {/* модалка для шаблонов */}
-        <Modal
-          style={{marginBottom: 0, marginLeft: 0, marginRight: 0}}
-          isVisible={this.state.modalTemplates}
-          onBackButtonPress={() => this.templatesModalExit()}
-          onBackdropPress={() => this.templatesModalExit()}>
-          <View style={Styles.modalDownWrap}>
-            <SelectedList
-              currentValues={userSettings.templates}
-              sqlText={`SELECT id, name 
-                FROM Templates 
-                WHERE id NOT IN (${'?,'
-                  .repeat(this.state.temporaryTemplates.length)
-                  .slice(0, -1)})`}
-              sqlArgs={this.state.temporaryTemplates.map(item => item.id)}
-              labelCurrent="Выбранные шаблоны"
-              labelPossible="Доступные шаблоны"
-              onChange={data => {
-                this.setState({temporaryTemplates: data});
-              }}
-              editing={true}
-            />
-            <TouchableOpacity
-              style={Styles.submitBtn}
-              onPress={() => {
-                this.saveSettings('templates', this.state.temporaryTemplates);
-                this.setState({modalTemplates: false});
-              }}>
-              <Text style={Styles.submitBtnText}>Сохранить</Text>
-            </TouchableOpacity>
-          </View>
-        </Modal>
-        <Modal style={{margin: 0}} isVisible={this.state.modalTutorial}>
-          <View
-            style={{width: '100%', height: '100%', backgroundColor: '#fff'}}>
-            <Slider onClose={() => this.setState({modalTutorial: false})} />
-          </View>
-        </Modal>
-        {/* заглушка фоновой загрузки */}
-        <LoadModal status={this.state.loading} />
-      </View>
-    );
-  }
+          </TouchableOpacity>
+        </View>
+        {/* пустое пространство */}
+        <View style={Styles.crutch}></View>
+      </ScrollView>
+      {/* модалка для шаблонов */}
+      <Modal
+        style={{marginBottom: 0, marginLeft: 0, marginRight: 0}}
+        isVisible={modalTemplates}
+        onBackButtonPress={() => templatesModalExit()}
+        onBackdropPress={() => templatesModalExit()}>
+        <View style={Styles.modalDownWrap}>
+          <SelectedList
+            currentValues={userSettings.templates}
+            sqlText={`SELECT id, name
+              FROM Templates
+              WHERE id NOT IN (${'?,'
+                .repeat(temporaryTemplates.length)
+                .slice(0, -1)})`}
+            sqlArgs={temporaryTemplates.map(item => item.id)}
+            labelCurrent="Выбранные шаблоны"
+            labelPossible="Доступные шаблоны"
+            onChange={data => setTemporaryTemplates(data)}
+            editing={true}
+          />
+          <TouchableOpacity
+            style={Styles.submitBtn}
+            onPress={() => {
+              saveSettings('templates', temporaryTemplates);
+              setModalTemplates(false);
+            }}>
+            <Text style={Styles.submitBtnText}>Сохранить</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+      <Modal style={{margin: 0}} isVisible={modalTutorial}>
+        <View
+          style={{width: '100%', height: '100%', backgroundColor: '#fff'}}>
+          <Slider onClose={() => setModalTutorial(false)} />
+        </View>
+      </Modal>
+      {/* заглушка фоновой загрузки */}
+      <LoadModal status={loading} />
+    </View>
+  );
 }

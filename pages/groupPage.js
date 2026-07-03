@@ -1,327 +1,116 @@
-import React, {Component} from 'react';
+import React, {useState, useRef, useEffect, useCallback} from 'react';
 import {Alert, BackHandler} from 'react-native';
 import SubTab from '../components/generatorPages';
 import PagerView from 'react-native-pager-view';
 import NavPage from '../components/elements/navPage';
 import setHeaderNavigation from '../actions/changeHeader';
-import {insertInto} from '../actions/sqlGenerator';
-import SQLite from 'react-native-sqlite-storage';
 import MenuActions from '../components/menuActions';
-import {deleteGroup} from '../actions/actinonsDB';
 import {
   saveConfirm,
   removeConfirm,
   undoConfirm,
   undoCreate,
 } from '../actions/confirmAction';
+import {getDiagnoses} from '../database/repositories/studentRepo';
+import {
+  getGroupMembers,
+  getGroupById,
+  createGroup,
+  updateGroup,
+  saveGroupMembers,
+  deleteGroup,
+} from '../database/repositories/groupRepo';
+import {getDB} from '../database/connection';
+import useBackHandler from '../hooks/useBackHandler';
 
-SQLite.enablePromise(true);
+export default function GroupPage({route, navigation}) {
+  const optionsRef = useRef({...route.params});
+  const pageViewerRef = useRef(null);
 
-export default class GroupPage extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      // переданные параметры
-      options: this.props.route.params,
-      // состояние редактирования
-      editing: false,
+  const [editing, setEditing] = useState(optionsRef.current.type !== 'view');
+  const [selectedPageIndex, setSelectedPageIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [menuShow, setMenuShow] = useState(false);
 
-      // хранение экземпляра страниц
-      pageViewer: undefined,
-      // текущий индекс страницы
-      selectedPageIndex: 0,
+  const [sections] = useState([
+    {
+      id: 1,
+      name: 'default_main',
+      show_label: null,
+      tab_name: 'Общие сведения',
+      footer: null,
+    },
+    {
+      id: 2,
+      name: 'default_list',
+      show_label: null,
+      tab_name: 'Состав',
+      footer: null,
+    },
+  ]);
 
-      // секции страницы
-      sections: [
-        {
-          id: 1,
-          name: 'default_main',
-          show_label: null,
-          tab_name: 'Общие сведения',
-          footer: null,
-        },
-        {
-          id: 2,
-          name: 'default_list',
-          show_label: null,
-          tab_name: 'Состав',
-          footer: null,
-        },
-      ],
-
-      // поля по умолчанию для основной страницы с данными выбора (если есть)
-      defaultData: {
-        default_main: {
-          name: {
-            label: 'Название',
-            requared: true,
-            type: 'inputView',
-          },
-          category: {
-            label: 'Возрастная группа',
-            requared: true,
-            type: 'droplist',
-          },
-          diagnos: {
-            label: 'Заключение ЦПМПК',
-            requared: true,
-            type: 'droplist',
-          },
-        },
-        default_list: {
-          list: {
-            label: '',
-            type: 'selectedInList',
-            props: {
-              sqlText: `
-              SELECT st.id,
-                  st.surname || ' ' || st.name || ' ' || COALESCE(st.midname, '') as name
-              FROM Students as st
-              WHERE st.id NOT IN (?) AND id_template = ?
-              `,
-              sqlArgs: ['', this.props.route.params.template.id],
-              labelCurrent: 'Выбранные ученики',
-              labelPossible: 'Общий список учеников',
-            },
-          },
+  const defaultDataRef = useRef({
+    default_main: {
+      name: {
+        label: 'Название',
+        requared: true,
+        type: 'inputView',
+      },
+      category: {
+        label: 'Возрастная группа',
+        requared: true,
+        type: 'droplist',
+      },
+      diagnos: {
+        label: 'Заключение ЦПМПК',
+        requared: true,
+        type: 'droplist',
+      },
+    },
+    default_list: {
+      list: {
+        label: '',
+        type: 'selectedInList',
+        props: {
+          sqlText: `
+          SELECT st.id,
+              st.surname || ' ' || st.name || ' ' || COALESCE(st.midname, '') as name
+          FROM Students as st
+          WHERE st.id NOT IN (?) AND id_template = ?
+          `,
+          sqlArgs: ['', route.params.template.id],
+          labelCurrent: 'Выбранные ученики',
+          labelPossible: 'Общий список учеников',
         },
       },
+    },
+  });
 
-      // данные для секций по id
-      sectionsData: {},
+  const valuesStorageRef = useRef({list: []});
+  const currentDataRef = useRef({list: []});
 
-      // текущие данные группы
-      currentData: {list: []},
-
-      // состояние загрузки данных с бд
-      loading: true,
-
-      // временное хранилище значений
-      valuesStorage: {list: []},
-
-      // состояние меню
-      menuShow: false,
-    };
-
-    // способ открытия страницы
-    currentType = this.state.options.type;
-    // флаг, для запроса данных группы
-    getGroup = currentType == 'add' ? false : true;
-    // для уменьшения количества рендеров
-    // данные обновляются без setState
-    // в последней транзакции 2-х блоков меняется флаг загрузки
-
-    // получение данных
-    db.transaction(tx => {
-      // получение диагнозов
-      tx.executeSql(
-        `
-        SELECT id, name
-        FROM Diagnosis
-        WHERE id_template IS NULL OR id_template = ?
-        `,
-        [this.state.options.template.id],
-        (_, {rows}) =>
-          (this.state.defaultData.default_main.diagnos.values = rows.raw()),
-        err => console.log('error groupPage get Diagnosis', err),
-      );
-
-      // получение категорий
-      tx.executeSql(
-        `
-        SELECT *
-        FROM Categories
-        `,
-        [],
-        (_, {rows}) => {
-          this.state.defaultData.default_main.category.values = rows.raw();
-          if (!getGroup) {
-            this.setState({loading: false});
-          }
-        },
-        err => console.log('error groupPage get Categories', err),
-      );
-
-      // получение данных группы
-      if (getGroup) {
-        // ученики в группе
-        tx.executeSql(
-          `
-          SELECT st.id, 
-            st.surname || ' ' || st.name || ' ' || COALESCE(st.midname, '') as name
-          FROM ListStudentsGroup as lsg
-          LEFT JOIN Students as st ON st.id = lsg.id_student
-          WHERE id_group = ?
-          `,
-          [this.state.options.id],
-          (_, {rows}) => {
-            let dataString = JSON.stringify(rows.raw());
-            this.state.currentData.list = JSON.parse(dataString);
-            this.state.valuesStorage.list = JSON.parse(dataString);
-
-            let propsList = this.state.defaultData.default_list.list.props;
-            let list_Ids = JSON.parse(dataString).map(item => item.id);
-
-            // заменяем зашлушку
-            propsList.sqlText = propsList.sqlText.replace(
-              '?',
-              `?,`.repeat(list_Ids.length).slice(0, -1),
-            );
-
-            // меняем аргументы
-            propsList.sqlArgs.shift();
-            propsList.sqlArgs.unshift(...list_Ids);
-          },
-          err => console.log('error gropPage get cur students', err),
-        );
-
-        // данные группы
-        tx.executeSql(
-          `
-          SELECT name, 
-            id_diagnos as diagnos,
-            id_category as category 
-          FROM Groups
-          WHERE id = ? 
-          `,
-          [this.state.options.id],
-          (_, {rows}) => {
-            let stringJson = JSON.stringify(rows.raw()[0]);
-            this.state.currentData = {
-              ...this.state.currentData,
-              ...JSON.parse(stringJson),
-            };
-            this.state.valuesStorage = {
-              ...this.state.valuesStorage,
-              ...JSON.parse(stringJson),
-            };
-            this.setState({loading: false});
-          },
-          err => console.log('error groupPage get group', err),
-        );
-      }
+  const setNavView = useCallback(() => {
+    setHeaderNavigation({
+      mainTitle: 'Карточка группы',
+      addedTitle: optionsRef.current.template.name,
+      onPressRight: () => setMenuShow(true),
+      navigation: navigation,
+      mode: 'menu',
     });
+  }, [navigation]);
 
-    this.setNavView = () =>
-      setHeaderNavigation({
-        mainTitle: 'Карточка группы',
-        addedTitle: this.state.options.template.name,
-        onPressRight: () => {
-          this.setState({menuShow: true});
-        },
-        navigation: this.props.navigation,
-        mode: 'menu',
-      });
-
-    this.setNavChange = () =>
-      setHeaderNavigation({
-        mainTitle: 'Редактирование группы',
-        addedTitle: this.state.options.template.name,
-        onPressRight: () => {
-          saveConfirm(() => this.confirmEdit());
-        },
-        onPressLeft: () => {
-          undoConfirm(() => {
-            this.state.valuesStorage = JSON.parse(
-              JSON.stringify(this.state.currentData),
-            );
-            this.setState({
-              editing: false,
-            });
-            this.setNavView();
-          });
-        },
-        navigation: this.props.navigation,
-        mode: 'edit',
-      });
-
-    // установка заголовка и кнопок в header
-    switch (currentType) {
-      case 'view':
-        this.setNavView();
-        break;
-      case 'add':
-        this.state.editing = true;
-        setHeaderNavigation({
-          mainTitle: 'Новая группа',
-          addedTitle: this.state.options.template.name,
-          onPressRight: () => saveConfirm(() => this.confirmEdit()),
-          onPressLeft: () => undoCreate(() => this.props.navigation.goBack()),
-          navigation: this.props.navigation,
-          mode: 'edit',
-        });
-        break;
-      case 'copy':
-        this.state.editing = true;
-        setHeaderNavigation({
-          mainTitle: 'Копия группы',
-          addedTitle: this.state.options.template.name,
-          onPressRight: () => saveConfirm(() => this.confirmEdit()),
-          onPressLeft: () => undoCreate(() => this.props.navigation.goBack()),
-          navigation: this.props.navigation,
-          mode: 'edit',
-        });
-        break;
-    }
-  }
-
-  // когда мы в режиме редактирования добавляем алерт при аппаратному "назад"
-  backAction = () => {
-    if (this.state.options.type === 'view') {
-      undoConfirm(() => {
-        this.setState({
-          valuesStorage: JSON.parse(JSON.stringify(this.state.currentData)),
-          editing: false,
-        });
-        this.setNavView();
-      });
-    } else {
-      undoCreate(() => {});
-    }
-    return true;
-  };
-
-  // устанавливаем прослушку на кнопку назад (аппаратную)
-  componentDidMount() {
-    this.backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      this.backAction,
-    );
-  }
-
-  // прослушка должна устанавливатся только когда мы в режиме редактирования
-  shouldComponentUpdate(nextProps, nextState) {
-    if (nextState.editing) {
-      this.backHandler = BackHandler.addEventListener(
-        'hardwareBackPress',
-        this.backAction,
-      );
-    } else {
-      this.backHandler.remove();
-    }
-    return true;
-  }
-
-  // убираем прослушку
-  componentWillUnmount() {
-    this.backHandler.remove();
-  }
-
-  // подтверждение изменений
-  confirmEdit() {
-    // флаг ошибки проверки
+  const confirmEdit = useCallback(() => {
     let flagError = false;
-    // проверка обязательных полей данных по умолчанию
-    for (const key of Object.keys(this.state.defaultData.default_main)) {
-      if (this.state.defaultData.default_main[key].requared) {
-        if (this.state.valuesStorage[key] == undefined) {
+    const defaultMain = defaultDataRef.current.default_main;
+    for (const key of Object.keys(defaultMain)) {
+      if (defaultMain[key].requared) {
+        if (valuesStorageRef.current[key] == undefined) {
           flagError = true;
           break;
         }
       }
     }
 
-    // есть не заполненные обязательные поля
     if (flagError) {
       Alert.alert(
         'Ошибка ввода',
@@ -332,151 +121,202 @@ export default class GroupPage extends Component {
       return;
     }
 
-    // проверка пройдена - обновляем текущие данные
-    this.setState({
-      currentData: JSON.parse(JSON.stringify(this.state.valuesStorage)),
+    currentDataRef.current = JSON.parse(JSON.stringify(valuesStorageRef.current));
+    const data = currentDataRef.current;
+
+    (async () => {
+      if (optionsRef.current.type != 'view') {
+        let newId = await createGroup(data, optionsRef.current.template.id);
+        optionsRef.current.id = newId;
+        optionsRef.current.type = 'view';
+      } else {
+        await updateGroup(data, optionsRef.current.id);
+      }
+
+      await saveGroupMembers(optionsRef.current.id, currentDataRef.current.list);
+      Alert.alert('Данные успешно обновлены!');
+      setNavView();
+      setEditing(false);
+    })();
+  }, [setNavView]);
+
+  const setNavChange = useCallback(() => {
+    setHeaderNavigation({
+      mainTitle: 'Редактирование группы',
+      addedTitle: optionsRef.current.template.name,
+      onPressRight: () => saveConfirm(() => confirmEdit()),
+      onPressLeft: () => {
+        undoConfirm(() => {
+          valuesStorageRef.current = JSON.parse(
+            JSON.stringify(currentDataRef.current),
+          );
+          setEditing(false);
+          setNavView();
+        });
+      },
+      navigation: navigation,
+      mode: 'edit',
     });
+  }, [navigation, confirmEdit, setNavView]);
 
-    this.updateBase();
-  }
-
-  // обновление данных
-  async updateBase() {
-    // для удобства
-    const data = this.state.currentData;
-
-    if (this.state.options.type != 'view') {
-      dataStudent = {
-        name: data.name,
-        id_diagnos: data.diagnos,
-        id_category: data.category,
-        id_template: this.state.options.template.id,
-      };
-      newId = await insertInto([dataStudent], 'Groups', true);
-      this.state.options.id = newId;
-      this.state.options.type = 'view';
-    } else {
-      await db.transaction(tx => {
-        // обновление данных группы
-        tx.executeSql(
-          `
-          UPDATE Groups
-          SET name = ?,
-              id_diagnos = ?,
-              id_category = ?
-          WHERE id = ?
-          `,
-          [data.name, data.diagnos, data.category, this.state.options.id],
-          null,
-          err => (
-            Alert.alert('Произошла ошибка!'),
-            console.log('error groupPage updateBase', err)
-          ),
+  // BackHandler
+  useBackHandler(() => {
+    if (optionsRef.current.type === 'view') {
+      undoConfirm(() => {
+        valuesStorageRef.current = JSON.parse(
+          JSON.stringify(currentDataRef.current),
         );
-
-        // удаляем связей группы с учениками
-        tx.executeSql(
-          `
-          DELETE FROM ListStudentsGroup
-          WHERE id_group = ?
-          `,
-          [this.state.options.id],
-          null,
-          err => (
-            Alert.alert('Произошла ошибка!'),
-            console.log('error groupPage ListStudentsGroup', err)
-          ),
-        );
+        setEditing(false);
+        setNavView();
       });
+    } else {
+      undoCreate(() => {});
+    }
+    return true;
+  }, editing);
+
+  // Initial setup
+  useEffect(() => {
+    const currentType = optionsRef.current.type;
+    let getGroupFlag = currentType != 'add';
+
+    switch (currentType) {
+      case 'view':
+        setNavView();
+        break;
+      case 'add':
+        setHeaderNavigation({
+          mainTitle: 'Новая группа',
+          addedTitle: optionsRef.current.template.name,
+          onPressRight: () => saveConfirm(() => confirmEdit()),
+          onPressLeft: () => undoCreate(() => navigation.goBack()),
+          navigation: navigation,
+          mode: 'edit',
+        });
+        break;
+      case 'copy':
+        setHeaderNavigation({
+          mainTitle: 'Копия группы',
+          addedTitle: optionsRef.current.template.name,
+          onPressRight: () => saveConfirm(() => confirmEdit()),
+          onPressLeft: () => undoCreate(() => navigation.goBack()),
+          navigation: navigation,
+          mode: 'edit',
+        });
+        break;
     }
 
-    this.addNewData(this.state.options.id);
-  }
+    const db = getDB();
+    db.transaction(tx => {
+      getDiagnoses(tx, optionsRef.current.template.id, data => {
+        defaultDataRef.current.default_main.diagnos.values = data;
+      });
 
-  // добавление новых записей в дб
-  async addNewData(id) {
-    await insertInto(
-      this.state.currentData.list.map(item =>
-        Object({id_group: id, id_student: item.id}),
-      ),
-      'ListStudentsGroup',
-    );
+      tx.executeSql(
+        'SELECT * FROM Categories',
+        [],
+        (_, {rows}) => {
+          defaultDataRef.current.default_main.category.values = rows.raw();
+          if (!getGroupFlag) {
+            setLoading(false);
+          }
+        },
+        err => console.log('error groupPage get Categories', err),
+      );
 
-    Alert.alert('Данные успешно обновлены!');
-    // возвращаем заголовки
-    this.setNavView();
-    this.setState({editing: false});
-  }
+      if (getGroupFlag) {
+        getGroupMembers(tx, optionsRef.current.id, data => {
+          let dataString = JSON.stringify(data);
+          currentDataRef.current.list = JSON.parse(dataString);
+          valuesStorageRef.current.list = JSON.parse(dataString);
 
-  async removeCard() {
-    deleteGroup(this.state.options.id);
+          let propsList = defaultDataRef.current.default_list.list.props;
+          let list_Ids = JSON.parse(dataString).map(item => item.id);
+
+          propsList.sqlText = propsList.sqlText.replace(
+            '?',
+            `?,`.repeat(list_Ids.length).slice(0, -1),
+          );
+          propsList.sqlArgs.shift();
+          propsList.sqlArgs.unshift(...list_Ids);
+        });
+
+        getGroupById(tx, optionsRef.current.id, data => {
+          let stringJson = JSON.stringify(data);
+          currentDataRef.current = {
+            ...currentDataRef.current,
+            ...JSON.parse(stringJson),
+          };
+          valuesStorageRef.current = {
+            ...valuesStorageRef.current,
+            ...JSON.parse(stringJson),
+          };
+          setLoading(false);
+        });
+      }
+    });
+  }, []);
+
+  const removeCard = useCallback(async () => {
+    await deleteGroup(optionsRef.current.id);
     Alert.alert('Карточка успешно удалена!');
+    navigation.pop();
+  }, [navigation]);
 
-    this.props.navigation.pop();
+  if (loading) {
+    return null;
   }
 
-  render() {
-    // КОСТЫЛЬ МБ ПОМЕНЯТЬ (уменьшает нагрузку рендер страниц)
-    if (this.state.loading) {
-      return;
-    }
-    return (
-      <>
-        {/* верхняя навигация подстраниц */}
-        <NavPage
-          values={this.state.sections}
-          selected={this.state.selectedPageIndex}
-          onSelect={index => this.state.pageViewer.setPage(index)}
-        />
-        <PagerView
-          style={{flex: 1}}
-          initialPage={0}
-          ref={pager => {
-            this.state.pageViewer = pager;
-          }}
-          onPageSelected={e =>
-            this.setState({selectedPageIndex: e.nativeEvent.position})
-          }>
-          {this.state.sections.map(item => {
-            const assignData = {
-              ...this.state.defaultData[item.name],
-              ...this.state.sectionsData[item.id],
-            };
-            // сгенерированные страницы
-            return (
-              <SubTab
-                key={item.id}
-                footer={Boolean(item.footer)}
-                lable={item.show_label ? item.name : null}
-                data={assignData}
-                currentData={this.state.valuesStorage}
-                editing={this.state.editing}
-                indexParent={item.id}
-                navigation={this.props.navigation}
-              />
-            );
-          })}
-        </PagerView>
-        {/* меню действий с карточкой */}
-        <MenuActions
-          visible={this.state.menuShow}
-          callClose={() => this.setState({menuShow: false})}
-          callCopy={() => {
-            this.props.navigation.pop();
-            this.props.navigation.push('Group', {
-              type: 'copy',
-              id: this.state.options.id,
-              template: this.state.options.template,
-            });
-          }}
-          callDelete={() => removeConfirm(() => this.removeCard())}
-          callChange={() => {
-            this.setState({editing: true});
-            this.setNavChange();
-          }}
-          onCard={true}
-        />
-      </>
-    );
-  }
+  return (
+    <>
+      {/* верхняя навигация подстраниц */}
+      <NavPage
+        values={sections}
+        selected={selectedPageIndex}
+        onSelect={index => pageViewerRef.current.setPage(index)}
+      />
+      <PagerView
+        style={{flex: 1}}
+        initialPage={0}
+        ref={pageViewerRef}
+        onPageSelected={e => setSelectedPageIndex(e.nativeEvent.position)}>
+        {sections.map(item => {
+          const assignData = {
+            ...defaultDataRef.current[item.name],
+          };
+          return (
+            <SubTab
+              key={item.id}
+              footer={Boolean(item.footer)}
+              lable={item.show_label ? item.name : null}
+              data={assignData}
+              currentData={valuesStorageRef.current}
+              editing={editing}
+              indexParent={item.id}
+              navigation={navigation}
+            />
+          );
+        })}
+      </PagerView>
+      {/* меню действий с карточкой */}
+      <MenuActions
+        visible={menuShow}
+        callClose={() => setMenuShow(false)}
+        callCopy={() => {
+          navigation.pop();
+          navigation.push('Group', {
+            type: 'copy',
+            id: optionsRef.current.id,
+            template: optionsRef.current.template,
+          });
+        }}
+        callDelete={() => removeConfirm(() => removeCard())}
+        callChange={() => {
+          setEditing(true);
+          setNavChange();
+        }}
+        onCard={true}
+      />
+    </>
+  );
 }
