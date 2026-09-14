@@ -52,5 +52,8 @@
   },
   "jest": {
     "preset": "react-native"
+  },
+  "overrides": {
+    "js-yaml": "3.15.2"
   }
 }
